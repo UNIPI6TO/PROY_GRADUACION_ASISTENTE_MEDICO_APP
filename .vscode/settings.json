@@ -1,0 +1,15 @@
+{
+  "files.eol": "\n",
+  "files.encoding": "utf8",
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "Escribe SIEMPRE el mensaje de commit en idioma ESPAÑOL."
+    },
+    {
+      "text": "Usa obligatoriamente el formato Conventional Commits: '<tipo>: <descripción concisa en español>' usando tipos como 'docs', 'feat', 'fix', 'chore', 'refactor', 'test'."
+    },
+    {
+      "text": "El título del commit no debe exceder 72 caracteres, en minúsculas y sin punto final."
+    }
+  ]
+}

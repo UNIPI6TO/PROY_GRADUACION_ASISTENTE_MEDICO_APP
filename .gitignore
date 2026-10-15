@@ -1,0 +1,27 @@
+# Entornos virtuales Python
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Variables de entorno y secretos (Regla 5 Inquebrantable)
+.env
+*.env
+*.pem
+*.key
+service_account.json
+credentials.json
+
+# Datos locales y base vectorial (no subir base de datos Chroma local pesada)
+data/chroma/
+*.sqlite3
+
+# Logs y temporales
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+.DS_Store
+Thumbs.db
