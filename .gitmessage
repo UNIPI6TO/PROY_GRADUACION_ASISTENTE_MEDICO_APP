@@ -8,7 +8,10 @@
 #   test:     Añadir o corregir pruebas
 #   chore:    Tareas de mantenimiento (configuración, dependencias)
 #
-# Descripción detallada opcional de los cambios.
-#
-Hecho con asistencia de IA; revisado por WilsonSalinasFlores
+# Ejemplo
+#feat(triaje): implementar función de clasificación de #prioridad para tickets
 
+#- Añade la función clasificar_prioridad en triaje.py para #]evaluar incidencias críticas de facturación.
+#- Incluye pruebas unitarias en test_triaje.py cubriendo casos exactos, variaciones de formato y entradas vacías.
+#
+#Hecho con asistencia de IA; revisado por Wilson Salinas
