@@ -2,8 +2,9 @@ AGENTS.md
 # Proyecto
 Asistente de Orientación en Salud Pública sobre Dengue y Arbovirosis (Grupo 5)
 ## Comandos
-- Instalar Backend: pip install -r requirements.txt
-- Probar Backend: pytest -q
+- Instalar Backend: `pip install -r requirements.txt`
+- Levantar Backend en Local: `uvicorn app.main:app --reload --port 8000`
+- Probar Backend: `pytest -q` (o `pytest -v` para modo detallado)
 ## Reglas
 - Python 3.12; nada fuera de requirements.
 - No modifiques las pruebas sin pedirlo.
