@@ -19,3 +19,5 @@ Al generar sugerencias de mensajes de commit en GitHub Desktop y extensiones de 
    - Sin punto final en el título.
 5. **Cuerpo del commit (opcional):**
    - Si el commit abarca más de un cambio relevante, listar viñetas explicativas en español.
+6. **Agregar al final de la descripción del comentario**
+   - Hecho con asistencia de IA; revisado por:
