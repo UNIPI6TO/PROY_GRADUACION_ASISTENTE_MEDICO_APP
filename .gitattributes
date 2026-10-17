@@ -1,0 +1,20 @@
+# Configuración de saltos de línea para el proyecto
+# Asegura consistencia entre desarrollo en Windows y despliegue en Linux (GCP / Docker)
+
+# Comportamiento automático por defecto
+* text=auto
+
+# Archivos de documentación, código y configuración (forzar LF para compatibilidad con Linux/GCP)
+*.md text eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.sh text eol=lf
+Dockerfile text eol=lf
+.env.example text eol=lf
+.gitignore text eol=lf
+
+# Scripts de Windows
+*.bat text eol=crlf
+*.ps1 text eol=crlf
