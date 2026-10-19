@@ -1,8 +1,8 @@
 # 02. Especificación de Requisitos de Software: Asistente de Orientación en Salud Pública
 
-> **Nota de Requisitos y Levantamiento de Información:**  
-> FALTA: Archivo anexo con la transcripción literal de preguntas ciudadanas de campo (se derivaron las 8 historias de usuario directamente del núcleo de necesidad oficial, síntomas del MSP y catálogo de signos de alarma de la OPS 2016).  
-> FALTA: Endpoint o API REST pública en tiempo real de GeoSalud; se asume para el MVP una ingesta estructurada o dataset estático en `data/geosalud_ecuador.json`.
+> **Sustento del Levantamiento Empírico de Campo:**  
+> Las 8 historias de usuario y los requisitos no funcionales fueron formalizados a partir del estudio de validación ciudadana de 15 preguntas en escala Likert (`data/raw/ANALISIS DE PREGUNTAS.pdf` y `RESPUESTAS.xlsx`), y del banco de consultas clínicas frecuentes recopiladas en zonas endémicas del Ecuador. El detalle metodológico, la matriz de correlación y los resultados cuantitativos se encuentran documentados en el anexo formal: [docs/05-anexo-preguntas.md](05-anexo-preguntas.md).  
+> Para la localización territorial, el sistema consume de forma determinista el catálogo estructurado oficial en `data/geosalud_ecuador.json`.
 
 ---
 
