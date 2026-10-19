@@ -1,0 +1,60 @@
+name: SemVer Bumper CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'app/**'
+
+jobs:
+  versioning:
+    name: Automated SemVer Versioning
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Test Suite Pre-Check
+        run: |
+          pytest -q
+
+      - name: Execute SemVer Bumper
+        id: bumper
+        run: |
+          python scripts/semver_bumper.py --branch "${{ github.ref_name }}"
+
+      - name: Commit Version Bump and Create Git Tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Verificar si app/main.py tuvo cambios pendientes de commit
+          if ! git diff --quiet app/main.py; then
+            git add app/main.py
+            git commit -m "chore(release): bump version to ${{ steps.bumper.outputs.version }} [skip ci]"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
+          
+          # Crear y publicar tag en Git
+          NEW_TAG="${{ steps.bumper.outputs.tag }}"
+          if [ -n "$NEW_TAG" ]; then
+            git tag -a "$NEW_TAG" -m "Automated release tag: $NEW_TAG [skip ci]"
+            git push origin "$NEW_TAG"
+          fi
