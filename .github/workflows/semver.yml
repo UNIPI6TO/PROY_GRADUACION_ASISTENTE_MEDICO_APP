@@ -1,16 +1,20 @@
 name: SemVer Bumper CI/CD
 
 on:
-  push:
+  pull_request:
     branches:
       - main
       - develop
     paths:
       - 'app/**'
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   versioning:
-    name: Automated SemVer Versioning
+    name: Automated SemVer Versioning on Pull Request
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -19,6 +23,7 @@ jobs:
       - name: Checkout Code Repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
       - name: Set up Python 3.12
@@ -38,7 +43,7 @@ jobs:
       - name: Execute SemVer Bumper
         id: bumper
         run: |
-          python scripts/semver_bumper.py --branch "${{ github.ref_name }}"
+          python scripts/semver_bumper.py --branch "${{ github.base_ref }}"
 
       - name: Commit Version Bump and Create Git Tag
         run: |
@@ -49,7 +54,7 @@ jobs:
           if ! git diff --quiet app/main.py; then
             git add app/main.py
             git commit -m "chore(release): bump version to ${{ steps.bumper.outputs.version }} [skip ci]"
-            git push origin HEAD:${{ github.ref_name }}
+            git push origin HEAD:${{ github.head_ref }}
           fi
           
           # Crear y publicar tag en Git
