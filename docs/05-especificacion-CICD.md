@@ -77,3 +77,25 @@ Si el desarrollador ya modificó manualmente la variable `APP_VERSION` en `app/m
     - **Cuando** la cadena de versión no cumple estrictamente con el regex SemVer oficial:
       `r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"`
     - **Entonces** el workflow detiene la ejecución inmediatamente con código de error, bloquea la creación de tags y reporta la falla en el resumen de GitHub Actions.
+
+---
+
+## 3. Arquitectura Técnica Implementada
+
+Para asegurar la alta mantenibilidad, trazabilidad y cumplimiento del principio SOLID (Responsabilidad Única), la solución se estructura en dos capas:
+
+1. **Núcleo de Reglas SemVer (`scripts/semver_bumper.py`):**
+   - Módulo en Python 3 que contiene la lógica de negocio pura:
+     - `validate_semver(version)`: Validación contra el regex oficial.
+     - `determine_increment(commits)`: Jerarquía de incremento según Conventional Commits.
+     - `calculate_next_release(base_version, increment)`: Cálculo de versión limpia de producción.
+     - `calculate_next_snapshot(base_version, existing_tags)`: Cálculo de pre-release `SNAPSHOT-RC#`.
+     - `detect_manual_version_change(diff_text)`: Detección y respeto de versiones manuales válidas.
+     - `update_app_version_in_file(file_path, new_version)`: Sustitución segura en `app/main.py`.
+
+2. **Orquestación en CI/CD (`.github/workflows/semver.yml`):**
+   - Workflow de GitHub Actions que se activa ante `push` en `main` y `develop` con filtro `paths: ['app/**']`.
+   - Ejecuta las pruebas unitarias automáticas con `pytest`.
+   - Invoca `scripts/semver_bumper.py --branch ${{ github.ref_name }}`.
+   - Realiza commit automático con bandera `[skip ci]` para prevenir loops de ejecución.
+   - Genera y publica el tag Git correspondiente (`vX.Y.Z` o `vX.Y.Z-SNAPSHOT-RC#`).
