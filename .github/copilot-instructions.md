@@ -21,3 +21,19 @@ Al generar sugerencias de mensajes de commit en GitHub Desktop y extensiones de 
    - Si el commit abarca más de un cambio relevante, listar viñetas explicativas en español.
 6. **Agregar al final de la descripción del comentario**
    - Hecho con asistencia de IA; revisado por:
+
+---
+
+## Estilo y Generación de Pull Requests (PR)
+Al sugerir o generar títulos, descripciones y comentarios de Pull Requests:
+
+1. **Idioma OBLIGATORIO:** Español.
+2. **Sugerencia del Título:**
+   - Debe ser conciso, claro y descriptivo en español (formato recomendado: `tipo(ámbito): descripción en español`).
+3. **Comentarios de Commits a Fusionar (OBLIGATORIO):**
+   - Debe incluir y mostrar el listado con los comentarios/mensajes de todos los commits que componen la rama y que se van a fusionar.
+4. **Estructura sugerida para la Descripción del PR:**
+   - **Resumen general:** Breve explicación en español del objetivo y los cambios del PR.
+   - **Commits a fusionar:** Listado de los commits incluidos con sus respectivos mensajes/comentarios.
+   - **Impacto / Componentes afectados:** Módulos o archivos modificados.
+   - **Pruebas y verificación:** Validación y pruebas realizadas.
