@@ -1,4 +1,4 @@
-# Instrucciones del Repositorio para GitHub Copilot
+﻿# Instrucciones del Repositorio para GitHub Copilot
 
 ## Estilo y Generación de Mensajes de Commit
 Al generar sugerencias de mensajes de commit en GitHub Desktop y extensiones de desarrollo:
