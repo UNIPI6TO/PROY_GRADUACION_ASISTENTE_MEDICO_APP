@@ -53,22 +53,22 @@ Si el desarrollador ya modificó manualmente la variable `APP_VERSION` en `app/m
 - **Criterios de Aceptación (Gherkin):**
 
   - **Criterio 1: Generación de versión Release en rama `main` y creación de Git Tag**
-    - **Dado** que se mergea o pushea un commit a la rama `main` con cambios en archivos dentro de `app/` sin modificación manual de `APP_VERSION`,
+    - **Dado** que se realiza un Pull Request hacia la rama `main` con cambios en archivos dentro de `app/` sin modificación manual de `APP_VERSION`,
     - **Cuando** el workflow de GitHub Actions analiza los mensajes de commit según Conventional Commits (`feat:`, `fix:`, etc.),
     - **Entonces** calcula el incremento SemVer correspondiente (MAJOR, MINOR o PATCH), valida la versión contra el regex oficial, actualiza `APP_VERSION` en `app/main.py`, persiste el cambio y crea el Git Tag con prefijo `v` (ej. `v0.2.0`).
 
   - **Criterio 2: Generación de versión Snapshot incremental en rama `develop`**
-    - **Dado** que se aprueba y realiza un Pull Request hacia la rama `develop` modificando archivos en `app/`,
+    - **Dado** que se realiza un Pull Request hacia la rama `develop` modificando archivos en `app/`,
     - **Cuando** se ejecuta el GitHub Action de versionado para `develop`,
     - **Entonces** el pipeline calcula la versión base y le concatena el sufijo `SNAPSHOT-RC#` (incrementando el correlativo `RC` respecto al último snapshot registrado), valida la cadena contra el regex SemVer, actualiza `APP_VERSION` en `app/main.py` y genera el tag en Git (ej. `v0.1.0-SNAPSHOT-RC2`).
 
   - **Criterio 3: Respeto de actualización manual de versión definida por el usuario**
-    - **Dado** que un commit entrante en `main` o `develop` con modificaciones en `app/` ya incluye un cambio manual sobre la variable `APP_VERSION` en `app/main.py`,
+    - **Dado** que un Pull Request entrante en `main` o `develop` con modificaciones en `app/` ya incluye un cambio manual sobre la variable `APP_VERSION` en `app/main.py`,
     - **Cuando** el workflow inspecciona el diff y valida que la nueva versión manual cumple con el regex de SemVer,
     - **Entonces** el sistema respeta el valor provisto por el usuario sin sobreescribirlo y procede a crear el Git Tag con dicha versión.
 
   - **Criterio 4: Omisión del workflow si no hay cambios dentro de `app/`**
-    - **Dado** que se realiza un push a `main` o `develop` afectando únicamente archivos fuera del directorio `app/` (como `docs/`, `tests/` o configuración raíz),
+    - **Dado** que se abre o actualiza un Pull Request a `main` o `develop` afectando únicamente archivos fuera del directorio `app/` (como `docs/`, `tests/` o configuración raíz),
     - **Cuando** GitHub Actions evalúa los filtros de rutas (`paths: ['app/**']`),
     - **Entonces** el pipeline no se activa, no se genera tag y `APP_VERSION` en `app/main.py` permanece intacto.
 
@@ -94,8 +94,8 @@ Para asegurar la alta mantenibilidad, trazabilidad y cumplimiento del principio 
      - `update_app_version_in_file(file_path, new_version)`: Sustitución segura en `app/main.py`.
 
 2. **Orquestación en CI/CD (`.github/workflows/semver.yml`):**
-   - Workflow de GitHub Actions que se activa ante `push` en `main` y `develop` con filtro `paths: ['app/**']`.
+   - Workflow de GitHub Actions que se activa ante eventos `pull_request` hacia `main` y `develop` con filtro `paths: ['app/**']`.
    - Ejecuta las pruebas unitarias automáticas con `pytest`.
-   - Invoca `scripts/semver_bumper.py --branch ${{ github.ref_name }}`.
+   - Invoca `scripts/semver_bumper.py --branch ${{ github.base_ref }}`.
    - Realiza commit automático con bandera `[skip ci]` para prevenir loops de ejecución.
    - Genera y publica el tag Git correspondiente (`vX.Y.Z` o `vX.Y.Z-SNAPSHOT-RC#`).
