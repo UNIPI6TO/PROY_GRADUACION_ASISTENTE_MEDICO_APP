@@ -214,8 +214,8 @@ def main() -> int:
     parser.add_argument(
         "--branch",
         type=str,
-        default=os.getenv("GITHUB_REF_NAME", "develop"),
-        help="Rama de ejecución: 'main' para release o 'develop' para snapshot.",
+        default=os.getenv("GITHUB_BASE_REF") or os.getenv("GITHUB_REF_NAME", "develop"),
+        help="Rama de ejecución u objetivo: 'main' para release o 'develop' para snapshot.",
     )
     parser.add_argument(
         "--file",
