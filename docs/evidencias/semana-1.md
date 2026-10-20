@@ -10,6 +10,7 @@
   - [`docs/03-arquitectura.md`](../03-arquitectura.md): Diagrama modular simplificado de flujos, diagrama de clases, flujo de consulta, y arquitectura de bajo costo en GCP con Cloud Run, Angular PWA e IAM.
   - [`docs/04-fuentes.md`](../04-fuentes.md): Inventario de fuentes oficiales (MSP, OPS 2016, GeoSalud) y estrategia de chunking jerárquico.
   - [`docs/05-especificacion-CICD.md`](../05-especificacion-CICD.md): Especificación formal de CI/CD para versionado SemVer automático en ramas `main` y `develop` mediante GitHub Actions.
+  - [`README.md`](../../README.md): Documentación del repositorio con alcance positivo/negativo estricto, guías de instalación, ejecución, pruebas y señalamiento explícito de datos faltantes (`FALTA:`).
 
 ---
 
@@ -221,16 +222,7 @@ levanta por mi la aplicacion
 
 ---
 
-### Prompt 16: Documentación Integral de Evidencias en `semana-1.md`
-**Propósito:** Solicitar la consolidación y persistencia de todos los prompts y evidencias de ejecución en la memoria técnica del proyecto.
-
-```markdown
-quiero que evidencies agregando los prompt de esta conversacion a docs\evidencias\semana-1.md no quiero que quites lo que existe agrega evidencias de uso en el archivo de semana 1
-```
-
----
-
-### Prompt 17: Redacción de Historia de Usuario SemVer para SRE y Detección de Faltantes
+### Prompt 16: Redacción de Historia de Usuario SemVer para SRE y Detección de Faltantes
 **Propósito:** Definir la automatización del versionado SemVer para el Backend bajo rol SRE, especificando ramas `main` (release) y `develop` (snapshot), historias en Gherkin con entrega en < 3 días y detección estricta de gaps (`FALTA:`).
 
 ```markdown
@@ -249,7 +241,7 @@ Usa solo la necesidad descrita. Si falta información, escribe FALTA: y qué fal
 
 ---
 
-### Prompt 18: Resolución de Faltantes (Conventional Commits, SNAPSHOT-RC#, Tagging y Cambio Manual)
+### Prompt 17: Resolución de Faltantes (Conventional Commits, SNAPSHOT-RC#, Tagging y Cambio Manual)
 **Propósito:** Proporcionar las directrices operativas exactas para resolver las cuatro áreas faltantes identificadas en la especificación de SemVer.
 
 ```markdown
@@ -268,7 +260,7 @@ En los que incida falta seguir las intruciones
 
 ---
 
-### Prompt 19: Análisis de Código, Flujo de Datos y Casos Borde para SemVer
+### Prompt 18: Análisis de Código, Flujo de Datos y Casos Borde para SemVer
 **Propósito:** Solicitar análisis conceptual y técnico del código actual, flujos de entrada/salida y casos borde de SemVer antes de programar.
 
 ```markdown
@@ -279,7 +271,7 @@ Explícame qué hace hoy el código, qué datos entran y salen, y qué casos bor
 
 ---
 
-### Prompt 20: Propuesta de Plan Inicial de Implementación y Arquitectura
+### Prompt 19: Propuesta de Plan Inicial de Implementación y Arquitectura
 **Propósito:** Exigir un plan detallado de cambios por función y por archivo con espera de aprobación previa del usuario.
 
 ```markdown
@@ -289,7 +281,7 @@ Espera mi aprobación.
 
 ---
 
-### Prompt 21: Refinamiento del Plan TDD con las 3 Primeras Pruebas Unitarias
+### Prompt 20: Refinamiento del Plan TDD con las 3 Primeras Pruebas Unitarias
 **Propósito:** Incorporar al plan las 3 pruebas unitarias prioritarias a escribir primero bajo la metodología TDD con aprobación humana.
 
 ```markdown
@@ -298,7 +290,7 @@ Propón un plan antes de programar: qué funciones cambiarías, en qué archivos
 
 ---
 
-### Prompt 22: Implementación y Verificación del Paso 1 (Cálculo de Release y Conventional Commits)
+### Prompt 21: Implementación y Verificación del Paso 1 (Cálculo de Release y Conventional Commits)
 **Propósito:** Autorizar e implementar exclusivamente el Paso 1 (módulo de incremento SemVer y Prueba 1 para `main`), verificando con Pytest y respetando pruebas preexistentes.
 
 ```markdown
@@ -307,7 +299,7 @@ Implementa solo el paso 1 del plan. Ejecuta las pruebas y muéstrame el resultad
 
 ---
 
-### Prompt 23: Implementación y Verificación del Paso 2 (Snapshot SNAPSHOT-RC# en develop)
+### Prompt 22: Implementación y Verificación del Paso 2 (Snapshot SNAPSHOT-RC# en develop)
 **Propósito:** Autorizar e implementar exclusivamente el Paso 2 (lógica de snapshots incrementales en `develop` y Prueba 2), ejecutando la suite de pruebas.
 
 ```markdown
@@ -316,7 +308,7 @@ Implementa solo el paso 2 del plan. Ejecuta las pruebas y muéstrame el resultad
 
 ---
 
-### Prompt 24: Implementación de Pasos Restantes (Cambio Manual, CLI, Workflow y Docs)
+### Prompt 23: Implementación de Pasos Restantes (Cambio Manual, CLI, Workflow y Docs)
 **Propósito:** Autorizar e implementar los pasos restantes del plan: detección de versiones manuales (Prueba 3), CLI en `scripts/semver_bumper.py`, workflow de GitHub Actions y documentación técnica.
 
 ```markdown
@@ -326,7 +318,7 @@ las pruebas.
 
 ---
 
-### Prompt 25: Corrección de Evento Trigger en GitHub Actions (Migración a Pull Request)
+### Prompt 24: Corrección de Evento Trigger en GitHub Actions (Migración a Pull Request)
 **Propósito:** Corregir el disparador del workflow para que se active en eventos de `pull_request` hacia `main` y `develop` en lugar de `push`.
 
 ```markdown
@@ -335,11 +327,20 @@ pero vi que el action esta cuando se hace push y aqui se debe activar cuando se 
 
 ---
 
-### Prompt 26: Evidenciación de Prompts y Registro de Pruebas en `semana-1.md`
-**Propósito:** Consolidar y documentar de manera acumulativa todos los prompts de la sesión de CI/CD y versionado SemVer sin eliminar el contenido existente.
+### Prompt 25: Redacción Estricta del README.md del Repositorio (Metodología R.E.C.E.T.A.)
+**Propósito:** Elaborar el `README.md` oficial del repositorio con alcance positivo/negativo, instalación, ejecución y pruebas, basándose de manera estricta y exclusiva en los archivos existentes y declarando `FALTA` ante cualquier omisión.
 
 ```markdown
-quiero que evidencies agregando los prompt de esta conversacion a docs\evidencias\semana-1.md no quiero que quites lo que existe agrega evidencias de uso en el archivo de semana 1
+Redacta el README de este repositorio: propósito, instalación, cómo ejecutar y cómo probar. Usa solo lo que está en los archivos. Si falta un dato, escribe FALTA.
+```
+
+---
+
+### Prompt 26: Ejecución Asistida del Backend en Local con Uvicorn
+**Propósito:** Solicitar el levantamiento del backend FastAPI en local para habilitar y verificar el servidor en segundo plano con recarga automática en el puerto 8000.
+
+```markdown
+ejecutar backend en mi local
 ```
 
 ---
@@ -363,17 +364,17 @@ quiero que evidencies agregando los prompt de esta conversacion a docs\evidencia
 | **Prompt 13** | Documentación de chat | Instrucciones paso a paso para levantar Uvicorn y ejecutar Pytest. |
 | **Prompt 14** | `AGENTS.md` | Actualización de la sección `## Comandos` con comandos oficiales de instalación, arranque y pruebas. |
 | **Prompt 15** | Background Task / Servidor local | Instalación de dependencias y ejecución de Uvicorn en puerto 8000. |
-| **Prompt 16** | `docs/evidencias/semana-1.md` | Documentación de todos los prompts de la sesión y evidencias de uso en vivo. |
-| **Prompt 17** | `docs/05-especificacion-CICD.md` | Redacción de la historia de usuario HU-CICD-01 y criterios Gherkin con identificación de faltantes. |
-| **Prompt 18** | `docs/05-especificacion-CICD.md` | Definición de reglas de Conventional Commits, SNAPSHOT-RC#, git tagging y manejo de cambio manual. |
-| **Prompt 19** | Documentación de chat | Análisis de entradas, salidas, comportamiento actual de `app/main.py` y casos borde para SemVer. |
-| **Prompt 20** | `implementation_plan.md` | Propuesta de plan de implementación detallando funciones, archivos y arquitectura SRE. |
-| **Prompt 21** | `implementation_plan.md` | Refinamiento del plan incorporando las 3 primeras pruebas prioritarias bajo enfoque TDD. |
-| **Prompt 22** | `scripts/semver_bumper.py`<br/>`tests/test_semver_bumper.py` | Implementación de Paso 1: cálculo de incremento SemVer para `main` y Prueba 1 exitosa. |
-| **Prompt 23** | `scripts/semver_bumper.py`<br/>`tests/test_semver_bumper.py` | Implementación de Paso 2: progresión correlativa de `SNAPSHOT-RC#` en `develop` y Prueba 2 exitosa. |
-| **Prompt 24** | `scripts/semver_bumper.py`<br/>`tests/test_semver_bumper.py`<br/>`.github/workflows/semver.yml`<br/>`docs/05-especificacion-CICD.md` | Implementación de pasos restantes: Prueba 3 (detección manual), CLI, workflow y documentación técnica. |
-| **Prompt 25** | `.github/workflows/semver.yml`<br/>`docs/05-especificacion-CICD.md`<br/>`scripts/semver_bumper.py` | Migración del trigger de GitHub Actions de `push` a `pull_request` y soporte de `GITHUB_BASE_REF`. |
-| **Prompt 26** | `docs/evidencias/semana-1.md` | Actualización acumulativa de la memoria técnica con todos los prompts y evidencias de ejecución. |
+| **Prompt 16** | `docs/05-especificacion-CICD.md` | Redacción de la historia de usuario HU-CICD-01 y criterios Gherkin con identificación de faltantes. |
+| **Prompt 17** | `docs/05-especificacion-CICD.md` | Definición de reglas de Conventional Commits, SNAPSHOT-RC#, git tagging y manejo de cambio manual. |
+| **Prompt 18** | Documentación de chat | Análisis de entradas, salidas, comportamiento actual de `app/main.py` y casos borde para SemVer. |
+| **Prompt 19** | `implementation_plan.md` | Propuesta de plan de implementación detallando funciones, archivos y arquitectura SRE. |
+| **Prompt 20** | `implementation_plan.md` | Refinamiento del plan incorporando las 3 primeras pruebas prioritarias bajo enfoque TDD. |
+| **Prompt 21** | `scripts/semver_bumper.py`<br/>`tests/test_semver_bumper.py` | Implementación de Paso 1: cálculo de incremento SemVer para `main` y Prueba 1 exitosa. |
+| **Prompt 22** | `scripts/semver_bumper.py`<br/>`tests/test_semver_bumper.py` | Implementación de Paso 2: progresión correlativa de `SNAPSHOT-RC#` en `develop` y Prueba 2 exitosa. |
+| **Prompt 23** | `scripts/semver_bumper.py`<br/>`tests/test_semver_bumper.py`<br/>`.github/workflows/semver.yml`<br/>`docs/05-especificacion-CICD.md` | Implementación de pasos restantes: Prueba 3 (detección manual), CLI, workflow y documentación técnica. |
+| **Prompt 24** | `.github/workflows/semver.yml`<br/>`docs/05-especificacion-CICD.md`<br/>`scripts/semver_bumper.py` | Migración del trigger de GitHub Actions de `push` a `pull_request` y soporte de `GITHUB_BASE_REF`. |
+| **Prompt 25** | `README.md` | Redacción estricta del README oficial con propósito, instalación, ejecución y pruebas, registrando `FALTA` ante ausencias. |
+| **Prompt 26** | Background Task / Servidor local | Ejecución asistida del backend con `uvicorn app.main:app --reload --port 8000` y verificación en vivo de `/manage/health`. |
 
 ---
 
@@ -384,13 +385,14 @@ quiero que evidencies agregando los prompt de esta conversacion a docs\evidencia
 - [x] **03-arquitectura.md:** Diagrama modular simplificado, diagrama de clases, flujo de triaje/RAG, 4 servicios Cloud Run con Angular PWA y seguridad IAM Zero-Trust.
 - [x] **04-fuentes.md:** Catálogo documental oficial (MSP, OPS 2016, GeoSalud) y estrategia de chunking jerárquico.
 - [x] **05-especificacion-CICD.md:** Especificación formal de CI/CD para versionado SemVer automático en ramas `main` y `develop` mediante GitHub Actions.
+- [x] **README.md:** Redactado conforme a la estructura del repositorio con alcance positivo/negativo, instalación, ejecución, pruebas y señalamiento explícito de datos faltantes (`FALTA:`).
 - [x] **app/main.py:** Backend inicial funcional con `/manage/health` (liveness y readiness) y `/manage/info` (SemVer estricto).
 - [x] **scripts/semver_bumper.py:** Módulo de automatización SemVer bajo principios SOLID (Conventional Commits, cálculo de snapshots, detección manual y actualización segura).
 - [x] **tests/test_main.py:** Suite de pruebas unitarias 100% aprobadas con biblioteca estándar.
 - [x] **tests/test_semver_bumper.py:** Suite de pruebas unitarias TDD aprobadas cubriendo los 3 escenarios clave de versionado SemVer.
 - [x] **.github/workflows/semver.yml:** Workflow automatizado en GitHub Actions activado por `pull_request` hacia `main` y `develop` con filtro en `app/**`.
 - [x] **AGENTS.md:** Normativa de desarrollo y comandos operativos actualizada.
-- [x] **evidencias/semana-1.md:** Memoria técnica completa, trazabilidad de 26 prompts y evidencias de ejecución en vivo.
+- [x] **evidencias/semana-1.md:** Memoria técnica completa, trazabilidad de 26 prompts de ingeniería y evidencias de ejecución en vivo.
 
 ---
 
@@ -529,3 +531,50 @@ Salida en consola:
 ?? tests/test_semver_bumper.py
 ```
 *Garantía de integridad:* El archivo original de pruebas del backend `tests/test_main.py` se mantuvo intacto sin ninguna modificación, cumpliendo estrictamente con la regla normativa del proyecto.
+
+### 5.5. Evidencias de Redacción de README.md y Ejecución en Local con Recarga Automática
+
+#### 5.5.1. Verificación y Suite de Pruebas tras Generación de `README.md`
+Tras la redacción y generación de `README.md` bajo directivas estrictas de alcance y detección de faltantes (`FALTA:`), se ejecutó la suite de pruebas unitarias:
+Comando ejecutado:
+```powershell
+pytest -q
+```
+Salida en consola:
+```text
+...                                                                      [100%]
+3 passed in 0.35s
+```
+
+#### 5.5.2. Levantamiento Asistido del Servidor Backend en Local (`--reload`)
+Comando ejecutado:
+```powershell
+uvicorn app.main:app --reload --port 8000
+```
+Salida real registrada en logs del proceso:
+```text
+INFO:     Will watch for changes in these directories: ['C:\\Tools\\app_movil\\PI\\PROY_GRADUACION_ASISTENTE_MEDICO_APP']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [39036] using StatReload
+INFO:     Started server process [10160]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+```
+
+#### 5.5.3. Verificación en Vivo de Disponibilidad (`/manage/health`)
+Comando ejecutado en PowerShell:
+```powershell
+Invoke-RestMethod -Uri http://127.0.0.1:8000/manage/health
+```
+Salida real obtenida en consola:
+```text
+status checks                  
+------ ------                  
+UP     @{liveness=; readiness=}
+```
+
+*Endpoints verificados en ejecución local activa:*
+- `GET http://127.0.0.1:8000/manage/health` (Estado general `UP`, Liveness `UP`, Readiness `UP`).
+- `GET http://127.0.0.1:8000/manage/info` (Metadatos SemVer de la aplicación).
+- `GET http://127.0.0.1:8000/docs` (Swagger UI interactivo de FastAPI).
+
