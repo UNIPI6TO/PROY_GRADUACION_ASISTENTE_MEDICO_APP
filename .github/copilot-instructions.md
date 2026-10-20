@@ -25,15 +25,18 @@ Al generar sugerencias de mensajes de commit en GitHub Desktop y extensiones de 
 ---
 
 ## Estilo y Generación de Pull Requests (PR)
-Al sugerir o generar títulos, descripciones y comentarios de Pull Requests:
+Al generar o sugerir el resumen de un Pull Request (mediante el botón de Copilot Summary o chat de Copilot):
 
-1. **Idioma OBLIGATORIO:** Español.
+1. **Idioma OBLIGATORIO:** Español para el título, resumen y todos los comentarios.
 2. **Sugerencia del Título:**
-   - Debe ser conciso, claro y descriptivo en español (formato recomendado: `tipo(ámbito): descripción en español`).
-3. **Comentarios de Commits a Fusionar (OBLIGATORIO):**
-   - Debe incluir y mostrar el listado con los comentarios/mensajes de todos los commits que componen la rama y que se van a fusionar.
-4. **Estructura sugerida para la Descripción del PR:**
-   - **Resumen general:** Breve explicación en español del objetivo y los cambios del PR.
-   - **Commits a fusionar:** Listado de los commits incluidos con sus respectivos mensajes/comentarios.
-   - **Impacto / Componentes afectados:** Módulos o archivos modificados.
-   - **Pruebas y verificación:** Validación y pruebas realizadas.
+   - Debe ser conciso, claro y descriptivo en español (formato recomendado: `tipo(ámbito): descripción breve en español`).
+3. **Inclusión Obligatoria de los Commits a Fusionar:**
+   - En el cuerpo del resumen generado, Copilot DEBE incluir explícitamente el encabezado:
+     `### 📜 Commits a Fusionar`
+     seguido de la lista textual con los mensajes/títulos de todos los commits que forman parte de la rama a fusionar (por ejemplo: `- tipo: mensaje del commit`).
+4. **Estructura Completa que Copilot debe generar en su salida:**
+   - `### 📋 Resumen de los Cambios` (breve descripción técnica en español).
+   - `### 📜 Commits a Fusionar` (lista con los mensajes de cada commit de la rama).
+   - `### 🔍 Impacto y Componentes Afectados` (lista de módulos o archivos modificados).
+5. **Sin viñetas vacías:**
+   - Nunca generar viñetas vacías sin contenido; cada sección debe contener su información correspondiente.
