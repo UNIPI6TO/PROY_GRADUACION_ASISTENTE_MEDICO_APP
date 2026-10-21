@@ -4,7 +4,7 @@
 Al generar sugerencias de mensajes de commit en GitHub Desktop y extensiones de desarrollo:
 
 1. **Idioma OBLIGATORIO:** Español.
-2. **Estándar OBLIGATORIO:** Conventional Commits (formato: `<tipo>: <descripción concisa en español>`).
+2. **Estándar OBLIGATORIO:** Conventional Commits (formato: `<tipo>(<scope>): <descripción concisa en español>`).
 3. **Tipos válidos:**
    - `docs:` Cambios o adiciones en documentación técnica y especificaciones (archivos en `docs/` o README).
    - `feat:` Nuevas funcionalidades o endpoints (FastAPI, frontend, herramientas del agente).
