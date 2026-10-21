@@ -10,7 +10,7 @@ import os
 import re
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-APP_NAME = "asistente-orientacion-salud-dengue"
+APP_NAME = "GuíaVital"
 APP_VERSION = "0.1.0"
 SEMVER_REGEX = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
 
@@ -80,7 +80,7 @@ try:
     from fastapi import FastAPI, Response
 
     app = FastAPI(
-        title="Asistente de Orientación en Salud Pública - Dengue",
+        title="GuíaVital - Asistente de Orientación en Salud Pública sobre Dengue",
         description="API Backend para orientación preventiva y triaje de signos de alarma en dengue.",
         version=APP_VERSION,
     )

@@ -1,4 +1,8 @@
-# Asistente de Orientación en Salud Pública sobre Dengue y Arbovirosis (Grupo 5)
+# GuíaVital · Asistente de Orientación en Salud Pública sobre Dengue y Arbovirosis
+
+> **Nombre Oficial / Nombre Corto (`APP_NAME`):** `GuíaVital`  
+> **Versión Actual:** `0.1.0` (SemVer)  
+> **Caso:** 05 - Grupo 5 · Seminario de Titulación UNIANDES
 
 ## Propósito
 El propósito del sistema es servir como un canal digital directo, validado y accesible para la orientación informativa en salud pública y el triaje determinista de signos de alarma frente al dengue y arbovirosis en Ecuador (zonas endémicas de la Costa y Amazonía), sustentado de manera estricta y exclusiva en la documentación oficial del Ministerio de Salud Pública del Ecuador (MSP) y la Organización Panamericana de la Salud (OPS/OMS).
@@ -51,7 +55,7 @@ uvicorn app.main:app --reload --port 8000
 
 Endpoints disponibles:
 - `GET /manage/health`: Estado de salud de la aplicación (Liveness y Readiness).
-- `GET /manage/info`: Información y versión SemVer de la aplicación.
+- `GET /manage/info`: Información y metadatos del sistema (retorna el nombre corto `GuíaVital` y la versión SemVer).
 
 ### Frontend
 - **FALTA**: No existen archivos ejecutables de frontend en el repositorio.
@@ -77,7 +81,7 @@ pytest -v
 Pruebas implementadas en `tests/test_main.py`:
 - `test_check_health_liveness_and_readiness_up`: Valida código HTTP 200 y estados "UP" en liveness y readiness.
 - `test_check_health_readiness_down_on_failure`: Valida código HTTP 503 y estado "DOWN" en readiness ante falla de sonda dependiente.
-- `test_get_info_semver_format_and_app_name`: Valida código HTTP 200, nombre de app y cumplimiento del formato SemVer.
+- `test_get_info_semver_format_and_app_name`: Valida código HTTP 200, concordancia del nombre corto oficial (`GuíaVital`) y cumplimiento de la expresión regular SemVer.
 
 ### Pruebas de Evaluación RAG y Casos de Cálculo
 - **FALTA**: En la estructura de `AGENTS.md` se listan `eval/preguntas.csv`, `eval/casos_calculo.csv` y `eval/run_eval.py`, pero la carpeta `eval/` no existe en el repositorio.
