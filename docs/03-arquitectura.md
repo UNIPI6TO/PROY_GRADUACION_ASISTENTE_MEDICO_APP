@@ -1,22 +1,22 @@
 # 03. Arquitectura del Sistema: Asistente de Orientación en Salud Pública
 
 ## 1. Visión General de la Arquitectura
-El sistema adopta una arquitectura desacoplada, modular y orientada a microservicios livianos bajo el paradigma **Twelve-Factor App**, diseñada para ser desplegada en **Google Cloud Platform (GCP)**:
-- **Capa de Presentación (Frontend):** Aplicación Web Progresiva (PWA) construida en **Angular** (TypeScript, Standalone Components, Service Workers), diseñada con enfoque *mobile-first* para ciudadanos en zonas endémicas, permitiendo instalación en pantalla de inicio y soporte offline para consulta básica de signos de alarma.
-- **Capa de Servicios y Orquestación (Backend FastAPI):** API REST asíncrona de alto rendimiento construida con Python 3.11+, encargada de validar datos de entrada (Pydantic), orquestar la recuperación vectorial, gestionar la seguridad del paciente y despachar herramientas deterministas.
-- **Capa de Inteligencia y Recuperación (RAG Engine):** ChromaDB persistente en disco como motor vectorial de similitud semántica, alimentado con embeddings oficiales, conectado a Google Gemini mediante directivas de sistema ultrarrestrictivas.
-- **Capa Determinista (Agent Tools):** Módulos Python puros que ejecutan lógica matemática y condicional rígida (cero alucinación), totalmente independientes del modelo generativo.
-- **Infraestructura Cloud (GCP):** Servicios gestionados serverless (Cloud Run, Secret Manager, Cloud Storage, Artifact Registry y Cloud Logging).
+El sistema adopta una arquitectura desacoplada, modular y orientada a microservicios livianos bajo el paradigma **Twelve-Factor App**, diseñada para despliegue continuo en entornos modernos:
+- **Capa de Presentación (Frontend):** Aplicación Web construida en **React + Vite** (JavaScript/TypeScript, TailwindCSS/CSS modular), diseñada con enfoque *mobile-first* y accesible para ciudadanos en zonas endémicas, garantizando renderizado ultrarrápido, manejo de estados de carga/error y advertencias de triaje médico inmediatas.
+- **Capa de Servicios y Orquestación (Backend FastAPI):** API REST asíncrona de alto rendimiento construida con Python 3.12, encargada de validar datos de entrada (Pydantic), orquestar la conmutación de modelos LLM (Gemini 2.0 Flash como principal y Groq Llama 3.1 8B como respaldo), gestionar la seguridad del paciente y despachar herramientas deterministas.
+- **Capa de Persistencia y Auditoría (Base de Datos):** **SQLite** embebida y optimizada para almacenamiento local de sesiones de conversación y registro de métricas operativas anónimas (Zero-PII).
+- **Capa de Inteligencia y Recuperación (RAG Engine):** ChromaDB persistente en disco como motor vectorial de similitud semántica, alimentado con embeddings oficiales de guías del MSP y OPS.
+- **Capa Determinista (Agent Tools):** Módulos Python puros que ejecutan lógica matemática y condicional rígida (cero alucinación) para triaje de signos de alarma y filtrado de establecimientos GeoSalud.
+- **Infraestructura Cloud:** Preparado para contenedorización Docker y despliegue en PaaS moderna (Render / Railway / Cloud Run) con inyección de secretos vía variables de entorno.
 
 ---
 
 ## 2. Diagrama de Arquitectura Modular del Sistema (Mermaid.js)
 
 ### 2.1 Identificación de Datos Faltantes (Gaps de Integración Externa)
-- **FALTA:** API REST pública y en tiempo real de GeoSalud del MSP para consulta en vivo de disponibilidad de camas y guardias (se suple mediante el dataset local estático `data/geosalud.json`).
+- **FALTA:** API REST pública y en tiempo real de GeoSalud del MSP para consulta en vivo de disponibilidad de camas y guardias (se suple mediante el dataset local estático `data/geosalud_ecuador.json`).
 - **FALTA:** Webhook de despacho telemático directo hacia el sistema ECU-911 (se suple mediante derivación en frontend con disparador de llamada `tel:911`).
-- **FALTA:** Módulo de autenticación y registro de ciudadanos (el sistema es 100% anónimo y sin login para garantizar 0 bytes de captura de datos personales / PII según RNF-03).
-- **FALTA:** Configuración del manifiesto PWA (`manifest.webmanifest`) e iconos de resolución múltiple para compatibilidad nativa en Android e iOS.
+- **FALTA:** Módulo de autenticación y registro de ciudadanos (el sistema es 100% anónimo y sin login para garantizar 0 bytes de captura de datos personales / PII según RNF-03 y LOPDP).
 
 ### 2.2 Diagrama de Componentes, Flechas y Flujos de Datos
 
@@ -24,40 +24,46 @@ El sistema adopta una arquitectura desacoplada, modular y orientada a microservi
 flowchart TD
     %% Componentes Principales
     subgraph ClientLayer ["1. Capa de Usuario (Frontend)"]
-        UI["Angular PWA (Mobile-First)<br/>- Interfaz de Chat y Citas<br/>- Checklist de Signos de Alarma<br/>- Modo Offline con Service Worker"]
+        UI["React + Vite (Mobile-First)<br/>- Interfaz de Chat y Citas Oficiales<br/>- Alerta Visual de Signos de Alarma<br/>- Aviso Ético de IA y No-Prescripción"]
     end
 
     subgraph BackendLayer ["2. Capa de Servicios (Backend FastAPI)"]
-        Backend["FastAPI API + Orquestador<br/>- Validacion de entrada (Pydantic UTF-8)<br/>- Bloqueo determinista de recetas de farmacos<br/>- Orquestacion de RAG y Triaje"]
+        Backend["FastAPI API + Orquestador<br/>- Validación de entrada (Pydantic UTF-8)<br/>- Bloqueo determinista de recetas de fármacos<br/>- Control de Cuota 429 y Fallback LLM"]
+        DB[(SQLite Local<br/>Sesiones anónimas y métricas)]
     end
 
     subgraph ToolsLayer ["3. Herramientas Deterministas (Python)"]
-        Tool_Triaje["evaluar_signos_alarma(respuestas)<br/>Reglas booleanas de triaje de la OPS"]
+        Tool_Triaje["evaluar_signos_alarma(respuestas)<br/>Reglas booleanas de triaje de la OPS/MSP"]
         Tool_Geo["ubicar_establecimiento(ciudad)<br/>Filtro de centros de salud y hospitales"]
-        GeoData[("Catalogo GeoSalud<br/>data/geosalud.json")]
+        GeoData[("Catálogo GeoSalud<br/>data/geosalud_ecuador.json")]
     end
 
     subgraph KnowledgeLayer ["4. Inteligencia y Base de Conocimiento (RAG)"]
-        ChromaDB[("ChromaDB Persistente<br/>Guias clinicas oficiales MSP y OPS")]
-        GeminiAPI["Google Gemini API<br/>Sintesis con citas obligatorias [1]"]
+        ChromaDB[("ChromaDB Persistente<br/>Guías clínicas oficiales MSP y OPS")]
+        GeminiAPI["Google Gemini 2.0 Flash<br/>(Proveedor Principal)"]
+        GroqAPI["Groq Llama 3.1 8B<br/>(Proveedor de Respaldo)"]
     end
 
     %% Flujos de Datos entre Componentes
-    UI -->|"1. Envia consulta o checklist de sintomas (JSON)"| Backend
-    Backend -->|"2. Retorna respuesta citada, alerta roja o derivacion 911"| UI
+    UI -->|"1. Envía consulta o checklist de síntomas (JSON)"| Backend
+    Backend -->|"2. Retorna respuesta citada, alerta roja o derivación 911"| UI
+    Backend <-->|"Persistencia de sesión anónima"| DB
 
-    Backend -->|"3. Consulta semantica"| ChromaDB
+    Backend -->|"3. Consulta semántica"| ChromaDB
     ChromaDB -->|"4. Fragmentos oficiales y metadatos"| Backend
 
-    Backend -->|"5. Prompt enjaulado con contexto RAG"| GeminiAPI
-    GeminiAPI -->|"6. Texto sintetizado con citas oficiales"| Backend
+    Backend -->|"5. Prompt con contexto y salvaguardas"| GeminiAPI
+    GeminiAPI -.->|"Falla 429 / Timeout > 3s"| GroqAPI
+    GeminiAPI -->|"6a. Texto sintetizado con citas oficiales"| Backend
+    GroqAPI -->|"6b. Respuesta fallback"| Backend
 
-    Backend -->|"7. Respuestas booleanas de sintomas"| Tool_Triaje
-    Tool_Triaje -->|"8. Estado de alerta y derivacion medica"| Backend
+    Backend -->|"7. Respuestas booleanas de síntomas"| Tool_Triaje
+    Tool_Triaje -->|"8. Estado de alerta y derivación médica"| Backend
 
-    Backend -->|"9. Ciudad o canton"| Tool_Geo
+    Backend -->|"9. Ciudad o cantón"| Tool_Geo
     GeoData -.->|"Lectura indexada"| Tool_Geo
-    Tool_Geo -->|"10. Lista de centros de salud y telefonos"| Backend
+    Tool_Geo -->|"10. Lista de centros de salud y teléfonos"| Backend
+```
 ```
 
 ---
@@ -320,26 +326,21 @@ flowchart TD
 
 ---
 
-### 5.4 Matriz de Roles IAM y Decisiones de Arquitectura Frontend (Angular PWA)
+### 5.4 Decisiones de Arquitectura Frontend (React + Vite) y Seguridad
 
-1. **Patrón Nginx Reverse Proxy con Inyección OIDC en Cloud Run:**
-   - La aplicación cliente compilada de **Angular PWA** corre en el navegador del ciudadano. Un navegador web **nunca** debe almacenar credenciales privadas de GCP ni tiene acceso directo a `metadata.google.internal`.
-   - Por ello, el contenedor de Cloud Run `frontend-prod` aloja un servidor web **Nginx** liviano que cumple una doble función:
-     - **Servir activos estáticos:** Entrega los archivos HTML, CSS, JavaScript empaquetados y el Service Worker (`ngsw-worker.js`).
-     - **BFF / Proxy Reverso Autenticado para `/api/*`:** Cuando la SPA Angular invoca una ruta de backend (ej. `/api/v1/chat`), la llamada viaja hacia el Nginx del propio servicio Cloud Run frontend. Nginx solicita un token OIDC a la metadata de GCP bajo la identidad de `sa-frontend-prod`, añade la cabecera `Authorization: Bearer <ID_TOKEN>` y reenvía la petición al servicio privado `backend-prod`.
-   - El backend **permanece 100% privado e inaccesible al público**.
+1. **Arquitectura Client-Server Desacoplada:**
+   - La aplicación cliente compilada con **React + Vite** corre en el navegador del ciudadano.
+   - El frontend consume exclusivamente los endpoints del backend (`/api/chat`, `/manage/health`) a través de un cliente HTTP modular.
+   - La clave del modelo **nunca** llega al frontend ni se inyecta en variables públicas (`VITE_*`). Reside únicamente en el backend.
 
-2. **Ventajas Clínicas y Operativas de la PWA en Zonas Endémicas:**
-   - **Instalabilidad Móvil:** Los ciudadanos en la Costa o Amazonía pueden instalar el asistente en la pantalla de inicio de su teléfono inteligente (Android/iOS) sin pasar por Google Play ni App Store.
-   - **Caché y Resiliencia Offline:** Gracias a los Service Workers de Angular (`@angular/service-worker`), si el usuario pierde la conexión 3G/4G, la aplicación sigue abriendo y muestra de manera persistente los 7 signos de alarma del dengue, instrucciones de primeros auxilios (hidratación oral) y los números telefónicos directos de emergencia (ECU-911 y línea 171).
+2. **Ventajas Clínicas y Operativas de React + Vite en Zonas Endémicas:**
+   - **Carga Ultrarrápida y Bundle Liviano:** Vite genera un empaquetado optimizado con división de código (*code splitting*), permitiendo que la interfaz cargue en menos de 1 segundo incluso con redes móviles 3G lentas.
+   - **Interactividad Reactiva:** Renderizado fluido de mensajes, indicadores de escritura (*typing indicators*), y tarjetas visuales de alerta inmediata cuando se detecta un signo de alarma o derivación a urgencias.
+   - **Persistencia Local con SQLite:** Para persistir sesiones anónimas y configuraciones operativas de forma local y ligera.
 
 3. **Acceso Mínimo a Secretos (Least Privilege):**
-   - `sa-backend-prod` solo tiene el rol `roles/secretmanager.secretAccessor` para la clave de producción.
-   - `sa-backend-test` solo tiene acceso a la clave de pruebas.
-   - El frontend **no tiene permisos** en Secret Manager (no conoce ni manipula la clave del LLM).
-
-4. **Cero Costo en Reposo (`min-instances = 0`):**
-   - Ambos entornos operan bajo demanda (*Request-based CPU*). En ausencia de tráfico, las 4 instancias se reducen a cero, facturando **\$0.00**.
+   - El backend carga `GEMINI_API_KEY` y `GROQ_API_KEY` mediante variables de entorno desde `.env`.
+   - El frontend no tiene permisos ni acceso a ninguna credencial externa.
 
 ---
 
@@ -347,12 +348,12 @@ flowchart TD
 
 | Componente | Archivo / Módulo | Responsabilidad Principal | Regla Ponytail Asociada |
 | :--- | :--- | :--- | :--- |
-| **API Endpoints** | `app/main.py` | Definición de rutas REST, manejo de ciclo de vida (Lifespan), CORS y middleware UTF-8. | Modularidad y contrato OpenAPI estricto. |
+| **API Endpoints** | `app/main.py` | Definición de rutas REST (`/api/chat`, `/manage/health`, `/manage/info`), ciclo de vida y CORS. | Modularidad y contrato OpenAPI estricto. |
 | **Esquemas de Datos** | `app/schemas.py` | Modelos Pydantic para `ChatRequest`, `ChatResponse`, `ChecklistInput`, `TriajeOutput`, `EstablecimientoSalud`. | Validación estricta y tipado estático. |
 | **Recuperador RAG** | `app/services/retriever.py` | Conexión a ChromaDB, búsqueda semántica por similitud con filtrado de metadatos. | Regla 1: Lo que afirma, lo cita. |
-| **Generador LLM** | `app/services/llm.py` | Cliente para Gemini API, control de tasa (rate limiting, manejo de 429) y prompt enjaulado. | Regla 2: Lo que no sabe, lo dice. |
-| **Evaluador de Alarma** | `app/tools/evaluacion.py` | Lógica determinista de evaluación booleana de signos de alarma. | Regla 3: Lo que se calcula, va en código. |
+| **Generador LLM** | `app/services/llm.py` | Cliente desacoplado con Gemini 2.0 Flash y fallback a Groq, manejo de errores 429 y prompt enjaulado. | Regla 2: Lo que no sabe, lo dice. |
+| **Evaluador de Alarma** | `app/tools/evaluacion.py` | Lógica determinista de evaluación booleana de signos de alarma (OPS/MSP). | Regla 3: Lo que se calcula, va en código. |
 | **Localizador de Salud** | `app/tools/geosalud.py` | Búsqueda y filtrado determinista de establecimientos de salud en dataset local indexado. | Regla 3: Lo que se calcula, va en código. |
-| **Configuraciones** | `config/settings.py` | Parámetros de umbrales, nombres de colecciones y rutas estáticas. | Regla 4: Lo que cambia, va en configuración. |
-| **Gestión de Secretos** | Secret Manager / `.env` | Claves de API (`GEMINI_API_KEY`) inyectadas como variables de entorno seguras. | Regla 5: Lo que es secreto, no toca el repo. |
-| **Frontend UI** | `frontend/` (Angular PWA) | SPA interactiva con TypeScript, Service Worker offline, instalación móvil y proxy Nginx OIDC. | Regla 6: Lo que tiene consecuencias, requiere confirmación. |
+| **Base de Datos** | `app/database.py` / `SQLite` | Persistencia local ligera de sesiones anónimas y auditoría de eventos. | Regla 4: Lo que cambia, va en configuración. |
+| **Gestión de Secretos** | `.env` / Plataforma Cloud | Claves de API (`GEMINI_API_KEY`, `GROQ_API_KEY`) inyectadas como variables de entorno seguras. | Regla 5: Lo que es secreto, no toca el repo. |
+| **Frontend UI** | `frontend/` (React + Vite) | SPA interactiva con React, Vite, TailwindCSS, estados de carga y avisos de triaje de emergencia. | Regla 6: Lo que tiene consecuencias, requiere confirmación. |
