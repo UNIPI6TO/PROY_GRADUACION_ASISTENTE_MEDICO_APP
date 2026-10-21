@@ -125,7 +125,7 @@ flowchart LR
 
 ## Decisiones de arquitectura
 
-Ver `docs/09-decisiones.md`: ADR-001 Proveedor y modelo generativo (Propuesto); ADR-002 Patrón de integración: workflow o agente (Propuesto); ADR-003 Manejo de claves y datos personales (Propuesto); ADR-004 Signos de alarma por reglas, no por el modelo (Propuesto).
+Ver `docs/09-decisiones.md`: ADR-001 Proveedor y modelo generativo (Aceptado); ADR-002 Patrón de integración: workflow o agente (Aceptado); ADR-003 Manejo de claves y datos personales (Aceptado); ADR-004 Signos de alarma por reglas, no por el modelo (Aceptado).
 
 ## Uso de la plantilla
 
