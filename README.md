@@ -35,7 +35,7 @@ pip install -r requirements.txt
 ```
 
 2. Configurar variables de entorno:
-Copiar `.env.example` a `.env` y configurar los valores requeridos (`APP_ENV`, `PORT`, `HOST`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `CHROMA_PERSIST_DIR`, `GEOSALUD_DATA_PATH`, `RELEVANCE_THRESHOLD`, `TOP_K_CHUNKS`).
+Copiar `.env.example` a `.env` y configurar los valores requeridos (`APP_ENV`, `PORT`, `HOST`, `GEMINI_API_KEY`, `LLM_MODEL`, `CHROMA_PERSIST_DIR`, `GEOSALUD_DATA_PATH`, `RELEVANCE_THRESHOLD`, `TOP_K_CHUNKS`).
 
 ### Instalación del Frontend
 - **FALTA**: En los archivos del proyecto se menciona `frontend/` (Streamlit / Angular PWA), pero actualmente la carpeta y sus archivos de configuración y dependencias no existen en el repositorio.
