@@ -50,10 +50,12 @@ flowchart LR
   U1(["Familiar del Enfermo"])
   subgraph SYS["GuíaVital"]
     FE["Frontend<br/>React + Vite"]
-    BE["Backend API<br/>FastAPI (Python)<br/>POST /api/chat<br/>GET /manage/health<br/>POST /manage/info"]
+    BE["Backend API<br/>FastAPI (Python)<br/>POST /api/v1/chat<br/>GET /manage/health<br/>GET /manage/info"]
+    SEC["Seguridad · seguridad.py<br/>Rate Limit (429) y delimitación"]
     LLM["Servicio IA · llm.py<br/>tiempo límite, reintentos, respaldo"]
+    REPO["Repositorio · historial.py<br/>memoria por idSesion"]
     PR[("app/prompts/")]
-    DB[("SQLite")]
+    DB[("SQLite<br/>data/historial.db")]
     OB["Registro: Logs estructurados sin datos personales"]
     VEC[("Base vectorial RAG<br/>semana 3")]
     AG["Agente y herramientas<br/>semana 3"]
@@ -64,11 +66,13 @@ flowchart LR
   U0 --> FE
   U1 --> FE
   FE -- "HTTPS / JSON" --> BE
+  BE --> SEC
   BE --> LLM
+  BE --> REPO
+  REPO --> DB
   LLM -- API --> P1
   LLM -. respaldo .-> P2
   BE --> PR
-  BE --> DB
   BE --> OB
   BE -.-> AG
   AG -.-> VEC
@@ -97,15 +101,49 @@ flowchart LR
 
 | Método | Ruta | Propósito |
 |---|---|---|
-| POST | `/api/chat` | Orientación con salvaguardas; deriva ante signos de alarma |
-| GET | `/manage/health` | Estado del servicio |
-| POST | `/manage/info` | Información de la versión del servicio |
+| POST | `/api/v1/chat` | Orientación con salvaguardas, memoria por `idSesion`, límite de tasa y errores RFC 9457 |
+| GET | `/manage/health` | Estado del servicio (Liveness y Readiness) |
+| GET | `/manage/info` | Información y versión SemVer del servicio |
+
+## Capas del Backend (Principio de Responsabilidad Única)
+
+| Capa / Módulo | Archivo | Responsabilidad |
+|---|---|---|
+| Controlador HTTP y Contrato | `app/main.py`, `app/schemas.py` | Rutas FastAPI, inyección con `Depends()`, validación Pydantic (`Solicitud`, `RespuestaChat`) y errores `ProblemaRFC9457` (`422`, `429`, `503`, `500`) sin exponer *stack traces* |
+| Seguridad OWASP LLM 2025 | `app/services/seguridad.py` | `LimitadorTasa` por `idSesion` (ventana deslizante con respuesta `429` y cabecera `Retry-After`) y `delimitar_consulta` con etiquetas `<consulta_usuario>` contra inyección de prompts |
+| Cliente de IA Resiliente | `app/services/llm.py` | Encapsula Gemini y Groq, valida salida JSON contra esquema estricto, aplica reintentos con espera exponencial + *jitter*, soporta historial multi-turno y registra métricas sin PII en `logs/llm.jsonl` |
+| Persistencia de Memoria | `app/repositorio/historial.py` | Almacena y consulta los últimos turnos por `idSesion` en SQLite (`data/historial.db`) mediante consultas parametrizadas aisladas por sesión |
 
 ## Prompts versionados
 
+Comparativa detallada con 10 entradas de prueba en [`docs/05-prompts.md`](05-prompts.md):
+
 | Archivo | Qué cambia en esta versión |
 |---|---|
-| `app/prompts/system_v1.md` | No diagnosticar, no recetar, derivar ante signos de alarma |
+| `app/prompts/system_v1.md` | Base *zero-shot*: no diagnosticar, no recetar, derivar ante signos de alarma |
+| `app/prompts/system_v2.md` | *Few-shot* con 3 ejemplos completos y formato de lectura móvil con viñetas |
+| `app/prompts/system_v3.md` | *Guardrails* numerados (1–7), grupos vulnerables, 6 señales de alarma y reglas anti-engaño |
+| `app/prompts/system_v4.md` | Criterios explícitos para cada campo JSON (`derivar_a: null` en prevención, `se_abstiene: true` fuera de dominio y lectura de `<consulta_usuario>`) |
+
+## Pruebas Automatizadas con Dobles (Mocks) del Modelo
+
+La arquitectura desacopla las dependencias con `Depends()` en FastAPI y clientes inyectables en `ClienteLLM`, permitiendo que **`pytest -q` valide todo el backend en ~1.5 s sin conexión a internet y sin gastar cuota de API**:
+
+```mermaid
+flowchart LR
+  PT["pytest"] --> TC["TestClient(app)<br/>tests/test_dengue.py"]
+  PT --> UT["Pruebas unitarias<br/>tests/test_llm.py · test_main.py"]
+  TC -- "dependency_overrides" --> LF["LLMFalso (Mock)<br/>sin red ni cuota API"]
+  TC -- "dependency_overrides" --> RM["RepositorioHistorial(':memory:')<br/>SQLite efímero"]
+  TC -- "dependency_overrides" --> RL["LimitadorTasa + Reloj simulado"]
+  UT --> DB["Doble OpenAI<br/>simula 200, 429, 503, timeouts"]
+```
+
+| Suite de Pruebas | Archivo | Doble / Mock Utilizado | Qué Verifica |
+|---|---|---|---|
+| Endpoint `/api/v1/chat`, Memoria y Seguridad | `tests/test_dengue.py` | `LLMFalso`, `RepositorioHistorial(":memory:")` y `Reloj` inyectados con `app.dependency_overrides` | Contrato `200`, persistencia y memoria multi-turno en SQLite, aislamiento entre sesiones, *rate limit* `429` + `Retry-After`, delimitación anti-inyección `<consulta_usuario>`, validaciones `422` (`texto` e `idSesion`), errores `503`/`500` en formato RFC 9457 sin *stack trace* y abstención ante salida inválida |
+| Servicio de IA (`ClienteLLM`) | `tests/test_llm.py` | `Doble` del cliente OpenAI y función `dormir` simulada | Validación de esquema JSON estricto, autocorrección en 1 intento, reintentos ante `429`/`503`/respuesta vacía, respeto de `Retry-After`, espera exponencial y conmutación al proveedor de respaldo |
+| Operación y Versionado | `tests/test_main.py`, `tests/test_semver_bumper.py` | Sondas de salud simuladas (*lambdas*) | Diagnóstico `/manage/health` (`200` UP / `503` DOWN), cumplimiento SemVer en `/manage/info` e incremento automático de versión |
 
 ## Requisitos no funcionales de IA
 
