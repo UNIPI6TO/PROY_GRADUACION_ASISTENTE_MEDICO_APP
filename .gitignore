@@ -25,3 +25,6 @@ data/chroma/
 htmlcov/
 .DS_Store
 Thumbs.db
+
+# Historial de chat (datos de usuarios)
+data/historial.db
