@@ -178,11 +178,13 @@ class ClienteLLM:
         return Resultado(r.choices[0].message.content, p.nombre, p.modelo,
                          getattr(uso, "prompt_tokens", None), getattr(uso, "completion_tokens", None), ms, intentos)
 
-    def generar_json(self, system: str, usuario: str, esquema: type[T]) -> Resultado[T]:
+    def generar_json(self, system: str, usuario: str, esquema: type[T],
+                     historial: list[dict] | None = None) -> Resultado[T]:
         """Pide JSON con un esquema y lo valida. Si no cumple, pide UNA corrección."""
         formato = {"response_format": {"type": "json_schema", "json_schema": {
             "name": esquema.__name__, "strict": True, "schema": esquema.model_json_schema()}}}
-        mensajes = [{"role": "system", "content": system}, {"role": "user", "content": usuario}]
+        mensajes = [{"role": "system", "content": system}, *(historial or []),
+                    {"role": "user", "content": usuario}]
         p, r, ms, intentos = self._con_respaldo(mensajes, formato)
         texto = r.choices[0].message.content
         try:
