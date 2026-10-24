@@ -9,9 +9,24 @@ import httpx
 import openai
 import pytest
 
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
+
 from app.config import Config, Proveedor
-from app.schemas import Clasificacion
 from app.services.llm import ClienteLLM, ProveedorNoDisponible, SalidaInvalida
+
+
+class Clasificacion(BaseModel):
+    """Esquema local de prueba (movido desde app/schemas.py, que ya no lo contiene)."""
+    model_config = ConfigDict(extra="forbid")
+    es_soporte_tecnologico: bool
+    categoria: Literal["hardware", "software", "red", "accesos", "otro"]
+    impacto: Literal["bajo", "medio", "alto"]
+    urgencia: Literal["baja", "media", "alta"]
+    resumen: str = Field(max_length=300)
+    datos_faltantes: list[str]
+
 
 BUENA = json.dumps({"es_soporte_tecnologico": True, "categoria": "accesos", "impacto": "alto", "urgencia": "alta",
                     "resumen": "Ventas no puede entrar a facturación.", "datos_faltantes": []})
