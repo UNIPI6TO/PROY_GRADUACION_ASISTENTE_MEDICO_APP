@@ -4,7 +4,7 @@ Proyecto: GuíaVital · Caso 05. Formato de Michael Nygard (2011). Un ADR no se 
 
 ## ADR-001: Proveedor y modelo generativo
 
-- **Estado:** Propuesto
+- **Estado:** Aprobado
 - **Fecha:** 2026-10-19
 - **Responsables:** Wilson Salinas
 - **Nota:** el contexto y las opciones partieron de la sugerencia de la plantilla.
@@ -33,7 +33,7 @@ Usaremos Google AI Studio (Gemini 2.0 Flash) como proveedor principal y Groq (Ll
 
 ## ADR-002: Patrón de integración: workflow o agente
 
-- **Estado:** Propuesto
+- **Estado:** Aprobado
 - **Fecha:** 2026-10-19
 - **Responsables:** Wilson Salinas
 - **Nota:** el contexto y las opciones partieron de la sugerencia de la plantilla.
@@ -92,7 +92,7 @@ Usaremos la configuración de Clave en .env local + variables de entorno de la p
 
 ## ADR-004: Signos de alarma por reglas, no por el modelo
 
-- **Estado:** Propuesto
+- **Estado:** Aprobado
 - **Fecha:** 2026-10-20
 - **Responsables:** LUIS CAGUANA
 - **Nota:** el contexto y las opciones partieron de la sugerencia de la plantilla.
