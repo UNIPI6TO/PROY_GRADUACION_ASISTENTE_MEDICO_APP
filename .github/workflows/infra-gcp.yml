@@ -1,0 +1,122 @@
+name: Provision GCP Infrastructure (SRE)
+
+on:
+  workflow_dispatch:
+    inputs:
+      gcp_region:
+        description: 'Región de GCP para Artifact Registry y Cloud Run'
+        required: false
+        default: 'us-central1'
+        type: string
+      gar_repository:
+        description: 'Nombre del repositorio Docker en Artifact Registry'
+        required: false
+        default: 'guiavital-repo'
+        type: string
+      backend_runtime_sa:
+        description: 'Nombre de la Service Account de ejecución exclusiva del Backend'
+        required: false
+        default: 'guiavital-backend-sa'
+        type: string
+
+env:
+  GCP_REGION: ${{ inputs.gcp_region || vars.GCP_REGION || 'us-central1' }}
+  GAR_REPOSITORY: ${{ inputs.gar_repository || vars.GAR_REPOSITORY || 'guiavital-repo' }}
+  BACKEND_SA_NAME: ${{ inputs.backend_runtime_sa || vars.BACKEND_SA_NAME || 'guiavital-backend-sa' }}
+
+jobs:
+  provision-infra:
+    name: Provision GAR, Secret Manager & Least-Privilege Runtime SA
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud via Deployer SA (GCP_JSON_KEY)
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_JSON_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Enable Required GCP APIs
+        run: |
+          gcloud services enable \
+            run.googleapis.com \
+            artifactregistry.googleapis.com \
+            secretmanager.googleapis.com \
+            iam.googleapis.com \
+            --project="${{ steps.auth.outputs.project_id }}"
+
+      - name: Provision Artifact Registry Repository (Idempotent)
+        env:
+          PROJECT_ID: ${{ steps.auth.outputs.project_id }}
+        run: |
+          if gcloud artifacts repositories describe "${{ env.GAR_REPOSITORY }}" \
+            --location="${{ env.GCP_REGION }}" \
+            --project="${PROJECT_ID}" >/dev/null 2>&1; then
+            echo "Artifact Registry '${{ env.GAR_REPOSITORY }}' ya existe en ${{ env.GCP_REGION }}."
+          else
+            gcloud artifacts repositories create "${{ env.GAR_REPOSITORY }}" \
+              --repository-format=docker \
+              --location="${{ env.GCP_REGION }}" \
+              --description="Repositorio de contenedores para GuíaVital (guiavital y guiavital-backend)" \
+              --project="${PROJECT_ID}"
+          fi
+
+      - name: Provision Dedicated Backend Runtime Service Account (Least Privilege)
+        id: runtime_sa
+        env:
+          PROJECT_ID: ${{ steps.auth.outputs.project_id }}
+        run: |
+          SA_EMAIL="${{ env.BACKEND_SA_NAME }}@${PROJECT_ID}.iam.gserviceaccount.com"
+          if gcloud iam service-accounts describe "${SA_EMAIL}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+            echo "Service Account de ejecución '${SA_EMAIL}' ya existe."
+          else
+            gcloud iam service-accounts create "${{ env.BACKEND_SA_NAME }}" \
+              --display-name="GuíaVital Backend Runtime SA (Least Privilege)" \
+              --description="Identidad de ejecución exclusiva de guiavital-backend para consumir secretos desde Secret Manager" \
+              --project="${PROJECT_ID}"
+          fi
+          echo "sa_email=${SA_EMAIL}" >> "$GITHUB_OUTPUT"
+
+      - name: Provision Secret Containers in Secret Manager & Bind Resource-Level IAM
+        env:
+          PROJECT_ID: ${{ steps.auth.outputs.project_id }}
+          RUNTIME_SA_EMAIL: ${{ steps.runtime_sa.outputs.sa_email }}
+        run: |
+          for SECRET_NAME in GEMINI_API_KEY GROQ_API_KEY; do
+            if gcloud secrets describe "${SECRET_NAME}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+              echo "Secreto '${SECRET_NAME}' ya existe en Secret Manager."
+            else
+              gcloud secrets create "${SECRET_NAME}" \
+                --replication-policy="automatic" \
+                --labels="app=guiavital,component=backend,managed-by=github-actions" \
+                --project="${PROJECT_ID}"
+              echo "Secreto vacío '${SECRET_NAME}' creado. Ingrese su valor manualmente en la consola de GCP."
+            fi
+
+            # Principio de menor privilegio: permiso secretAccessor SOLO sobre cada secreto específico
+            gcloud secrets add-iam-policy-binding "${SECRET_NAME}" \
+              --member="serviceAccount:${RUNTIME_SA_EMAIL}" \
+              --role="roles/secretmanager.secretAccessor" \
+              --project="${PROJECT_ID}" >/dev/null
+          done
+
+      - name: Summary of Provisioned Infrastructure
+        run: |
+          cat << 'EOF' >> "$GITHUB_STEP_SUMMARY"
+          ### Infraestructura GCP Aprovisionada Exitosamente
+          - **Proyecto GCP:** `${{ steps.auth.outputs.project_id }}`
+          - **Artifact Registry:** `${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id }}/${{ env.GAR_REPOSITORY }}`
+          - **Runtime SA (Backend):** `${{ steps.runtime_sa.outputs.sa_email }}`
+          - **Secretos configurados (IAM `roles/secretmanager.secretAccessor`):** `GEMINI_API_KEY`, `GROQ_API_KEY`
+          
+          > **Acción manual requerida (única vez):** Ingresar el valor de las claves en **GCP Console → Secret Manager → `GEMINI_API_KEY` / `GROQ_API_KEY` → New Version** antes de ejecutar el workflow `Deploy to GCP Cloud Run`.
+          EOF

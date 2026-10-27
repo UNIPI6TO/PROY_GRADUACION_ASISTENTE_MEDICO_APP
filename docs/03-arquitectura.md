@@ -91,11 +91,11 @@ flowchart LR
 | Frontend | React + Vite |
 | Backend | FastAPI (Python) |
 | Datos | SQLite |
-| Modelo principal | Google Gemini (AI Studio) · gemini-2.0-flash |
-| Modelo de respaldo | Groq · llama-3.1-8b-instant |
+| Modelo principal | Google Gemini (AI Studio) · gemini-3.5-flash-lite |
+| Modelo de respaldo | Groq · openai/gpt-oss-20b |
 | Patrón de integración | Enrutamiento por tipo de consulta |
 | Registro | Logs estructurados sin datos personales |
-| Despliegue previsto | _Por decidir_ |
+| Despliegue previsto | Hugging Face Spaces |
 
 ## Endpoints
 
