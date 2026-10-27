@@ -16,6 +16,8 @@ env:
   BACKEND_SERVICE: guiavital-backend
   FRONTEND_SERVICE: guiavital
   BACKEND_SA_EMAIL: ${{ vars.BACKEND_SA_EMAIL || 'guiavital-backend-sa@project-3e1faa58-1e7d-4e8d-933.iam.gserviceaccount.com' }}
+  FRONTEND_SA_EMAIL: ${{ vars.FRONTEND_SA_EMAIL || 'guiavital-frontend-sa@project-3e1faa58-1e7d-4e8d-933.iam.gserviceaccount.com' }}
+  AUTHORIZED_USER_EMAIL: 'wilsonivansalinasflore@gmail.com'
 
 jobs:
   test:
@@ -103,13 +105,13 @@ jobs:
         env:
           PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
         run: |
-          RUNTIME_SA_EMAIL="${{ env.BACKEND_SA_EMAIL }}"
-
-          # 1. Verificar que la Service Account exclusiva del backend exista
-          if ! gcloud iam service-accounts describe "${RUNTIME_SA_EMAIL}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
-            echo "::error::No existe la Service Account '${RUNTIME_SA_EMAIL}'. Ejecute primero el workflow 'Provision GCP Infrastructure (SRE)'."
-            exit 1
-          fi
+          # 1. Verificar que existan las Service Accounts exclusivas de Backend y Frontend
+          for SA_EMAIL in "${{ env.BACKEND_SA_EMAIL }}" "${{ env.FRONTEND_SA_EMAIL }}"; do
+            if ! gcloud iam service-accounts describe "${SA_EMAIL}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+              echo "::error::No existe la Service Account '${SA_EMAIL}'. Ejecute primero el workflow 'Provision GCP Infrastructure (SRE)'."
+              exit 1
+            fi
+          done
 
           # 2. Verificar que todos los secretos de entorno existan y tengan una versión habilitada (ENABLED) en Secret Manager
           BACKEND_SECRETS=(
@@ -136,8 +138,6 @@ jobs:
             fi
           done
 
-          echo "runtime_sa_email=${RUNTIME_SA_EMAIL}" >> "$GITHUB_OUTPUT"
-
       - name: Configure Docker for GCP Artifact Registry
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
 
@@ -153,7 +153,7 @@ jobs:
           docker push "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}"
           docker push "${IMAGE_URI}:${{ steps.meta.outputs.sha_tag }}"
 
-      - name: Deploy Backend to Cloud Run with Dedicated Runtime SA & Secret Manager
+      - name: Deploy Backend to Cloud Run (Private Invocation Only)
         id: deploy_backend
         uses: google-github-actions/deploy-cloudrun@v2
         with:
@@ -162,12 +162,42 @@ jobs:
           image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.BACKEND_SERVICE }}:${{ steps.meta.outputs.image_tag }}
           flags: >-
             --service-account=${{ env.BACKEND_SA_EMAIL }}
-            --allow-unauthenticated
+            --no-allow-unauthenticated
             --port=8080
             --min-instances=0
             --max-instances=5
             --set-env-vars=APP_NAME=GuíaVital,APP_VERSION=${{ steps.meta.outputs.app_version }}
             --set-secrets=LLM_PROVIDER=LLM_PROVIDER:latest,LLM_MODEL=LLM_MODEL:latest,GEMINI_API_KEY=GEMINI_API_KEY:latest,LLM_FALLBACK_PROVIDER=LLM_FALLBACK_PROVIDER:latest,LLM_FALLBACK_MODEL=LLM_FALLBACK_MODEL:latest,GROQ_API_KEY=GROQ_API_KEY:latest,LLM_TIMEOUT_SECONDS=LLM_TIMEOUT_SECONDS:latest,LLM_TEMPERATURE=LLM_TEMPERATURE:latest,LLM_MAX_OUTPUT_TOKENS=LLM_MAX_OUTPUT_TOKENS:latest,MAX_INPUT_CHARS=MAX_INPUT_CHARS:latest,RATE_LIMIT_PER_MINUTE=RATE_LIMIT_PER_MINUTE:latest,HISTORIAL_DB=HISTORIAL_DB:latest,CORS_ORIGINS=CORS_ORIGINS:latest
+
+      - name: Restrict Backend Invoker IAM to Frontend SA & Authorized User
+        env:
+          PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
+        run: |
+          set +e
+          # Revocar acceso público (allUsers) si existía de despliegues previos
+          gcloud run services remove-iam-policy-binding "${{ env.BACKEND_SERVICE }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --project="${PROJECT_ID}" \
+            --member="allUsers" \
+            --role="roles/run.invoker" \
+            --quiet >/dev/null 2>&1 || true
+
+          # Permitir invocación exclusivamente a la Service Account del Frontend
+          gcloud run services add-iam-policy-binding "${{ env.BACKEND_SERVICE }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --project="${PROJECT_ID}" \
+            --member="serviceAccount:${{ env.FRONTEND_SA_EMAIL }}" \
+            --role="roles/run.invoker" \
+            --quiet
+
+          # Permitir invocación al usuario autorizado
+          gcloud run services add-iam-policy-binding "${{ env.BACKEND_SERVICE }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --project="${PROJECT_ID}" \
+            --member="user:${{ env.AUTHORIZED_USER_EMAIL }}" \
+            --role="roles/run.invoker" \
+            --quiet
+          exit 0
 
       - name: Build & Push Frontend Container (guiavital)
         env:
@@ -175,27 +205,30 @@ jobs:
         run: |
           docker build \
             -f frontend/Dockerfile \
-            --build-arg VITE_API_URL="${{ steps.deploy_backend.outputs.url }}" \
+            --build-arg VITE_API_URL="/backend" \
             -t "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}" \
             -t "${IMAGE_URI}:${{ steps.meta.outputs.sha_tag }}" \
             ./frontend
           docker push "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}"
           docker push "${IMAGE_URI}:${{ steps.meta.outputs.sha_tag }}"
 
-      - name: Deploy Frontend to Cloud Run (guiavital)
+      - name: Deploy Frontend to Cloud Run with Dedicated Frontend SA (guiavital)
         id: deploy_frontend
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ env.FRONTEND_SERVICE }}
           region: ${{ env.GCP_REGION }}
           image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.FRONTEND_SERVICE }}:${{ steps.meta.outputs.image_tag }}
-          env_vars: |
-            APP_VERSION=${{ steps.meta.outputs.app_version }}
-            VITE_API_URL=${{ steps.deploy_backend.outputs.url }}
-          flags: '--allow-unauthenticated --port=8080 --min-instances=0 --max-instances=5'
+          flags: >-
+            --service-account=${{ env.FRONTEND_SA_EMAIL }}
+            --allow-unauthenticated
+            --port=8080
+            --min-instances=0
+            --max-instances=5
+            --set-env-vars=APP_VERSION=${{ steps.meta.outputs.app_version }},BACKEND_URL=${{ steps.deploy_backend.outputs.url }}
 
-      - name: Verify SRE Endpoints
+      - name: Verify SRE Endpoints (Frontend & Authenticated Proxy to Backend)
         run: |
-          curl --fail --silent --show-error "${{ steps.deploy_backend.outputs.url }}/manage/health"
-          curl --fail --silent --show-error "${{ steps.deploy_backend.outputs.url }}/manage/info"
           curl --fail --silent --show-error "${{ steps.deploy_frontend.outputs.url }}/healthz"
+          curl --fail --silent --show-error "${{ steps.deploy_frontend.outputs.url }}/backend/manage/health"
+          curl --fail --silent --show-error "${{ steps.deploy_frontend.outputs.url }}/backend/manage/info"
