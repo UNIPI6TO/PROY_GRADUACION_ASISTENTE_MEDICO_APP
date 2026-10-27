@@ -4,8 +4,7 @@ FROM python:3.12-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8080 \
-    HISTORIAL_DB=/tmp/historial.db
+    PORT=8080
 
 WORKDIR /workspace
 
