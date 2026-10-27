@@ -14,15 +14,17 @@ on:
         default: 'guiavital-repo'
         type: string
       backend_runtime_sa:
-        description: 'Nombre de la Service Account de ejecución exclusiva del Backend'
+        description: 'Service Account de ejecución exclusiva del Backend'
         required: false
-        default: 'guiavital-backend-sa'
+        default: 'guiavital-backend-sa@project-3e1faa58-1e7d-4e8d-933.iam.gserviceaccount.com'
         type: string
 
 env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'project-3e1faa58-1e7d-4e8d-933' }}
   GCP_REGION: ${{ inputs.gcp_region || vars.GCP_REGION || 'us-central1' }}
   GAR_REPOSITORY: ${{ inputs.gar_repository || vars.GAR_REPOSITORY || 'guiavital-repo' }}
-  BACKEND_SA_NAME: ${{ inputs.backend_runtime_sa || vars.BACKEND_SA_NAME || 'guiavital-backend-sa' }}
+  BACKEND_SA_EMAIL: ${{ inputs.backend_runtime_sa || vars.BACKEND_SA_EMAIL || 'guiavital-backend-sa@project-3e1faa58-1e7d-4e8d-933.iam.gserviceaccount.com' }}
+  BACKEND_SA_NAME: 'guiavital-backend-sa'
 
 jobs:
   provision-infra:
@@ -47,7 +49,7 @@ jobs:
 
       - name: Enable Required GCP APIs (Idempotent)
         env:
-          PROJECT_ID: ${{ steps.auth.outputs.project_id }}
+          PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
         run: |
           set +e
           for API in run.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com iam.googleapis.com; do
@@ -58,7 +60,7 @@ jobs:
 
       - name: Provision Artifact Registry Repository (Ignore if Exists)
         env:
-          PROJECT_ID: ${{ steps.auth.outputs.project_id }}
+          PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
         run: |
           set +e
           if gcloud artifacts repositories describe "${{ env.GAR_REPOSITORY }}" \
@@ -88,10 +90,11 @@ jobs:
       - name: Provision Dedicated Backend Runtime Service Account (Ignore if Exists)
         id: runtime_sa
         env:
-          PROJECT_ID: ${{ steps.auth.outputs.project_id }}
+          PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
         run: |
           set +e
-          SA_EMAIL="${{ env.BACKEND_SA_NAME }}@${PROJECT_ID}.iam.gserviceaccount.com"
+          SA_EMAIL="${{ env.BACKEND_SA_EMAIL }}"
+          SA_ID="${SA_EMAIL%@*}"
           echo "sa_email=${SA_EMAIL}" >> "$GITHUB_OUTPUT"
 
           if gcloud iam service-accounts describe "${SA_EMAIL}" \
@@ -99,7 +102,7 @@ jobs:
             --quiet >/dev/null 2>&1; then
             echo "[SKIP] Service Account '${SA_EMAIL}' ya existe. Ignorando creación."
           else
-            OUTPUT=$(gcloud iam service-accounts create "${{ env.BACKEND_SA_NAME }}" \
+            OUTPUT=$(gcloud iam service-accounts create "${SA_ID}" \
               --display-name="GuíaVital Backend Runtime SA (Least Privilege)" \
               --description="Identidad de ejecución exclusiva de guiavital-backend para consumir secretos desde Secret Manager" \
               --project="${PROJECT_ID}" \
@@ -116,13 +119,29 @@ jobs:
           fi
           exit 0
 
-      - name: Provision Secret Containers in Secret Manager & Bind IAM (Ignore if Exists)
+      - name: Provision All Backend Environment Secrets in Secret Manager & Bind IAM (Ignore if Exists)
         env:
-          PROJECT_ID: ${{ steps.auth.outputs.project_id }}
+          PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
           RUNTIME_SA_EMAIL: ${{ steps.runtime_sa.outputs.sa_email }}
         run: |
           set +e
-          for SECRET_NAME in GEMINI_API_KEY GROQ_API_KEY; do
+          BACKEND_SECRETS=(
+            "LLM_PROVIDER"
+            "LLM_MODEL"
+            "GEMINI_API_KEY"
+            "LLM_FALLBACK_PROVIDER"
+            "LLM_FALLBACK_MODEL"
+            "GROQ_API_KEY"
+            "LLM_TIMEOUT_SECONDS"
+            "LLM_TEMPERATURE"
+            "LLM_MAX_OUTPUT_TOKENS"
+            "MAX_INPUT_CHARS"
+            "RATE_LIMIT_PER_MINUTE"
+            "HISTORIAL_DB"
+            "CORS_ORIGINS"
+          )
+
+          for SECRET_NAME in "${BACKEND_SECRETS[@]}"; do
             if gcloud secrets describe "${SECRET_NAME}" \
               --project="${PROJECT_ID}" \
               --quiet >/dev/null 2>&1; then
@@ -163,10 +182,14 @@ jobs:
         run: |
           cat << 'EOF' >> "$GITHUB_STEP_SUMMARY"
           ### Infraestructura GCP Verificada / Aprovisionada Exitosamente
-          - **Proyecto GCP:** `${{ steps.auth.outputs.project_id }}`
-          - **Artifact Registry:** `${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id }}/${{ env.GAR_REPOSITORY }}`
+          - **Proyecto GCP:** `${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}`
+          - **Artifact Registry:** `${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}`
           - **Runtime SA (Backend):** `${{ steps.runtime_sa.outputs.sa_email }}`
-          - **Secretos configurados (IAM `roles/secretmanager.secretAccessor`):** `GEMINI_API_KEY`, `GROQ_API_KEY`
+          - **Secretos configurados en Secret Manager (IAM `roles/secretmanager.secretAccessor`):**
+            - `LLM_PROVIDER`, `LLM_MODEL`, `GEMINI_API_KEY`
+            - `LLM_FALLBACK_PROVIDER`, `LLM_FALLBACK_MODEL`, `GROQ_API_KEY`
+            - `LLM_TIMEOUT_SECONDS`, `LLM_TEMPERATURE`, `LLM_MAX_OUTPUT_TOKENS`
+            - `MAX_INPUT_CHARS`, `RATE_LIMIT_PER_MINUTE`, `HISTORIAL_DB`, `CORS_ORIGINS`
           
-          > **Nota:** Los componentes ya existentes fueron omitidos de forma segura (`[SKIP]`). Asegúrese de haber ingresado el valor de las claves en **GCP Console → Secret Manager → `GEMINI_API_KEY` / `GROQ_API_KEY` → New Version** antes de ejecutar el workflow `Deploy to GCP Cloud Run`.
+          > **Nota:** Los componentes ya existentes fueron omitidos de forma segura (`[SKIP]`). Asegúrese de haber ingresado los valores de los secretos en **GCP Console → Secret Manager** antes de ejecutar el workflow `Deploy to GCP Cloud Run`.
           EOF
