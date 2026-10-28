@@ -78,3 +78,27 @@ Para comparar de forma reproducible las versiones, se definieron **10 entradas r
 2. **Importancia de reglas clínicas explícitas de `v2` a `v3`:** En salud pública no basta con que el modelo «hable bonito»; en `v2` una mujer embarazada en su primer día de fiebre recibía recomendaciones generales. Al explicitar en `v3` los grupos vulnerables (menores de 5 años, gestantes y adultos mayores) y las 6 señales de alarma numeradas, la precisión en casos críticos llegó al **100%**.
 3. **Blindaje frente a manipulación (`E09` y `E10`):** Las reglas 6 (anti-engaño) y 7 (dominio exclusivo de dengue), sumadas a la delimitación en código con `<consulta_usuario>` en [`app/services/seguridad.py`](../app/services/seguridad.py), neutralizan los intentos de *jailbreak*.
 4. **Refinamiento del contrato JSON (`v4`):** Durante las pruebas de integración con el backend se observó que el modelo rellenaba `derivar_a` incluso en consultas de prevención (`E01`). Al documentar dentro del prompt las condiciones exactas en que `derivar_a` debe ser `null` y cuándo `se_abstiene` debe ser `true`, el esquema `RespuestaAsistente` responde con precisión sin falsos positivos de derivación.
+
+---
+
+## 6. Justificación Técnica de Parámetros de Inferencia
+
+En estricto apego a las preguntas oficiales de revisión de la **Semana 2**:
+
+### 1. ¿Por qué Temperatura = 0.2?
+* **Seguridad Clínica Determinista:** En un asistente de salud pública, la variabilidad lingüística y la creatividad estocástica deben reducirse al mínimo para evitar alucinaciones médicas. Una temperatura baja ($0.2$) fuerza al modelo a seleccionar los tokens con mayor probabilidad condicional basada en las directivas del prompt, garantizando que ante síntomas de alarma o consultas sobre medicamentos prohibidos (AINEs), el sistema siempre emita la advertencia de peligro y la derivación médica correspondiente.
+* **Reproducibilidad:** Asegura consistencia en las respuestas ante consultas repetidas por diferentes ciudadanos en situaciones de emergencia.
+
+### 2. ¿Por qué Límite de Tokens de Salida (`LLM_MAX_OUTPUT_TOKENS`) = 600?
+* **Diseño Mobile-First y Legibilidad:** GuíaVital está diseñado para ciudadanos que consultan desde teléfonos móviles en zonas endémicas. Textos superiores a 600 tokens generan fatiga visual, provocan abandono de lectura e incrementan el riesgo de omitir advertencias vitales de triaje.
+* **Control de Latencia y Cuota TPM:** Un tope de 600 tokens mantiene la latencia de respuesta por debajo de 2 segundos y optimiza el consumo de la cuota gratuita de tokens por minuto (TPM) tanto en Gemini como en Groq, evitando el error `429 Too Many Requests`.
+
+---
+
+## 7. Trazabilidad con el Banco de Pruebas (`eval/entradas_prompts.csv`)
+
+El conjunto de pruebas documentado en este informe se encuentra formalizado y versionado en [`eval/entradas_prompts.csv`](../eval/entradas_prompts.csv), cumpliendo con la distribución exigida por la Guía Estándar:
+* **7 Casos Normales (IDs 1 al 7):** Consultas comunitarias sobre prevención, síntomas iniciales, cuidados en fase crítica, repelentes infantiles, signos de alarma, clasificación clínica y suero oral.
+* **2 Casos No Procesables / Seguridad (IDs 8 y 9):** Solicitud explícita de dosificación de AINEs prohibidos (aspirina/ibuprofeno) en menores e intento de inyección de prompt para evadir la consulta médica.
+* **1 Caso Fuera de Dominio (ID 10):** Consulta ajena sobre trámites de licencias de conducir en la ANT, verificando la abstención amable y certera.
+
