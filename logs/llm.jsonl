@@ -430,3 +430,34 @@
 {"evento": "reintento", "proveedor": "gemini", "intento": 2, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.06}
 {"evento": "agotado", "proveedor": "gemini", "intento": 3, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 2.88}
 {"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 887, "tokens_entrada": 1408, "tokens_salida": 293, "fin": "stop"}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "salida_invalida", "proveedor": "a", "errores": 6}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "salida_invalida", "proveedor": "a", "errores": 1}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "salida_invalida_final", "proveedor": "a", "errores": 1}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 2.33}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 2, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "InternalServerError", "estado_http": 503, "espera_s": 0.64}
+{"evento": "reintento", "proveedor": "a", "intento": 2, "tipo": "InternalServerError", "estado_http": 503, "espera_s": 1.95}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 3, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "_RespuestaVacia", "estado_http": null, "espera_s": 0.77}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 2, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 0.51}
+{"evento": "reintento", "proveedor": "a", "intento": 2, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 1.11}
+{"evento": "agotado", "proveedor": "a", "intento": 3, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 2.36}
+{"evento": "ok", "proveedor": "b", "modelo": "modelo-b", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "error_definitivo", "proveedor": "a", "intento": 1, "tipo": "AuthenticationError", "estado_http": 401}
+{"evento": "ok", "proveedor": "b", "modelo": "modelo-b", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.07}
+{"evento": "reintento", "proveedor": "a", "intento": 2, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.27}
+{"evento": "agotado", "proveedor": "a", "intento": 3, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.29}
+{"evento": "reintento", "proveedor": "b", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.23}
+{"evento": "reintento", "proveedor": "b", "intento": 2, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.5}
+{"evento": "agotado", "proveedor": "b", "intento": 3, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.39}
+{"evento": "sin_proveedor"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 3600.36}
+{"evento": "ok", "proveedor": "b", "modelo": "modelo-b", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
