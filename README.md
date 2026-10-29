@@ -1,7 +1,7 @@
 # GuíaVital · Asistente de Orientación en Salud Pública sobre Dengue y Arbovirosis
 
 > **Nombre Oficial / Nombre Corto (`APP_NAME`):** `GuíaVital`  
-> **Versión Actual:** `0.1.0` (SemVer)  
+> **Versión Actual:** `0.2.0` (SemVer)  
 > **Caso:** 05 - Grupo 5 · Seminario de Titulación UNIANDES  
 > **Repositorio:** `https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP`
 
@@ -46,6 +46,9 @@
 | **Cliente LLM Resiliente** | SDK `openai` (compatible con Gemini y Groq) | Salida estructurada JSON validada, 1 intento de autocorrección automática, reintentos con espera exponencial + *jitter*, respeto de `Retry-After` y conmutación automática (*fallback*) |
 | **Proveedor Principal** | Google Gemini (`gemini-3.8-flash` / `gemini-2.0-flash`) | Generación principal de orientación preventiva con baja temperatura |
 | **Proveedor de Respaldo** | Groq (`openai/gpt-oss-20b` / `llama-3.1-8b-instant`) | Conmutación automática ante caídas, errores definitivos o *timeouts* del proveedor principal |
+| **Base Vectorial (RAG)** | ChromaDB (`chromadb`) local persistente | Colección `guia_vital_dengue` con espacio métrico coseno (`cosine`), persistencia local en SQLite + HNSW sin costos de nube |
+| **Modelo de Embeddings** | `intfloat/multilingual-e5-small` | Modelo denso multilingüe optimizado en español (384 dimensiones, asimétrico con prefijos `query: ` y `passage: `) |
+| **Pipeline de Ingesta** | PyMuPDF (`fitz`) + Chunking Jerárquico | Limpieza de marcas de agua, delimitación exacta por regex, inyección de encabezado contextual y exportación a `data/processed/` |
 | **Persistencia** | SQLite (`data/historial.db`) | Almacenamiento de los últimos turnos por `idSesion` mediante consultas parametrizadas |
 | **Seguridad (OWASP LLM)** | `app/services/seguridad.py` + CORS | Delimitación anti-inyección (`<consulta_usuario>`), límite de tasa por sesión (`429 Too Many Requests` + `Retry-After`) y CORS restringido |
 | **Observabilidad** | `logs/llm.jsonl` | Registro estructurado en JSON Lines con proveedor, modelo, latencia, intentos y tokens consumidos (sin texto del usuario ni PII) |
@@ -65,6 +68,7 @@ PROY_GRADUACION_ASISTENTE_MEDICO_APP/
 │   │   └── historial.py         # RepositorioHistorial en SQLite aislado por idSesion
 │   └── services/
 │       ├── llm.py               # ClienteLLM con reintentos, backoff exponencial, validación JSON y fallback
+│       ├── retriever.py         # BuscadorVectorial en ChromaDB con prefijos E5, filtros de vigencia y búsqueda híbrida
 │       └── seguridad.py         # LimitadorTasa (ventana deslizante) y delimitación contra Prompt Injection
 ├── frontend/
 │   ├── src/
@@ -79,18 +83,24 @@ PROY_GRADUACION_ASISTENTE_MEDICO_APP/
 │   ├── package.json
 │   └── vite.config.ts
 ├── scripts/
+│   ├── ingest.py                # Pipeline de ingesta reproducible (PDFs -> Chunks semánticos -> ChromaDB)
 │   ├── primera_llamada.py       # Script de prueba rápida de conexión con el proveedor LLM
 │   ├── servidor_simulado.py     # Proveedor local falso compatible con OpenAI para simular 429, lentitud y JSON roto
 │   ├── demo_429.py              # Demostración en vivo de resiliencia ante errores 429 con y sin ClienteLLM
 │   └── semver_bumper.py         # Automatización de versionado SemVer para CI/CD
 ├── data/
-│   ├── raw/                     # Guías clínicas oficiales (MSP y OPS/OMS) en PDF y análisis de preguntas
+│   ├── raw/                     # Guías clínicas oficiales (Guia-dengue-OPS-2016.pdf, manual_de_procedimientos_sive-alerta.pdf)
+│   ├── processed/               # fragmentos.md y fragmentos.json (161 fragmentos exportados y trazables)
 │   ├── geosalud_ecuador.json    # Catálogo georreferenciado de establecimientos de salud
 │   └── historial.db             # Base de datos SQLite generada en ejecución
+├── chroma_db/                   # Base de datos vectorial persistente (161 fragmentos indexados con HNSW + SQLite)
 ├── eval/
+│   ├── preguntas.csv            # Conjunto de 20 preguntas clínicas de referencia con validación Hit@k
+│   ├── run_eval.py              # Evaluador de recuperación vectorial (Hit@1 = 85%, Hit@5 = 100%)
 │   └── entradas_prompts.csv     # Conjunto de entradas para evaluación comparativa de prompts
 ├── tests/                       # Pruebas automatizadas del backend con pytest y dobles (mocks)
 │   ├── test_dengue.py           # Pruebas de /api/v1/chat, memoria SQLite, rate limit y seguridad
+│   ├── test_retriever.py        # Pruebas de ingesta, prefijos E5, código exacto y filtro de vigencia
 │   ├── test_llm.py              # Pruebas unitarias de ClienteLLM (reintentos, backoff, fallback, validación JSON)
 │   ├── test_main.py             # Pruebas de /manage/health y /manage/info
 │   └── test_semver_bumper.py    # Pruebas del calculador de versiones SemVer
@@ -185,6 +195,16 @@ npm run dev
   python scripts/servidor_simulado.py --limite 5 --ventana 10
   ```
 
+### 4. Ingesta y Evaluación de la Base Vectorial (RAG)
+- **Ejecutar el pipeline de ingesta reproducible (PDFs oficiales -> ChromaDB):**
+  ```bash
+  python -m scripts.ingest
+  ```
+- **Ejecutar la evaluación cuantitativa de recuperación vectorial (Hit@1 y Hit@5):**
+  ```bash
+  python -m eval.run_eval
+  ```
+
 ---
 
 ## Endpoints de la API
@@ -193,7 +213,7 @@ npm run dev
 |---|---|---|---|
 | `POST` | `/api/v1/chat` | Procesa una consulta ciudadana con memoria por `idSesion`, delimitadores anti-inyección, límite de tasa y salida estructurada validada | `200 OK` (`RespuestaChat`), `422` (Validación), `429` (Rate Limit + `Retry-After`), `503` (Proveedor no disponible), `500` (Error interno) |
 | `GET` | `/manage/health` | Diagnóstico operativo de *Liveness* y *Readiness* | `200 OK` (`status: UP`), `503 Service Unavailable` (`status: DOWN`) |
-| `GET` | `/manage/info` | Retorna el nombre oficial (`GuíaVital`) y versión validada bajo SemVer (`0.1.0`) | `200 OK` |
+| `GET` | `/manage/info` | Retorna el nombre oficial (`GuíaVital`) y versión validada bajo SemVer (`0.2.0`) | `200 OK` |
 
 ### Ejemplo de Solicitud y Respuesta (`POST /api/v1/chat`)
 
@@ -236,6 +256,7 @@ pytest -v
 | Archivo de Prueba | Qué Valida |
 |---|---|
 | `tests/test_dengue.py` | Contrato `200` de `/api/v1/chat`, persistencia y memoria multi-turno en SQLite, aislamiento entre sesiones, *rate limit* `429` + cabecera `Retry-After`, delimitación `<consulta_usuario>`, validaciones `422`, errores `503`/`500` en formato RFC 9457 sin *stack trace*, abstención ante salida inválida y vigencia de `system_v4` |
+| `tests/test_retriever.py` | Extracción de páginas 95 a 100 de SIVE-Alerta, exclusión de referencias bibliográficas de OPS 2016, asimetría de prefijos E5 (`query: ` / `passage: `), orden por distancia coseno, búsqueda híbrida por código exacto (`CIE-10 A 91`) y filtro por vigencia (`vigente: True`) |
 | `tests/test_llm.py` | Validación de esquema JSON estricto, autocorrección en 1 intento, reintentos ante `429`/`503`/respuesta vacía, respeto de `Retry-After`, espera exponencial con *jitter* y conmutación al proveedor de respaldo |
 | `tests/test_main.py` | Diagnóstico `/manage/health` (`200` UP / `503` DOWN) y cumplimiento de expresión regular SemVer en `/manage/info` |
 | `tests/test_semver_bumper.py` | Reglas de incremento SemVer (*MAJOR*, *MINOR*, *PATCH*) según *Conventional Commits* y generación de versiones *SNAPSHOT-RC* |

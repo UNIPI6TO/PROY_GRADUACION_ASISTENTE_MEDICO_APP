@@ -28,7 +28,7 @@ from app.services.llm import ClienteLLM, ProveedorNoDisponible, SalidaInvalida, 
 from app.services.seguridad import LimiteExcedido, LimitadorTasa, delimitar_consulta
 
 APP_NAME = "GuíaVital"
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.2.0"
 SEMVER_REGEX = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
 
 PROMPT = "system_v4"
