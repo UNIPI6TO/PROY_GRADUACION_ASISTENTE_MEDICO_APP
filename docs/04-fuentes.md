@@ -83,21 +83,30 @@ El fraccionamiento por longitud fija de caracteres o tokens (ej. cortes ciegos c
 
 ---
 
-### 4.2 Estrategia Seleccionada: Fragmentación Semántica Jerárquica Guiada por Encabezados (Markdown-Aware Chunking)
+### 4.2 Estrategia Implementada: Fragmentación Semántica Jerárquica Guiada por Encabezados y Delimitación Normativa
 
-Para preservar la integridad clínica, el pipeline de ingesta (`scripts/ingest.py`) implementará una estrategia basada en la estructura del documento:
+Para preservar la integridad clínica, el pipeline de ingesta (`scripts/ingest.py`) implementa una estrategia basada en la estructura jerárquica del documento con delimitación estricta y limpieza de ruido:
 
-#### A. Preprocesamiento Estructurado
-* Conversión de los PDFs oficiales a texto estructurado en Markdown (`.md`), respetando rigurosamente títulos `#`, subtítulos `##`, `###` y listas de viñetas `-`.
-* Las tablas clínicas (clasificación del dengue según gravedad: Dengue sin signos, Dengue con signos, Dengue grave) se convierten a tablas Markdown compactas para no dispersar filas entre fragmentos.
+#### A. Delimitación y Limpieza del Manual SIVE-Alerta (MSP Ecuador, Págs. 95–100)
+* **Delimitación exacta por regex:** En la página 95 del PDF concluye el protocolo de *Enfermedad de Chagas* y en la página 100 inicia *Fiebre Amarilla*. El script acota la extracción exactamente entre el encabezado `8.2.3.2 DENGUE` y `8.2.3.3 FIEBRE AMARILLA`.
+* **Eliminación de artefactos:** Se depura mediante expresiones regulares la marca de agua transversal `"Documento final"` presente en cada página, junto con pies de página y numeraciones flotantes.
+* **Resultado:** 12 fragmentos semánticos que cubren: casos sospechosos con/sin alarma y grave, criterios de confirmación por laboratorio (NS1, RT-PCR, IgM), descarte, flujo de notificación inmediata en 24h y medidas de control vectorial.
 
-#### B. Separadores Jerárquicos
-Se configuran divisores semánticos en orden de prioridad:
-```python
-separators = [
-    "\n## ",     # Secciones principales (ej. "Signos de Alarma", "Fase Crítica")
-    "\n### ",    # Subsecciones clínicas específicas
-    "\n\n",      # Párrafos completos y tablas
-    "\n",        # Saltos de línea en listas de verificación
-    ". "         # Oraciones completas (último recurso)
-]
+#### B. Extracción y Filtrado Clínico de la Guía OPS/OMS 2016
+* **Preliminares de impacto comunitario:** Se extrae la página 2 (medidas intradomiciliarias: *"¡Sin mosquitos no hay dengue!"*) y páginas 16–17 (tabla de abreviaturas clínicas). Se descartan dedicatorias e índices generales.
+* **Núcleo Clínico (Capítulos 1 al 8):** Segmentación por capítulos numerados (`1.1`, `2.3`, `3.2`), cuadros clínicos (`Cuadro 1: Curso de la enfermedad`, `Cuadro 3: Signos de alarma`, `Cuadro 6: Categorías de intervención`) y categorías de manejo (A, B1, B2, C).
+* **Anexos Clínicos (D al U):** Conservación de tablas de hematocrito, líquidos de mantenimiento (Holliday-Segar), tablas de goteo y hoja de monitoreo.
+* **Exclusión intencional del Capítulo 9 (Referencias bibliográficas / PubMed):** Páginas 107 a 127 excluidas para evitar contaminación vectorial (impedir que búsquedas por "shock" o "embarazo" recuperen cadenas de búsqueda en inglés o nombres de autores en vez del protocolo asistencial).
+
+#### C. Inyección de Contexto en Sub-fragmentos
+Cuando una sección clínica supera los 1.600 caracteres, se subdivide por párrafos conservando siempre en el encabezado del fragmento el contexto padre:
+```text
+[OPS 2016 · 3.4 Categoría de intervención B2: Pacientes con signos de alarma] (Parte 2/3)
+Contenido de la administración de solución salina isotónica...
+```
+
+#### D. Métricas Finales de la Base de Conocimiento Indexada
+* **Total de fragmentos en ChromaDB:** **161 fragmentos** (149 de OPS 2016 + 12 de SIVE-Alerta).
+* **Formato de persistencia de respaldo:** Exportados de forma transparente a [`data/processed/fragmentos.md`](../data/processed/fragmentos.md) y [`data/processed/fragmentos.json`](../data/processed/fragmentos.json).
+* **Modelo de embeddings:** `intfloat/multilingual-e5-small` (384 dimensiones) con prefijo obligatorio `"passage: "`.
+* **Colección en ChromaDB:** `guia_vital_dengue` con espacio métrico `cosine`.
