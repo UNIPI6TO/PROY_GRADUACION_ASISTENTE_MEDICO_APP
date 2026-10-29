@@ -1,0 +1,195 @@
+name: Provision GCP Infrastructure (SRE)
+
+on:
+  workflow_dispatch:
+    inputs:
+      gcp_region:
+        description: 'Región de GCP para Artifact Registry y Cloud Run'
+        required: false
+        default: 'us-central1'
+        type: string
+      gar_repository:
+        description: 'Nombre del repositorio Docker en Artifact Registry'
+        required: false
+        default: 'guiavital-repo'
+        type: string
+      backend_runtime_sa:
+        description: 'Service Account de ejecución exclusiva del Backend'
+        required: false
+        default: 'guiavital-backend-sa@project-3e1faa58-1e7d-4e8d-933.iam.gserviceaccount.com'
+        type: string
+
+env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'project-3e1faa58-1e7d-4e8d-933' }}
+  GCP_REGION: ${{ inputs.gcp_region || vars.GCP_REGION || 'us-central1' }}
+  GAR_REPOSITORY: ${{ inputs.gar_repository || vars.GAR_REPOSITORY || 'guiavital-repo' }}
+  BACKEND_SA_EMAIL: ${{ inputs.backend_runtime_sa || vars.BACKEND_SA_EMAIL || 'guiavital-backend-sa@project-3e1faa58-1e7d-4e8d-933.iam.gserviceaccount.com' }}
+  BACKEND_SA_NAME: 'guiavital-backend-sa'
+
+jobs:
+  provision-infra:
+    name: Provision GAR, Secret Manager & Least-Privilege Runtime SA
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud via Deployer SA (GCP_JSON_KEY)
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_JSON_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Enable Required GCP APIs (Idempotent)
+        env:
+          PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
+        run: |
+          set +e
+          for API in run.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com iam.googleapis.com; do
+            echo "Verificando/habilitando API: ${API}..."
+            gcloud services enable "${API}" --project="${PROJECT_ID}" --quiet || echo "[WARN] No se pudo habilitar ${API} o ya se encuentra activa; continuando..."
+          done
+          exit 0
+
+      - name: Provision Artifact Registry Repository (Ignore if Exists)
+        env:
+          PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
+        run: |
+          set +e
+          if gcloud artifacts repositories describe "${{ env.GAR_REPOSITORY }}" \
+            --location="${{ env.GCP_REGION }}" \
+            --project="${PROJECT_ID}" \
+            --quiet >/dev/null 2>&1; then
+            echo "[SKIP] Artifact Registry '${{ env.GAR_REPOSITORY }}' ya existe en ${{ env.GCP_REGION }}. Ignorando creación."
+          else
+            OUTPUT=$(gcloud artifacts repositories create "${{ env.GAR_REPOSITORY }}" \
+              --repository-format=docker \
+              --location="${{ env.GCP_REGION }}" \
+              --description="Repositorio de contenedores para GuíaVital (guiavital y guiavital-backend)" \
+              --project="${PROJECT_ID}" \
+              --quiet 2>&1)
+            STATUS=$?
+            if [ $STATUS -eq 0 ]; then
+              echo "[OK] Artifact Registry '${{ env.GAR_REPOSITORY }}' creado exitosamente."
+            elif echo "$OUTPUT" | grep -qiE "ALREADY_EXISTS|already exists"; then
+              echo "[SKIP] Artifact Registry '${{ env.GAR_REPOSITORY }}' ya existe (ALREADY_EXISTS). Ignorando."
+            else
+              echo "::error::Error inesperado creando Artifact Registry: $OUTPUT"
+              exit $STATUS
+            fi
+          fi
+          exit 0
+
+      - name: Provision Dedicated Backend Runtime Service Account (Ignore if Exists)
+        id: runtime_sa
+        env:
+          PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
+        run: |
+          set +e
+          SA_EMAIL="${{ env.BACKEND_SA_EMAIL }}"
+          SA_ID="${SA_EMAIL%@*}"
+          echo "sa_email=${SA_EMAIL}" >> "$GITHUB_OUTPUT"
+
+          if gcloud iam service-accounts describe "${SA_EMAIL}" \
+            --project="${PROJECT_ID}" \
+            --quiet >/dev/null 2>&1; then
+            echo "[SKIP] Service Account '${SA_EMAIL}' ya existe. Ignorando creación."
+          else
+            OUTPUT=$(gcloud iam service-accounts create "${SA_ID}" \
+              --display-name="GuíaVital Backend Runtime SA (Least Privilege)" \
+              --description="Identidad de ejecución exclusiva de guiavital-backend para consumir secretos desde Secret Manager" \
+              --project="${PROJECT_ID}" \
+              --quiet 2>&1)
+            STATUS=$?
+            if [ $STATUS -eq 0 ]; then
+              echo "[OK] Service Account '${SA_EMAIL}' creada exitosamente."
+            elif echo "$OUTPUT" | grep -qiE "ALREADY_EXISTS|already exists"; then
+              echo "[SKIP] Service Account '${SA_EMAIL}' ya existe (ALREADY_EXISTS). Ignorando."
+            else
+              echo "::error::Error inesperado creando Service Account: $OUTPUT"
+              exit $STATUS
+            fi
+          fi
+          exit 0
+
+      - name: Provision All Backend Environment Secrets in Secret Manager & Bind IAM (Ignore if Exists)
+        env:
+          PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
+          RUNTIME_SA_EMAIL: ${{ steps.runtime_sa.outputs.sa_email }}
+        run: |
+          set +e
+          BACKEND_SECRETS=(
+            "LLM_PROVIDER"
+            "LLM_MODEL"
+            "GEMINI_API_KEY"
+            "LLM_FALLBACK_PROVIDER"
+            "LLM_FALLBACK_MODEL"
+            "GROQ_API_KEY"
+            "LLM_TIMEOUT_SECONDS"
+            "LLM_TEMPERATURE"
+            "LLM_MAX_OUTPUT_TOKENS"
+            "MAX_INPUT_CHARS"
+            "RATE_LIMIT_PER_MINUTE"
+            "HISTORIAL_DB"
+            "CORS_ORIGINS"
+          )
+
+          for SECRET_NAME in "${BACKEND_SECRETS[@]}"; do
+            if gcloud secrets describe "${SECRET_NAME}" \
+              --project="${PROJECT_ID}" \
+              --quiet >/dev/null 2>&1; then
+              echo "[SKIP] El contenedor de secreto '${SECRET_NAME}' ya existe en Secret Manager. Ignorando creación."
+            else
+              OUTPUT=$(gcloud secrets create "${SECRET_NAME}" \
+                --replication-policy="automatic" \
+                --labels="app=guiavital,component=backend,managed-by=github-actions" \
+                --project="${PROJECT_ID}" \
+                --quiet 2>&1)
+              STATUS=$?
+              if [ $STATUS -eq 0 ]; then
+                echo "[OK] Contenedor de secreto '${SECRET_NAME}' creado. Ingrese su valor manualmente en la consola de GCP."
+              elif echo "$OUTPUT" | grep -qiE "ALREADY_EXISTS|already exists"; then
+                echo "[SKIP] El secreto '${SECRET_NAME}' ya existe (ALREADY_EXISTS). Ignorando."
+              else
+                echo "::error::Error inesperado creando el secreto '${SECRET_NAME}': $OUTPUT"
+                exit $STATUS
+              fi
+            fi
+
+            # Vincular permiso de menor privilegio (idempotente en GCP IAM)
+            BIND_OUTPUT=$(gcloud secrets add-iam-policy-binding "${SECRET_NAME}" \
+              --member="serviceAccount:${RUNTIME_SA_EMAIL}" \
+              --role="roles/secretmanager.secretAccessor" \
+              --project="${PROJECT_ID}" \
+              --quiet 2>&1)
+            BIND_STATUS=$?
+            if [ $BIND_STATUS -eq 0 ]; then
+              echo "[OK] Permiso secretAccessor verificado/aplicado sobre '${SECRET_NAME}' para '${RUNTIME_SA_EMAIL}'."
+            else
+              echo "[WARN] No se pudo actualizar el IAM binding de '${SECRET_NAME}' (posiblemente ya configurado): ${BIND_OUTPUT}"
+            fi
+          done
+          exit 0
+
+      - name: Summary of Provisioned Infrastructure
+        run: |
+          cat << 'EOF' >> "$GITHUB_STEP_SUMMARY"
+          ### Infraestructura GCP Verificada / Aprovisionada Exitosamente
+          - **Proyecto GCP:** `${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}`
+          - **Artifact Registry:** `${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}`
+          - **Runtime SA (Backend):** `${{ steps.runtime_sa.outputs.sa_email }}`
+          - **Secretos configurados en Secret Manager (IAM `roles/secretmanager.secretAccessor`):**
+            - `LLM_PROVIDER`, `LLM_MODEL`, `GEMINI_API_KEY`
+            - `LLM_FALLBACK_PROVIDER`, `LLM_FALLBACK_MODEL`, `GROQ_API_KEY`
+            - `LLM_TIMEOUT_SECONDS`, `LLM_TEMPERATURE`, `LLM_MAX_OUTPUT_TOKENS`
+            - `MAX_INPUT_CHARS`, `RATE_LIMIT_PER_MINUTE`, `HISTORIAL_DB`, `CORS_ORIGINS`
+          
+          > **Nota:** Los componentes ya existentes fueron omitidos de forma segura (`[SKIP]`). Asegúrese de haber ingresado los valores de los secretos en **GCP Console → Secret Manager** antes de ejecutar el workflow `Deploy to GCP Cloud Run`.
+          EOF

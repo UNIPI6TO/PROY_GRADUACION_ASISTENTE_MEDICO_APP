@@ -1,0 +1,10 @@
+node_modules
+dist
+.vite
+.vite-temp
+.env
+.env.*
+!.env.example
+coverage
+tests
+*.log
