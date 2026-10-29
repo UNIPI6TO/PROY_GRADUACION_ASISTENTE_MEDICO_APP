@@ -42,8 +42,6 @@ flowchart LR
 
 ## Diagrama de contenedores (C4 nivel 2)
 
-Los elementos con borde punteado naranja llegan en la semana 3.
-
 ```mermaid
 flowchart LR
   U0(["Ciudadano"])
@@ -53,11 +51,12 @@ flowchart LR
     BE["Backend API<br/>FastAPI (Python)<br/>POST /api/v1/chat<br/>GET /manage/health<br/>GET /manage/info"]
     SEC["Seguridad · seguridad.py<br/>Rate Limit (429) y delimitación"]
     LLM["Servicio IA · llm.py<br/>tiempo límite, reintentos, respaldo"]
+    RET["Retriever · retriever.py<br/>BuscadorVectorial (E5-small)"]
     REPO["Repositorio · historial.py<br/>memoria por idSesion"]
     PR[("app/prompts/")]
     DB[("SQLite<br/>data/historial.db")]
     OB["Registro: Logs estructurados sin datos personales"]
-    VEC[("Base vectorial RAG<br/>semana 3")]
+    VEC[("ChromaDB<br/>chroma_db/ (161 fragmentos)")]
     AG["Agente y herramientas<br/>semana 3"]
   end
   P1["Google Gemini (AI Studio)<br/>gemini-2.0-flash"]
@@ -67,6 +66,8 @@ flowchart LR
   U1 --> FE
   FE -- "HTTPS / JSON" --> BE
   BE --> SEC
+  BE --> RET
+  RET --> VEC
   BE --> LLM
   BE --> REPO
   REPO --> DB
@@ -75,11 +76,10 @@ flowchart LR
   BE --> PR
   BE --> OB
   BE -.-> AG
-  AG -.-> VEC
   BE -.-> E0
   classDef fut fill:#f6e9d8,stroke:#a8641a,stroke-dasharray:5 5
   classDef ext fill:#eceff1,stroke:#607d8b
-  class VEC,AG fut
+  class AG fut
   class P1,P2 ext
   class E0 fut
 ```
@@ -90,12 +90,14 @@ flowchart LR
 |---|---|
 | Frontend | React + Vite |
 | Backend | FastAPI (Python) |
-| Datos | SQLite |
-| Modelo principal | Google Gemini (AI Studio) · gemini-2.0-flash |
-| Modelo de respaldo | Groq · llama-3.1-8b-instant |
-| Patrón de integración | Enrutamiento por tipo de consulta |
+| Datos | SQLite (`data/historial.db`) |
+| Base Vectorial (RAG) | ChromaDB persistente (`chroma_db/`, espacio `cosine`) |
+| Modelo de Embeddings | `intfloat/multilingual-e5-small` (384 dimensiones, asimétrico) |
+| Modelo principal | Google Gemini (AI Studio) · gemini-3.5-flash-lite |
+| Modelo de respaldo | Groq · openai/gpt-oss-20b |
+| Patrón de integración | Enrutamiento por tipo de consulta con recuperación RAG |
 | Registro | Logs estructurados sin datos personales |
-| Despliegue previsto | _Por decidir_ |
+| Despliegue previsto | Hugging Face Spaces |
 
 ## Endpoints
 
@@ -111,8 +113,10 @@ flowchart LR
 |---|---|---|
 | Controlador HTTP y Contrato | `app/main.py`, `app/schemas.py` | Rutas FastAPI, inyección con `Depends()`, validación Pydantic (`Solicitud`, `RespuestaChat`) y errores `ProblemaRFC9457` (`422`, `429`, `503`, `500`) sin exponer *stack traces* |
 | Seguridad OWASP LLM 2025 | `app/services/seguridad.py` | `LimitadorTasa` por `idSesion` (ventana deslizante con respuesta `429` y cabecera `Retry-After`) y `delimitar_consulta` con etiquetas `<consulta_usuario>` contra inyección de prompts |
+| Recuperación Vectorial (RAG) | `app/services/retriever.py` | `BuscadorVectorial` con carga perezosa de `intfloat/multilingual-e5-small`, asimetría semántica con prefijo `query: `, filtrado por metadatos (`vigente: True`), búsqueda híbrida exacta y conversión a Pydantic `Fuente` |
 | Cliente de IA Resiliente | `app/services/llm.py` | Encapsula Gemini y Groq, valida salida JSON contra esquema estricto, aplica reintentos con espera exponencial + *jitter*, soporta historial multi-turno y registra métricas sin PII en `logs/llm.jsonl` |
 | Persistencia de Memoria | `app/repositorio/historial.py` | Almacena y consulta los últimos turnos por `idSesion` en SQLite (`data/historial.db`) mediante consultas parametrizadas aisladas por sesión |
+| Ingesta y Segmentación | `scripts/ingest.py` | Extracción con PyMuPDF, descarte de bibliografía y marcas de agua, chunking jerárquico con inyección de encabezado, prefijos `passage: `, indexación en ChromaDB y exportación a `data/processed/` |
 
 ## Prompts versionados
 
@@ -142,6 +146,7 @@ flowchart LR
 | Suite de Pruebas | Archivo | Doble / Mock Utilizado | Qué Verifica |
 |---|---|---|---|
 | Endpoint `/api/v1/chat`, Memoria y Seguridad | `tests/test_dengue.py` | `LLMFalso`, `RepositorioHistorial(":memory:")` y `Reloj` inyectados con `app.dependency_overrides` | Contrato `200`, persistencia y memoria multi-turno en SQLite, aislamiento entre sesiones, *rate limit* `429` + `Retry-After`, delimitación anti-inyección `<consulta_usuario>`, validaciones `422` (`texto` e `idSesion`), errores `503`/`500` en formato RFC 9457 sin *stack trace* y abstención ante salida inválida |
+| Recuperación Vectorial y Chunking | `tests/test_retriever.py` | `CarteroDeterminista` (doble determinista de embeddings) y `chromadb.EphemeralClient` | Extracción de páginas 95 a 100 de SIVE-Alerta, exclusión de referencias de OPS 2016, asimetría de prefijos E5 (`query:` vs `passage:`), ranking por distancia coseno, búsqueda por código exacto y filtro de vigencia |
 | Servicio de IA (`ClienteLLM`) | `tests/test_llm.py` | `Doble` del cliente OpenAI y función `dormir` simulada | Validación de esquema JSON estricto, autocorrección en 1 intento, reintentos ante `429`/`503`/respuesta vacía, respeto de `Retry-After`, espera exponencial y conmutación al proveedor de respaldo |
 | Operación y Versionado | `tests/test_main.py`, `tests/test_semver_bumper.py` | Sondas de salud simuladas (*lambdas*) | Diagnóstico `/manage/health` (`200` UP / `503` DOWN), cumplimiento SemVer en `/manage/info` e incremento automático de versión |
 
