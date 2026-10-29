@@ -16,6 +16,7 @@ credentials.json
 
 # Datos locales y base vectorial (no subir base de datos Chroma local pesada)
 data/chroma/
+chroma_db/
 *.sqlite3
 
 # Logs y temporales
