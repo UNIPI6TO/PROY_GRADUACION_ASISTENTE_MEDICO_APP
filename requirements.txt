@@ -6,3 +6,6 @@ fastapi==0.150.0        # endpoint de ejemplo
 uvicorn==0.53.0
 pytest==9.1.1           # pruebas con un doble (mock) del modelo
 httpx==0.28.1           # lo usa el TestClient de FastAPI
+pymupdf>=1.25.0         # extracción de texto de PDFs (data/raw/)
+chromadb>=1.0.0         # base vectorial local en disco (chroma_db/)
+sentence-transformers>=3.0.0  # modelo de embeddings intfloat/multilingual-e5-small
