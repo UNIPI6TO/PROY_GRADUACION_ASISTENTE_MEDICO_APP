@@ -1,0 +1,19 @@
+# Ignorar archivos innecesarios o sensibles en el contexto de build del Backend
+.git
+.github
+.pytest_cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.*
+!.env.example
+frontend/
+docs/
+eval/
+logs/
+state/
+tests/
+*.db
+*.sqlite3
