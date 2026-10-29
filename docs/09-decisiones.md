@@ -118,3 +118,46 @@ Usaremos información validada sobre los síntomas y la prevención del dengue, 
 **Positivas:** información más confiable, respuestas consistentes y facilidad para realizar pruebas.
 
 **Negativas y riesgos:** se necesita actualizar la información y programar reglas para comprobar las respuestas.
+
+---
+
+## ADR-005: Base Vectorial Local Embebida con ChromaDB, intfloat/multilingual-e5-small y Segmentación Semántica Jerárquica
+
+### Estado
+
+Aceptado
+
+### Fecha
+
+2026-10-28
+
+### Contexto
+
+Para fundamentar las respuestas del asistente en la normativa clínica oficial de la OPS/OMS (2016) y del Ministerio de Salud Pública del Ecuador (SIVE-Alerta), se requiere una base vectorial (RAG) que permita recuperar fragmentos con alta precisión semántica, soporte búsqueda híbrida por códigos clínicos exactos (ej. `CIE-10 A90`, `CIE-10 A91`), filtre directrices por vigencia y opere sin costos de API externa ni latencias de red.
+
+### Opciones consideradas
+
+* **Opción A (APIs de Embeddings y Vector DB en la nube - OpenAI `text-embedding-3-small` + Pinecone):**
+  * *Ventajas:* Alta calidad de embeddings y escalabilidad gestionada.
+  * *Desventajas:* Costo recurrente en dólares por cada consulta, dependencia de conexión constante a internet, riesgo de latencia externa e incompatibilidad con pruebas automatizadas rápidas sin cuotas de API.
+* **Opción B (Base Vectorial Local Embebida - ChromaDB + intfloat/multilingual-e5-small):**
+  * *Ventajas:* Ejecución 100% local y gratuita; persistencia combinada en SQLite (metadatos y FTS5 para búsqueda exacta de texto) y HNSW en archivos binarios (cálculo de distancias coseno en milisegundos); modelo multilingüe de 384 dimensiones altamente optimizado para español; esquema asimétrico (`query:` / `passage:`) que maximiza la similitud pregunta-respuesta; desacoplamiento total en pruebas con dobles efímeros (`chromadb.EphemeralClient`).
+  * *Desventajas:* Requiere almacenar los pesos del modelo en el entorno local (~470 MB) y ejecutar la inferencia de embeddings en CPU/GPU del servidor.
+
+### Decisión
+
+Se adopta la **Opción B**:
+1. Motor de base vectorial: **ChromaDB persistente** (`chroma_db/`) con colección `guia_vital_dengue` y espacio métrico `cosine`.
+2. Modelo de embeddings: **`intfloat/multilingual-e5-small`** (384 dimensiones) con prefijo asimétrico obligatorio `"passage: "` para pasajes indexados y `"query: "` para preguntas de usuarios.
+3. Estrategia de corte: Segmentación semántica jerárquica guiada por encabezados clínicos, limpieza de marcas de agua, delimitación exacta por regex en SIVE-Alerta (págs. 95–100) y exclusión de la bibliografía de la Guía OPS 2016.
+4. Trazabilidad: Exportación de los 161 fragmentos resultantes en Markdown estructurado (`data/processed/fragmentos.md`) y JSON (`data/processed/fragmentos.json`).
+
+### Consecuencias
+
+* **Positivas:**
+  * Cero costos por llamadas a servicios de embeddings en la nube.
+  * Privacidad total: las consultas no viajan a proveedores de embeddings externos.
+  * Pruebas automatizadas inmediatas en `pytest` (~4 s) mediante inyección de mocks (`CarteroDeterminista` y cliente efímero en memoria).
+  * Precisión comprobada: evaluación empírica con 20 preguntas clínicas en [eval/run_eval.py](../eval/run_eval.py) alcanzando **Hit@5 = 100%** y **Hit@1 = 85%**.
+* **Negativas y riesgos:**
+  * La primera ejecución requiere la descarga local de los pesos del modelo HuggingFace (~470 MB). En entornos sin internet debe configurarse `local_files_only=True` sobre la caché local.
