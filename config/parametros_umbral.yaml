@@ -1,0 +1,2 @@
+# config/parametros.yaml · agregar a su archivo existente
+umbral_confianza: 0.85   # elegido con el conjunto de prueba; recalibrar si cambia el modelo
