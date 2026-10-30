@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -92,3 +95,21 @@ def cargar_config() -> Config:
         reintentos=int(os.getenv("LLM_REINTENTOS", "3")),
         razonamiento=razonamiento,
     )
+
+
+RUTA_PARAMETROS_YAML = Path(__file__).resolve().parent.parent / "config" / "parametros.yaml"
+
+
+@lru_cache(maxsize=1)
+def cargar_parametros() -> dict[str, Any]:
+    """Carga los parámetros operativos desde config/parametros.yaml."""
+    if not RUTA_PARAMETROS_YAML.exists():
+        return {}
+    import yaml
+
+    with open(RUTA_PARAMETROS_YAML, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}
+
+
+PARAMETROS = cargar_parametros()
+
