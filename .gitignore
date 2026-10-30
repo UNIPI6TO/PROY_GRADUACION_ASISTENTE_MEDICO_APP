@@ -38,3 +38,5 @@ frontend/dist/
 # Colecciones y pruebas manuales locales
 bruno/GuiaVital/
 
+data/historial.db
+logs/llm.jsonl
