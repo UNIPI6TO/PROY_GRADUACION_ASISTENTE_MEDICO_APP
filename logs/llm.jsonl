@@ -461,3 +461,215 @@
 {"evento": "sin_proveedor"}
 {"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 3600.36}
 {"evento": "ok", "proveedor": "b", "modelo": "modelo-b", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "salida_invalida", "proveedor": "a", "errores": 6}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "salida_invalida", "proveedor": "a", "errores": 1}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "salida_invalida_final", "proveedor": "a", "errores": 1}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 2.15}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 2, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "InternalServerError", "estado_http": 503, "espera_s": 0.79}
+{"evento": "reintento", "proveedor": "a", "intento": 2, "tipo": "InternalServerError", "estado_http": 503, "espera_s": 1.21}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 3, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "_RespuestaVacia", "estado_http": null, "espera_s": 0.67}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 2, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 0.68}
+{"evento": "reintento", "proveedor": "a", "intento": 2, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 1.91}
+{"evento": "agotado", "proveedor": "a", "intento": 3, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 2.65}
+{"evento": "ok", "proveedor": "b", "modelo": "modelo-b", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "error_definitivo", "proveedor": "a", "intento": 1, "tipo": "AuthenticationError", "estado_http": 401}
+{"evento": "ok", "proveedor": "b", "modelo": "modelo-b", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.12}
+{"evento": "reintento", "proveedor": "a", "intento": 2, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.13}
+{"evento": "agotado", "proveedor": "a", "intento": 3, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.5}
+{"evento": "reintento", "proveedor": "b", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.14}
+{"evento": "reintento", "proveedor": "b", "intento": 2, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.03}
+{"evento": "agotado", "proveedor": "b", "intento": 3, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.02}
+{"evento": "sin_proveedor"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 3600.45}
+{"evento": "ok", "proveedor": "b", "modelo": "modelo-b", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "reintento", "proveedor": "gemini", "intento": 1, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 0.61}
+{"evento": "reintento", "proveedor": "gemini", "intento": 2, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 1.72}
+{"evento": "agotado", "proveedor": "gemini", "intento": 3, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 3.32}
+{"evento": "error_definitivo", "proveedor": "groq", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "sin_proveedor"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 2016, "tokens_entrada": 2185, "tokens_salida": 263, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 1856, "tokens_entrada": 2463, "tokens_salida": 236, "fin": "stop"}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "salida_invalida", "proveedor": "a", "errores": 6}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "salida_invalida", "proveedor": "a", "errores": 1}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "salida_invalida_final", "proveedor": "a", "errores": 1}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 2.35}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 2, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "InternalServerError", "estado_http": 503, "espera_s": 0.63}
+{"evento": "reintento", "proveedor": "a", "intento": 2, "tipo": "InternalServerError", "estado_http": 503, "espera_s": 1.62}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 3, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "_RespuestaVacia", "estado_http": null, "espera_s": 0.94}
+{"evento": "ok", "proveedor": "a", "modelo": "modelo-a", "intento": 2, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 0.91}
+{"evento": "reintento", "proveedor": "a", "intento": 2, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 1.27}
+{"evento": "agotado", "proveedor": "a", "intento": 3, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 2.26}
+{"evento": "ok", "proveedor": "b", "modelo": "modelo-b", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "error_definitivo", "proveedor": "a", "intento": 1, "tipo": "AuthenticationError", "estado_http": 401}
+{"evento": "ok", "proveedor": "b", "modelo": "modelo-b", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.04}
+{"evento": "reintento", "proveedor": "a", "intento": 2, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.39}
+{"evento": "agotado", "proveedor": "a", "intento": 3, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.05}
+{"evento": "reintento", "proveedor": "b", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.41}
+{"evento": "reintento", "proveedor": "b", "intento": 2, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.38}
+{"evento": "agotado", "proveedor": "b", "intento": 3, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 1.4}
+{"evento": "sin_proveedor"}
+{"evento": "reintento", "proveedor": "a", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 3600.22}
+{"evento": "ok", "proveedor": "b", "modelo": "modelo-b", "intento": 1, "latencia_ms": 0, "tokens_entrada": 10, "tokens_salida": 5, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 2070, "tokens_entrada": 2012, "tokens_salida": 58, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 1049, "tokens_entrada": 4723, "tokens_salida": 323, "fin": "stop"}
+{"evento": "reintento", "proveedor": "gemini", "intento": 1, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 0.53}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 2, "latencia_ms": 1244, "tokens_entrada": 2345, "tokens_salida": 29, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 1300, "tokens_entrada": 3527, "tokens_salida": 583, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 2858, "tokens_entrada": 2661, "tokens_salida": 209, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 2586, "tokens_entrada": 2632, "tokens_salida": 99, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 1494, "tokens_entrada": 2402, "tokens_salida": 31, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 1275, "tokens_entrada": 3762, "tokens_salida": 466, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 1811, "tokens_entrada": 2263, "tokens_salida": 26, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 784, "tokens_entrada": 4285, "tokens_salida": 253, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 2508, "tokens_entrada": 2314, "tokens_salida": 70, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 956, "tokens_entrada": 2559, "tokens_salida": 303, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 1830, "tokens_entrada": 2543, "tokens_salida": 77, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 960, "tokens_entrada": 2691, "tokens_salida": 360, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 2484, "tokens_entrada": 2743, "tokens_salida": 243, "fin": "stop"}
+{"evento": "reintento", "proveedor": "gemini", "intento": 1, "tipo": "APITimeoutError", "estado_http": null, "espera_s": 0.67}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 2, "latencia_ms": 2799, "tokens_entrada": 2764, "tokens_salida": 109, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 706, "tokens_entrada": 4633, "tokens_salida": 62, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 14.39}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 2, "latencia_ms": 967, "tokens_entrada": 4864, "tokens_salida": 383, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 1978, "tokens_entrada": 2838, "tokens_salida": 60, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 840, "tokens_entrada": 4159, "tokens_salida": 178, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 3051, "tokens_entrada": 2594, "tokens_salida": 30, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 893, "tokens_entrada": 2415, "tokens_salida": 176, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 2225, "tokens_entrada": 2502, "tokens_salida": 59, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 854, "tokens_entrada": 3598, "tokens_salida": 202, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 1079, "tokens_entrada": 2262, "tokens_salida": 31, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 822, "tokens_entrada": 2109, "tokens_salida": 185, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 1589, "tokens_entrada": 2254, "tokens_salida": 31, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 577, "tokens_entrada": 2269, "tokens_salida": 42, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 1068, "tokens_entrada": 3290, "tokens_salida": 492, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 2001, "tokens_entrada": 2591, "tokens_salida": 31, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 836, "tokens_entrada": 2577, "tokens_salida": 40, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 18.23}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 2, "latencia_ms": 1041, "tokens_entrada": 3598, "tokens_salida": 483, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 1299, "tokens_entrada": 2925, "tokens_salida": 28, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 1451, "tokens_entrada": 4250, "tokens_salida": 185, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 2440, "tokens_entrada": 2966, "tokens_salida": 109, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 2043, "tokens_entrada": 2573, "tokens_salida": 24, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 788, "tokens_entrada": 3798, "tokens_salida": 326, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 929, "tokens_entrada": 2384, "tokens_salida": 28, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 1249, "tokens_entrada": 3614, "tokens_salida": 755, "fin": "stop"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 1732, "tokens_entrada": 2938, "tokens_salida": 24, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "error_definitivo", "proveedor": "groq", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "sin_proveedor"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 1569, "tokens_entrada": 2938, "tokens_salida": 26, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 4.42}
+{"evento": "error_definitivo", "proveedor": "groq", "intento": 2, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "sin_proveedor"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 2254, "tokens_entrada": 2938, "tokens_salida": 26, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 25.26}
+{"evento": "sin_proveedor"}
+{"evento": "ok", "proveedor": "gemini", "modelo": "gemini-3.5-flash-lite", "intento": 1, "latencia_ms": 1291, "tokens_entrada": 2938, "tokens_salida": 62, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 22.01}
+{"evento": "sin_proveedor"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 457, "tokens_entrada": 2734, "tokens_salida": 42, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 1080, "tokens_entrada": 3770, "tokens_salida": 196, "fin": "stop"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 667, "tokens_entrada": 2762, "tokens_salida": 40, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 1808, "tokens_entrada": 3798, "tokens_salida": 166, "fin": "stop"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 567, "tokens_entrada": 2592, "tokens_salida": 55, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 3.02}
+{"evento": "reintento", "proveedor": "groq", "intento": 2, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 2.11}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 3, "latencia_ms": 584, "tokens_entrada": 5094, "tokens_salida": 69, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 27.37}
+{"evento": "sin_proveedor"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 2.38}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 2, "latencia_ms": 871, "tokens_entrada": 2592, "tokens_salida": 100, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 37.29}
+{"evento": "sin_proveedor"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 14.33}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 2, "latencia_ms": 802, "tokens_entrada": 2592, "tokens_salida": 47, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 29.5}
+{"evento": "sin_proveedor"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 470, "tokens_entrada": 2592, "tokens_salida": 55, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "error_definitivo", "proveedor": "groq", "intento": 1, "tipo": "BadRequestError", "estado_http": 400}
+{"evento": "sin_proveedor"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 370, "tokens_entrada": 2592, "tokens_salida": 47, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 41.15}
+{"evento": "sin_proveedor"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 18.39}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 2, "latencia_ms": 622, "tokens_entrada": 2592, "tokens_salida": 105, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 41.15}
+{"evento": "sin_proveedor"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 301, "tokens_entrada": 2592, "tokens_salida": 40, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 824, "tokens_entrada": 5470, "tokens_salida": 65, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 26.32}
+{"evento": "sin_proveedor"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 1312, "tokens_entrada": 2592, "tokens_salida": 48, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 2.26}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 2, "latencia_ms": 733, "tokens_entrada": 5470, "tokens_salida": 67, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "reintento", "proveedor": "groq", "intento": 1, "tipo": "RateLimitError", "estado_http": 429, "espera_s": 42.18}
+{"evento": "sin_proveedor"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 452, "tokens_entrada": 1511, "tokens_salida": 40, "fin": "tool_calls"}
+{"evento": "error_definitivo", "proveedor": "gemini", "intento": 1, "tipo": "NotFoundError", "estado_http": 404}
+{"evento": "ok", "proveedor": "groq", "modelo": "openai/gpt-oss-20b", "intento": 1, "latencia_ms": 1201, "tokens_entrada": 3819, "tokens_salida": 477, "fin": "stop"}
