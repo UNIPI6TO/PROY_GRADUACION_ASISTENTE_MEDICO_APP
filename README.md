@@ -60,10 +60,11 @@
 ```text
 PROY_GRADUACION_ASISTENTE_MEDICO_APP/
 ├── app/
-│   ├── main.py                  # Aplicación FastAPI, endpoints v1 y v2 (/api/v1/chat, /api/v2/chat, /manage/health)
-│   ├── config.py                # Carga de variables de entorno (.env), catálogo de proveedores y carga de config/parametros.yaml
+│   ├── main.py                  # Aplicación FastAPI, endpoints v1, v2 y herramientas (/herramientas/signos-alarma)
+│   ├── flujo.py                 # Cinta de automatización de 7 estaciones con umbral de confianza (0.85)
+│   ├── config.py                # Carga de variables de entorno (.env), catálogo de proveedores y config/parametros.yaml
 │   ├── schemas.py               # Contratos Pydantic estrictos (Solicitud, RespuestaAsistente, RespuestaChat, RespuestaChatV2)
-│   ├── prompts/                 # Prompts del sistema versionados (system_v1.md a system_v4.md)
+│   ├── prompts/                 # Prompts del sistema versionados (system_v1.md a system_v4.md, system_agente.md)
 │   ├── repositorio/
 │   │   └── historial.py         # RepositorioHistorial en SQLite aislado por idSesion
 │   ├── services/
@@ -73,21 +74,25 @@ PROY_GRADUACION_ASISTENTE_MEDICO_APP/
 │   │   └── seguridad.py         # LimitadorTasa (ventana deslizante) y delimitación contra Prompt Injection
 │   └── tools/                   # Herramientas modulares de alcance controlado (una por archivo)
 │       ├── consultar_guia_msp.py         # Libre: Búsqueda documental RAG en guías clínicas oficiales del MSP
-│       ├── evaluar_signos_alarma.py     # Libre: Comparación determinista contra signos de alarma del MSP
+│       ├── evaluar_signos_alarma.py     # Libre: Comparación determinista contra signos de alarma del MSP (Modelos HttpIn/Out)
 │       ├── buscar_centro_salud.py       # Libre: GeoSalud Ecuador con Haversine y filtro de Emergencia 24h
 │       └── notificar_contacto_emergencia.py # Con confirmación: Aviso a familiar/contacto (requiere autorización humana)
+├── bruno/
+│   └── GuiaVital/               # Colección de pruebas manuales para Bruno API Client (ignorada en Git)
+│       ├── environments/        # Entornos Local (127.0.0.1:8000) y Nube
+│       └── *.bru                # Peticiones preconfiguradas (Health, Info, Signos de Alarma 200/422, Chat V2)
 ├── config/
-│   └── parametros.yaml          # Parámetros operativos desacoplados (topes de agente, signos oficiales, umbrales)
+│   └── parametros.yaml          # Parámetros operativos desacoplados (umbral_confianza: 0.85, signos oficiales, topes)
 ├── frontend/
 │   ├── src/
 │   │   ├── api/                 # Cliente HTTP/SSE tipado (esquema OpenAPI), sanitización y manejo de errores RFC 9457
 │   │   ├── components/          # Componentes UI (MensajeChat, ChecklistSignosAlarma, AlertaEstado)
-│   │   ├── types/               # Máquina de 7 estados de interfaz (inactiva, enviando, recibiendo, completa, revision, reintentar, error)
+│   │   ├── types/               # Máquina de 7 estados de interfaz
 │   │   ├── App.tsx              # Vista principal del asistente GuíaVital
 │   │   └── main.tsx             # Punto de entrada React
 │   ├── scripts/
 │   │   └── verificar-secretos.mjs # Auditoría automática contra exposición de claves en el bundle frontend
-│   ├── tests/                   # Suite Vitest + Testing Library + MSW (cliente, estados, seguridad y accesibilidad)
+│   ├── tests/                   # Suite Vitest + Testing Library + MSW
 │   ├── package.json
 │   └── vite.config.ts
 ├── scripts/
@@ -103,10 +108,15 @@ PROY_GRADUACION_ASISTENTE_MEDICO_APP/
 │   └── historial.db             # Base de datos SQLite generada en ejecución
 ├── chroma_db/                   # Base de datos vectorial persistente (161 fragmentos indexados con HNSW + SQLite)
 ├── eval/
+│   ├── casos_flujo.jsonl        # Conjunto dorado de 20 casos para calibración de la cinta (0 errores silenciosos)
+│   ├── preguntas_rag.jsonl      # 20 preguntas de evaluación RAG (15 documentadas, 5 de abstención controlada)
+│   ├── evaluar.py               # Evaluador integral de metas de calidad para CI (RAG top-3 >= 85%, cinta <= 30% revisión)
 │   ├── preguntas.csv            # Conjunto de 20 preguntas clínicas de referencia con validación Hit@k
 │   ├── run_eval.py              # Evaluador de recuperación vectorial (Hit@1 = 85%, Hit@5 = 100%)
 │   └── entradas_prompts.csv     # Conjunto de entradas para evaluación comparativa de prompts
 ├── tests/                       # Pruebas automatizadas del backend con pytest y dobles (mocks)
+│   ├── test_flujo.py            # Pruebas de confianza, umbral (0.85) y decisiones de desvío de la cinta
+│   ├── test_endpoint_signos_alarma.py # Pruebas del endpoint HTTP determinista (casos 200 y validación 422)
 │   ├── test_dengue.py           # Pruebas de /api/v1/chat, memoria SQLite, rate limit y seguridad
 │   ├── test_api_v2.py           # Pruebas funcionales de endpoints v2 (/api/v2/chat y /api/v2/chat/confirmar)
 │   ├── test_agent.py            # Pruebas del bucle del agente (camino feliz, lista cerrada, tope y confirmación)
@@ -117,7 +127,7 @@ PROY_GRADUACION_ASISTENTE_MEDICO_APP/
 │   ├── test_llm.py              # Pruebas unitarias de ClienteLLM (reintentos, backoff, fallback, validación JSON)
 │   ├── test_main.py             # Pruebas de /manage/health y /manage/info
 │   └── test_semver_bumper.py    # Pruebas del calculador de versiones SemVer
-├── docs/                        # Documentación de ingeniería (01-propuesta a 09-decisiones y evidencias)
+├── docs/                        # Documentación de ingeniería (01-propuesta a 11-plan-de-calidad y evidencias)
 ├── .env.example                 # Plantilla de variables de entorno del backend
 ├── requirements.txt             # Dependencias bloqueadas del backend Python
 └── README.md
@@ -224,11 +234,66 @@ npm run dev
 
 | Método | Ruta | Descripción | Códigos de Respuesta |
 |---|---|---|---|
-| `POST` | `/api/v1/chat` | **v1 (Semana 2):** Consulta de una sola llamada con memoria SQLite, delimitación anti-inyección, rate limit y salida JSON fija | `200 OK` (`RespuestaChat`), `422`, `429`, `503`, `500` |
+| `POST` | `/herramientas/signos-alarma` | **Herramienta Determinista (Semana 3):** Evaluación algorítmica de signos de alarma de dengue según la Guía del MSP con modelos Pydantic de entrada y salida | `200 OK` (`EvaluarSignosAlarmaHttpOut`), `422 Unprocessable Content` |
 | `POST` | `/api/v2/chat` | **v2 (Semana 3):** Agente de alcance controlado con Function Calling, hasta 6 iteraciones, herramientas modulares y parada por confirmación | `200 OK` (`RespuestaChatV2`), `422`, `429`, `503`, `500` |
 | `POST` | `/api/v2/chat/confirmar` | **v2 (Semana 3):** Reanuda el agente tras la autorización o rechazo humano de una acción sensible | `200 OK` (`RespuestaChatV2`), `422`, `429`, `503`, `500` |
+| `POST` | `/api/v1/chat` | **v1 (Semana 2):** Consulta de una sola llamada con memoria SQLite, delimitación anti-inyección, rate limit y salida JSON fija | `200 OK` (`RespuestaChat`), `422`, `429`, `503`, `500` |
 | `GET` | `/manage/health` | Diagnóstico operativo de *Liveness* y *Readiness* | `200 OK` (`status: UP`), `503 Service Unavailable` (`status: DOWN`) |
 | `GET` | `/manage/info` | Retorna el nombre oficial (`GuíaVital`) y versión validada bajo SemVer (`0.2.0`) | `200 OK` |
+
+### Ejemplo de Herramienta Determinista (`POST /herramientas/signos-alarma`)
+
+**Solicitud Válida (200 OK):**
+```json
+{
+  "dias_fiebre": 4,
+  "dolor_abdominal": true,
+  "vomitos_persistentes": false,
+  "sangrado": false,
+  "edad": 34
+}
+```
+
+**Respuesta (`200 OK`):**
+```json
+{
+  "signos_presentes": 1,
+  "nivel": "alarma",
+  "recomendacion": "Acudir hoy al centro de salud más cercano",
+  "fuente": "Guía de dengue del MSP, sección signos de alarma"
+}
+```
+
+**Rechazo de Frontera Pydantic (`422 Unprocessable Content`):**
+Al enviar un valor biológicamente imposible (ej. `"edad": 800` o `"dias_fiebre": 45`), Pydantic v2 intercepta la petición antes de que toque la lógica de negocio:
+```json
+{
+  "detail": [
+    {
+      "type": "less_than_equal",
+      "loc": ["body", "edad"],
+      "msg": "Input should be less than or equal to 120",
+      "input": 800,
+      "ctx": { "le": 120 }
+    }
+  ]
+}
+```
+
+---
+
+### Cinta del Flujo Automatizado con Umbral (`app/flujo.py`)
+
+Para procesos masivos de entrada no estructurada (como formularios web de triaje), GuíaVital implementa una **cinta fija de 7 estaciones** regulada por un umbral de confianza calibrado en `config/parametros.yaml` (`umbral_confianza: 0.85`):
+
+```
+[1. Disparador] ──> [2. Clasificar] ──> [3. Umbral >= 0.85?] ──┬─ SI ──> [4. Extraer] ──> [5. Reglas MSP] ──> [7. Actuar]
+                                                                │
+                                                                └─ NO ──> [6. Revisión Humana Médica]
+```
+
+* **Calibración con Conjunto Dorado (`eval/casos_flujo.jsonl`):** Sobre 20 casos clínicos reales, el flujo resuelve el **70% de forma automática**, deriva el **30% a revisión médica**, y garantiza estrictamente **0 errores silenciosos**.
+
 
 ### Agente de Alcance Controlado (v2)
 
@@ -304,6 +369,8 @@ pytest -v
 
 | Archivo de Prueba | Qué Valida |
 |---|---|
+| `tests/test_flujo.py` | Cinta de 7 estaciones (`app/flujo.py`): cálculo de confianza, compuerta por umbral 0.85, casos automáticos vs revisión y calibración sin errores silenciosos |
+| `tests/test_endpoint_signos_alarma.py` | Endpoint HTTP determinista (`POST /herramientas/signos-alarma`): respuestas 200 (alarma, vigilancia, sin alarma) y validación Pydantic 422 |
 | `tests/test_api_v2.py` | Endpoints v2 (`/api/v2/chat` y `/api/v2/chat/confirmar`): flujo conversacional del agente, respuesta directa y pausa para confirmación humana |
 | `tests/test_agent.py` | Bucle del agente (`app/services/agent.py`): camino feliz, lista cerrada (rechazo de `diagnosticar`), corte por `MAX_ITER = 6` y flujo de confirmación |
 | `tests/test_consultar_guia_msp.py` | Herramienta RAG: validación de longitud con Pydantic, conexión con `BuscadorVectorial` y determinismo de resultados |
@@ -315,7 +382,33 @@ pytest -v
 | `tests/test_main.py` | Diagnóstico `/manage/health` (`200` UP / `503` DOWN) y cumplimiento de expresión regular SemVer en `/manage/info` |
 | `tests/test_semver_bumper.py` | Reglas de incremento SemVer (*MAJOR*, *MINOR*, *PATCH*) según *Conventional Commits* y generación de versiones *SNAPSHOT-RC* |
 
-### 2. Pruebas Automatizadas del Frontend (`Vitest` + `MSW`)
+### 2. Ejecutar Evaluación de Calidad en CI (`eval/evaluar.py`)
+Evalúa cuantitativamente el acierto del RAG top-3 y la cinta de automatización con umbral de confianza:
+```bash
+python eval/evaluar.py
+```
+* **Salida esperada:** RAG acierto top-3: 87% | Flujo a revisión: 30% | Errores silenciosos: 0.
+
+### 3. Inspeccionar la Confianza en Consola (`pytest -v -s`)
+Permite visualizar caso por caso la confianza calculada y el comportamiento del umbral:
+```bash
+pytest tests/test_flujo.py -v -s
+```
+
+### 4. Pruebas Manuales con Bruno API Client
+La colección de pruebas reside en `bruno/GuiaVital/` (excluida del repositorio vía `.gitignore`).
+1. Abrir **Bruno** y seleccionar *Open Collection* apuntando a la carpeta `bruno/GuiaVital/`.
+2. Seleccionar el entorno en la esquina superior derecha:
+   - **`Local`:** `http://127.0.0.1:8000` (desarrollo local).
+   - **`Nube`:** URL del backend desplegado en la nube.
+3. Ejecutar las peticiones preparadas:
+   - `01 - Health Check` (`GET /manage/health`)
+   - `02 - App Info` (`GET /manage/info`)
+   - `03 - Evaluar Signos Alarma (200 OK)` (`POST /herramientas/signos-alarma`)
+   - `04 - Evaluar Signos Alarma (422 Error)` (`POST /herramientas/signos-alarma`)
+   - `05 - Chat V2 (Agente)` (`POST /api/v2/chat`)
+
+### 5. Pruebas Automatizadas del Frontend (`Vitest` + `MSW`)
 Dentro del directorio `frontend/`:
 
 ```bash
@@ -326,12 +419,6 @@ Verificación de ausencia de secretos en el código y configuración del fronten
 ```bash
 npm run verify:secrets
 ```
-
-| Archivo de Prueba | Qué Valida |
-|---|---|
-| `frontend/tests/cliente.test.ts` | Consumo tipado de `/api/v1/chat`, manejo de errores RFC 9457 (`422`, `429` con lectura de `Retry-After`, `503`), streaming SSE por POST y cancelación inmediata con `AbortController` |
-| `frontend/tests/estados.test.ts` | Transiciones de la máquina de 7 estados (`inactiva`, `enviando`, `recibiendo`, `completa`, `revision`, `reintentar`, `error`), cuenta regresiva de reintento y parser de eventos SSE fragmentados |
-| `frontend/tests/seguridad-y-ui.test.tsx` | Neutralización de payloads XSS en respuestas del modelo (OWASP LLM05), bloqueo de enlaces `javascript:`/`data:`, generación de sesión anónima en `sessionStorage`, anuncios WAI-ARIA (`role="alert"`) y activación del checklist determinista de signos de alarma |
 
 ---
 
@@ -344,3 +431,6 @@ En el directorio [`docs/`](docs/) se encuentra el detalle de ingeniería del sis
 - [`docs/04-fuentes.md`](docs/04-fuentes.md): Corpus normativo oficial del MSP y la OPS/OMS.
 - [`docs/05-prompts.md`](docs/05-prompts.md): Evolución y evaluación comparativa de los prompts del sistema (`system_v1` a `system_v4`).
 - [`docs/09-decisiones.md`](docs/09-decisiones.md): Registro de Decisiones de Arquitectura (ADRs 001 a 004).
+- [`docs/10-automatizacion.md`](docs/10-automatizacion.md): **ADR de Flujo Automatizado con IA (Semana 3)**: decisiones sobre la cinta fija, umbral 0.85 y prevención de errores silenciosos.
+- [`docs/11-plan-de-calidad.md`](docs/11-plan-de-calidad.md): **Plan de Calidad y Evaluación (Semana 3)**: métricas de RAG, agente, cinta y cobertura mínima en CI (>= 85%).
+- [`docs/evidencias/semana-3/README.md`](docs/evidencias/semana-3/README.md): **Bitácora y Evidencias de la Semana 3**: ejecución de pruebas, resultados de `eval/evaluar.py` y guía de revisión.
