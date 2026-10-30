@@ -19,11 +19,16 @@ from fastapi.responses import JSONResponse
 
 from app.repositorio.historial import RepositorioHistorial
 from app.schemas import (
+    AccionPendiente,
+    EstadoAgente,
     ProblemaRFC9457,
     RespuestaAsistente,
     RespuestaChat,
+    RespuestaChatV2,
     Solicitud,
+    SolicitudConfirmacion,
 )
+from app.services.agent import ejecutar_bucle_agente, reanudar_agente
 from app.services.llm import ClienteLLM, ProveedorNoDisponible, SalidaInvalida, cargar_prompt
 from app.services.seguridad import LimiteExcedido, LimitadorTasa, delimitar_consulta
 
@@ -127,6 +132,124 @@ def chat(solicitud: Solicitud,
             fuentes=[],
             proveedor=None,
         )
+
+
+# Almacén en memoria de turnos pausados para confirmación humana (por idSesion)
+_ACCIONES_PENDIENTES: dict[str, dict[str, Any]] = {}
+
+
+@app.post("/api/v2/chat", response_model=RespuestaChatV2, tags=["Asistente v2 (Agente)"],
+          responses={422: {"model": ProblemaRFC9457}, 429: {"model": ProblemaRFC9457},
+                     503: {"model": ProblemaRFC9457}})
+def chat_v2(solicitud: Solicitud,
+            llm: ClienteLLM = Depends(obtener_llm),
+            repo: RepositorioHistorial = Depends(obtener_repositorio),
+            limitador: LimitadorTasa = Depends(obtener_limitador)):
+    """Endpoint v2: Agente de alcance controlado con Function Calling, RAG y límites estrictos."""
+    limitador.verificar(solicitud.idSesion)
+
+    mensajes: list[dict[str, Any]] = [
+        {"role": "system", "content": cargar_prompt("system_agente")}
+    ]
+    for t in repo.ultimos_turnos(solicitud.idSesion):
+        mensajes.append({"role": t.rol, "content": t.contenido})
+    mensajes.append({"role": "user", "content": delimitar_consulta(solicitud.texto)})
+
+    res = ejecutar_bucle_agente(mensajes, cliente_llm=llm)
+
+    if res["estado"] == "requiere_confirmacion":
+        _ACCIONES_PENDIENTES[solicitud.idSesion] = {
+            "mensajes": res["mensajes"],
+            "tool_call_id": res["tool_call_id"],
+            "nombre_herramienta": res["nombre_herramienta"],
+            "argumentos": res["argumentos"],
+            "vueltas": res["vueltas"],
+            "texto_usuario": solicitud.texto,
+        }
+        return RespuestaChatV2(
+            idSesion=solicitud.idSesion,
+            estado=EstadoAgente.REQUIERE_CONFIRMACION,
+            accion_pendiente=AccionPendiente(
+                tool_call_id=res["tool_call_id"],
+                nombre_herramienta=res["nombre_herramienta"],
+                argumentos=res["argumentos"],
+            ),
+            fuentes=res.get("fuentes", []),
+            vueltas_usadas=res["vueltas"],
+        )
+
+    # El ciclo concluyó (completado o tope alcanzado)
+    _ACCIONES_PENDIENTES.pop(solicitud.idSesion, None)
+    repo.guardar(solicitud.idSesion, "user", solicitud.texto)
+    repo.guardar(solicitud.idSesion, "assistant", res["respuesta"])
+
+    estado_final = EstadoAgente.COMPLETADO if res["estado"] == "completado" else EstadoAgente.TOPE_ALCANZADO
+    return RespuestaChatV2(
+        idSesion=solicitud.idSesion,
+        estado=estado_final,
+        respuesta=res["respuesta"],
+        fuentes=res.get("fuentes", []),
+        vueltas_usadas=res["vueltas"],
+    )
+
+
+@app.post("/api/v2/chat/confirmar", response_model=RespuestaChatV2, tags=["Asistente v2 (Agente)"],
+          responses={422: {"model": ProblemaRFC9457}, 429: {"model": ProblemaRFC9457},
+                     503: {"model": ProblemaRFC9457}})
+def confirmar_accion_v2(confirmacion: SolicitudConfirmacion,
+                        llm: ClienteLLM = Depends(obtener_llm),
+                        repo: RepositorioHistorial = Depends(obtener_repositorio)):
+    """Reanuda la ejecución del agente tras la decisión humana (Aprobar / Rechazar)."""
+    pendiente = _ACCIONES_PENDIENTES.pop(confirmacion.idSesion, None)
+    if not pendiente or pendiente["tool_call_id"] != confirmacion.tool_call_id:
+        return _problema(422, "Acción no encontrada", "No hay una acción pendiente de confirmación con ese identificador.", Request({"type": "http", "path": "/api/v2/chat/confirmar"}))
+
+    res = reanudar_agente(
+        mensajes=pendiente["mensajes"],
+        tool_call_id=confirmacion.tool_call_id,
+        aprobado=confirmacion.aprobado,
+        accion_nombre=pendiente["nombre_herramienta"],
+        argumentos=pendiente["argumentos"],
+        cliente_llm=llm,
+        vuelta_actual=pendiente["vueltas"],
+    )
+
+    if res["estado"] == "requiere_confirmacion":
+        _ACCIONES_PENDIENTES[confirmacion.idSesion] = {
+            "mensajes": res["mensajes"],
+            "tool_call_id": res["tool_call_id"],
+            "nombre_herramienta": res["nombre_herramienta"],
+            "argumentos": res["argumentos"],
+            "vueltas": res["vueltas"],
+            "texto_usuario": pendiente.get("texto_usuario", ""),
+        }
+        return RespuestaChatV2(
+            idSesion=confirmacion.idSesion,
+            estado=EstadoAgente.REQUIERE_CONFIRMACION,
+            accion_pendiente=AccionPendiente(
+                tool_call_id=res["tool_call_id"],
+                nombre_herramienta=res["nombre_herramienta"],
+                argumentos=res["argumentos"],
+            ),
+            fuentes=res.get("fuentes", []),
+            vueltas_usadas=res["vueltas"],
+        )
+
+    # Finalizado
+    texto_orig = pendiente.get("texto_usuario", "")
+    if texto_orig:
+        repo.guardar(confirmacion.idSesion, "user", texto_orig)
+    repo.guardar(confirmacion.idSesion, "assistant", res["respuesta"])
+
+    estado_final = EstadoAgente.COMPLETADO if res["estado"] == "completado" else EstadoAgente.TOPE_ALCANZADO
+    return RespuestaChatV2(
+        idSesion=confirmacion.idSesion,
+        estado=estado_final,
+        respuesta=res["respuesta"],
+        fuentes=res.get("fuentes", []),
+        vueltas_usadas=res["vueltas"],
+    )
+
 
 
 def check_health(readiness_probes: Optional[List[Callable[[], bool]]] = None) -> Tuple[Dict[str, Any], int]:
