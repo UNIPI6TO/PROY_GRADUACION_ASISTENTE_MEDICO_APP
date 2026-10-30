@@ -60,16 +60,24 @@
 ```text
 PROY_GRADUACION_ASISTENTE_MEDICO_APP/
 ├── app/
-│   ├── main.py                  # Aplicación FastAPI, endpoints (/api/v1/chat, /manage/health, /manage/info) y manejadores RFC 9457
-│   ├── config.py                # Carga y validación de variables de entorno (.env) y catálogo de proveedores (gemini, groq, simulado)
-│   ├── schemas.py               # Contratos Pydantic estrictos (Solicitud, RespuestaAsistente, RespuestaChat, ProblemaRFC9457)
+│   ├── main.py                  # Aplicación FastAPI, endpoints v1 y v2 (/api/v1/chat, /api/v2/chat, /manage/health)
+│   ├── config.py                # Carga de variables de entorno (.env), catálogo de proveedores y carga de config/parametros.yaml
+│   ├── schemas.py               # Contratos Pydantic estrictos (Solicitud, RespuestaAsistente, RespuestaChat, RespuestaChatV2)
 │   ├── prompts/                 # Prompts del sistema versionados (system_v1.md a system_v4.md)
 │   ├── repositorio/
 │   │   └── historial.py         # RepositorioHistorial en SQLite aislado por idSesion
-│   └── services/
-│       ├── llm.py               # ClienteLLM con reintentos, backoff exponencial, validación JSON y fallback
-│       ├── retriever.py         # BuscadorVectorial en ChromaDB con prefijos E5, filtros de vigencia y búsqueda híbrida
-│       └── seguridad.py         # LimitadorTasa (ventana deslizante) y delimitación contra Prompt Injection
+│   ├── services/
+│   │   ├── llm.py               # ClienteLLM con reintentos, backoff exponencial, validación JSON, tools y fallback
+│   │   ├── retriever.py         # BuscadorVectorial en ChromaDB con prefijos E5, filtros de vigencia y búsqueda híbrida
+│   │   ├── agent.py             # Bucle del Agente de Alcance Controlado (PERMITIDAS, REQUIEREN_OK, MAX_ITER = 6)
+│   │   └── seguridad.py         # LimitadorTasa (ventana deslizante) y delimitación contra Prompt Injection
+│   └── tools/                   # Herramientas modulares de alcance controlado (una por archivo)
+│       ├── consultar_guia_msp.py         # Libre: Búsqueda documental RAG en guías clínicas oficiales del MSP
+│       ├── evaluar_signos_alarma.py     # Libre: Comparación determinista contra signos de alarma del MSP
+│       ├── buscar_centro_salud.py       # Libre: GeoSalud Ecuador con Haversine y filtro de Emergencia 24h
+│       └── notificar_contacto_emergencia.py # Con confirmación: Aviso a familiar/contacto (requiere autorización humana)
+├── config/
+│   └── parametros.yaml          # Parámetros operativos desacoplados (topes de agente, signos oficiales, umbrales)
 ├── frontend/
 │   ├── src/
 │   │   ├── api/                 # Cliente HTTP/SSE tipado (esquema OpenAPI), sanitización y manejo de errores RFC 9457
@@ -100,6 +108,11 @@ PROY_GRADUACION_ASISTENTE_MEDICO_APP/
 │   └── entradas_prompts.csv     # Conjunto de entradas para evaluación comparativa de prompts
 ├── tests/                       # Pruebas automatizadas del backend con pytest y dobles (mocks)
 │   ├── test_dengue.py           # Pruebas de /api/v1/chat, memoria SQLite, rate limit y seguridad
+│   ├── test_api_v2.py           # Pruebas funcionales de endpoints v2 (/api/v2/chat y /api/v2/chat/confirmar)
+│   ├── test_agent.py            # Pruebas del bucle del agente (camino feliz, lista cerrada, tope y confirmación)
+│   ├── test_consultar_guia_msp.py # Pruebas de herramienta RAG con Pydantic y determinismo
+│   ├── test_evaluar_signos_alarma.py # Pruebas deterministas de detección de signos de alarma
+│   ├── test_buscar_centro_salud.py # Pruebas de GeoSalud con orden por distancia Haversine
 │   ├── test_retriever.py        # Pruebas de ingesta, prefijos E5, código exacto y filtro de vigencia
 │   ├── test_llm.py              # Pruebas unitarias de ClienteLLM (reintentos, backoff, fallback, validación JSON)
 │   ├── test_main.py             # Pruebas de /manage/health y /manage/info
@@ -211,9 +224,45 @@ npm run dev
 
 | Método | Ruta | Descripción | Códigos de Respuesta |
 |---|---|---|---|
-| `POST` | `/api/v1/chat` | Procesa una consulta ciudadana con memoria por `idSesion`, delimitadores anti-inyección, límite de tasa y salida estructurada validada | `200 OK` (`RespuestaChat`), `422` (Validación), `429` (Rate Limit + `Retry-After`), `503` (Proveedor no disponible), `500` (Error interno) |
+| `POST` | `/api/v1/chat` | **v1 (Semana 2):** Consulta de una sola llamada con memoria SQLite, delimitación anti-inyección, rate limit y salida JSON fija | `200 OK` (`RespuestaChat`), `422`, `429`, `503`, `500` |
+| `POST` | `/api/v2/chat` | **v2 (Semana 3):** Agente de alcance controlado con Function Calling, hasta 6 iteraciones, herramientas modulares y parada por confirmación | `200 OK` (`RespuestaChatV2`), `422`, `429`, `503`, `500` |
+| `POST` | `/api/v2/chat/confirmar` | **v2 (Semana 3):** Reanuda el agente tras la autorización o rechazo humano de una acción sensible | `200 OK` (`RespuestaChatV2`), `422`, `429`, `503`, `500` |
 | `GET` | `/manage/health` | Diagnóstico operativo de *Liveness* y *Readiness* | `200 OK` (`status: UP`), `503 Service Unavailable` (`status: DOWN`) |
 | `GET` | `/manage/info` | Retorna el nombre oficial (`GuíaVital`) y versión validada bajo SemVer (`0.2.0`) | `200 OK` |
+
+### Agente de Alcance Controlado (v2)
+
+El agente opera bajo **tres decisiones estrictas en código** (no delegadas al prompt ni modificables por el usuario o documentos):
+1. **Lista cerrada (`PERMITIDAS`):** Solo puede invocar las herramientas registradas en `app/tools/` (`consultar_guia_msp`, `evaluar_signos_alarma`, `buscar_centro_salud`, `notificar_contacto_emergencia`). Cualquier función no listada (como `diagnosticar` o inventada) es rechazada automáticamente por el servidor con error.
+2. **Tope de vueltas (`MAX_ITER = 6`):** Impide bucles infinitos y costos no planificados. Si alcanza la sexta iteración sin respuesta de texto, corta con mensaje de escape controlado.
+3. **Confirmación humana (`REQUIEREN_OK`):** Acciones que modifican el exterior o salen del sistema (`notificar_contacto_emergencia`) pausan el bucle en `requiere_confirmacion`, mostrando destinatario y contenido en la UI para su aprobación o rechazo explícito.
+
+### Ejemplo de Solicitud y Respuesta (`POST /api/v2/chat`)
+
+**Solicitud:**
+```json
+{
+  "idSesion": "sesion-ciudadano-02",
+  "texto": "Vivo en Guayaquil, tengo vómitos constantes y dolor de abdomen muy fuerte. ¿A dónde voy?"
+}
+```
+
+**Respuesta (`200 OK` - Estado Completado con Fuentes y Centros):**
+```json
+{
+  "idSesion": "sesion-ciudadano-02",
+  "estado": "completado",
+  "respuesta": "Presenta signos de alarma críticos (dolor abdominal intenso y continuo, vómitos persistentes). Acuda inmediatamente al Hospital General Guasmo Sur (Av. Cacique Tomalá y Vía Perimetral) o al Hospital Universitario, ambos con Emergencia 24h activa. No se automedique.",
+  "accion_pendiente": null,
+  "fuentes": [
+    {
+      "documento": "Guia-dengue-OPS-2016.pdf",
+      "seccion": "Signos de alarma y criterios de hospitalización"
+    }
+  ],
+  "vueltas_usadas": 3
+}
+```
 
 ### Ejemplo de Solicitud y Respuesta (`POST /api/v1/chat`)
 
@@ -255,6 +304,11 @@ pytest -v
 
 | Archivo de Prueba | Qué Valida |
 |---|---|
+| `tests/test_api_v2.py` | Endpoints v2 (`/api/v2/chat` y `/api/v2/chat/confirmar`): flujo conversacional del agente, respuesta directa y pausa para confirmación humana |
+| `tests/test_agent.py` | Bucle del agente (`app/services/agent.py`): camino feliz, lista cerrada (rechazo de `diagnosticar`), corte por `MAX_ITER = 6` y flujo de confirmación |
+| `tests/test_consultar_guia_msp.py` | Herramienta RAG: validación de longitud con Pydantic, conexión con `BuscadorVectorial` y determinismo de resultados |
+| `tests/test_evaluar_signos_alarma.py` | Herramienta determinista: normalización de texto y cruce contra los signos de alarma oficiales de `config/parametros.yaml` |
+| `tests/test_buscar_centro_salud.py` | Herramienta GeoSalud: filtro por ciudad, cálculo de distancias en km con Haversine y disponibilidad de Emergencia 24h |
 | `tests/test_dengue.py` | Contrato `200` de `/api/v1/chat`, persistencia y memoria multi-turno en SQLite, aislamiento entre sesiones, *rate limit* `429` + cabecera `Retry-After`, delimitación `<consulta_usuario>`, validaciones `422`, errores `503`/`500` en formato RFC 9457 sin *stack trace*, abstención ante salida inválida y vigencia de `system_v4` |
 | `tests/test_retriever.py` | Extracción de páginas 95 a 100 de SIVE-Alerta, exclusión de referencias bibliográficas de OPS 2016, asimetría de prefijos E5 (`query: ` / `passage: `), orden por distancia coseno, búsqueda híbrida por código exacto (`CIE-10 A 91`) y filtro por vigencia (`vigente: True`) |
 | `tests/test_llm.py` | Validación de esquema JSON estricto, autocorrección en 1 intento, reintentos ante `429`/`503`/respuesta vacía, respeto de `Retry-After`, espera exponencial con *jitter* y conmutación al proveedor de respaldo |

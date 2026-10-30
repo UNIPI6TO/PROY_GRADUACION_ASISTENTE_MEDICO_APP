@@ -136,7 +136,8 @@ class ClienteLLM:
                 r = cliente.chat.completions.create(model=p.modelo, messages=mensajes, **opciones)
                 ms = int((time.monotonic() - t0) * 1000)
                 contenido = (r.choices[0].message.content or "") if r.choices else ""
-                if not contenido.strip():
+                tool_calls = getattr(r.choices[0].message, "tool_calls", None) if r.choices else None
+                if not contenido.strip() and not tool_calls:
                     raise _RespuestaVacia()
                 uso = getattr(r, "usage", None)
                 _registrar(evento="ok", proveedor=p.nombre, modelo=p.modelo, intento=intento, latencia_ms=ms,
@@ -224,6 +225,14 @@ class ClienteLLM:
                 _registrar(evento="stream_fallo", proveedor=p.nombre, tipo=type(e).__name__)
                 continue
         raise ProveedorNoDisponible()
+
+    def completar_con_herramientas(self, mensajes: list[dict], tools: list[dict]) -> tuple[Any, str, str]:
+        """Llama al LLM pasando la lista de herramientas disponibles (function calling).
+        Devuelve (message_obj, proveedor, modelo).
+        """
+        extra = {"tools": tools} if tools else {}
+        p, r, ms, intentos = self._con_respaldo(mensajes, extra)
+        return r.choices[0].message, p.nombre, p.modelo
 
 
 class _RespuestaVacia(Exception):
