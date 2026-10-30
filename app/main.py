@@ -13,6 +13,7 @@ from functools import lru_cache
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from fastapi import Depends, FastAPI, Request, Response
+from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -31,9 +32,14 @@ from app.schemas import (
 from app.services.agent import ejecutar_bucle_agente, reanudar_agente
 from app.services.llm import ClienteLLM, ProveedorNoDisponible, SalidaInvalida, cargar_prompt
 from app.services.seguridad import LimiteExcedido, LimitadorTasa, delimitar_consulta
+from app.tools.evaluar_signos_alarma import (
+    EvaluarSignosAlarmaHttpIn,
+    EvaluarSignosAlarmaHttpOut,
+    evaluar_signos_alarma_clinica,
+)
 
 APP_NAME = "GuíaVital"
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.2.0-SNAPSHOT-RC1"
 SEMVER_REGEX = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
 
 PROMPT = "system_v4"
@@ -82,7 +88,13 @@ def obtener_limitador() -> LimitadorTasa:
 
 @app.exception_handler(RequestValidationError)
 async def _manejar_422(request: Request, exc: RequestValidationError):
-    return _problema(422, "Solicitud inválida", "Revisa idSesion y texto (5 a 2000 caracteres).", request)
+    # Para los endpoints de herramientas (Semana 3), devolver el formato estándar de Pydantic (loc, type, msg, input)
+    if request.url.path.startswith("/herramientas"):
+        return await request_validation_exception_handler(request, exc)
+
+    # Para los endpoints de chat (/api/...), mantener el formato RFC 9457 del proyecto
+    detalles = "; ".join([f"{'.'.join(str(l) for l in e['loc'][1:])}: {e['msg']}" for e in exc.errors()])
+    return _problema(422, "Solicitud inválida", detalles or "Revisa los campos de la solicitud.", request)
 
 
 @app.exception_handler(LimiteExcedido)
@@ -250,6 +262,16 @@ def confirmar_accion_v2(confirmacion: SolicitudConfirmacion,
         vueltas_usadas=res["vueltas"],
     )
 
+
+@app.post(
+    "/herramientas/signos-alarma",
+    response_model=EvaluarSignosAlarmaHttpOut,
+    tags=["Herramientas Deterministas"],
+    status_code=200,
+)
+def endpoint_signos_alarma(datos: EvaluarSignosAlarmaHttpIn) -> EvaluarSignosAlarmaHttpOut:
+    """Endpoint oficial Semana 3: Evaluación determinista de signos de alarma con parámetros del MSP."""
+    return evaluar_signos_alarma_clinica(datos)
 
 
 def check_health(readiness_probes: Optional[List[Callable[[], bool]]] = None) -> Tuple[Dict[str, Any], int]:

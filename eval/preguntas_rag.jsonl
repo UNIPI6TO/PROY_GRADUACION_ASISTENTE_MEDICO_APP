@@ -1,0 +1,20 @@
+{"id":"rag-01","pregunta":"¿Cuáles son los signos de alarma del dengue según el MSP?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["dolor abdominal","vómitos","sangrado","alarma"]}
+{"id":"rag-02","pregunta":"¿Por qué no se debe tomar ibuprofeno o aspirina si hay sospecha de dengue?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["hemorragia","sangrado","paracetamol","aspirina"]}
+{"id":"rag-03","pregunta":"¿Qué medicamento se recomienda para el control de la fiebre en el dengue?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["paracetamol","acetaminofen","fiebre"]}
+{"id":"rag-04","pregunta":"¿Cuántos días suele durar la fase febril del dengue?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["fase febril","días","temperatura"]}
+{"id":"rag-05","pregunta":"¿Qué cuidados de hidratación oral se recomiendan para pacientes sin signos de alarma?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["hidratación","suero oral","líquidos"]}
+{"id":"rag-06","pregunta":"¿Qué es la fase crítica del dengue y cuándo inicia?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["fase crítica","caída de la fiebre","defervescencia"]}
+{"id":"rag-07","pregunta":"¿Cuáles son los grupos de riesgo o vulnerables ante la infección por dengue?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["embarazadas","niños","adultos mayores","comorbilidades"]}
+{"id":"rag-08","pregunta":"¿Cómo se transmite el virus del dengue?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["aedes aegypti","mosquito","picadura"]}
+{"id":"rag-09","pregunta":"¿Cuáles son las medidas para eliminar los criaderos de mosquitos en el hogar?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["criaderos","recipientes","agua estancada","abatización"]}
+{"id":"rag-10","pregunta":"¿Qué complicaciones puede causar el dengue grave?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["shock","choque","hemorragia grave","daño orgánico"]}
+{"id":"rag-11","pregunta":"¿Qué es el dolor abdominal intenso y continuo en el contexto del dengue?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["dolor abdominal","signo de alarma","extravasación"]}
+{"id":"rag-12","pregunta":"¿Qué prueba diagnóstica confirma la infección por dengue en los primeros días?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["ns1","pcr","antígeno"]}
+{"id":"rag-13","pregunta":"¿En qué horario suele picar con mayor frecuencia el mosquito Aedes aegypti?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["mañana","tarde","amanecer","atardecer"]}
+{"id":"rag-14","pregunta":"¿Qué hacer si un familiar con dengue presenta vómitos persistentes y somnolencia?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["acudir inmediatamente","urgencias","centro de salud"]}
+{"id":"rag-15","pregunta":"¿Se puede contraer dengue más de una vez en la vida?","fuente":"Guía de Práctica Clínica Dengue MSP","keywords":["serotipos","denv","infección secundaria"]}
+{"id":"rag-16","pregunta":"¿Cuál es el tratamiento quirúrgico para una fractura de tibia?","fuente":null,"keywords":[]}
+{"id":"rag-17","pregunta":"¿Cuál es la cotización del dólar hoy en el mercado bursátil?","fuente":null,"keywords":[]}
+{"id":"rag-18","pregunta":"¿Cómo programar un algoritmo en lenguaje Rust?","fuente":null,"keywords":[]}
+{"id":"rag-19","pregunta":"¿Cuáles son las leyes de tránsito para vehículos pesados en Europa?","fuente":null,"keywords":[]}
+{"id":"rag-20","pregunta":"¿Cuál es la receta tradicional para preparar ceviche peruano?","fuente":null,"keywords":[]}
