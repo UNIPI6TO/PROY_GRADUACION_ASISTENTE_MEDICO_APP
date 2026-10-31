@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { ShieldAlert, CheckCircle2, PhoneCall, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ShieldAlert, CheckCircle2, PhoneCall, X, AlertTriangle } from "lucide-react";
+import { evaluarSignosAlarmaHttp, type EvaluarSignosAlarmaHttpOut } from "../api/cliente";
 
 interface SignoAlarma {
   id: string;
@@ -46,14 +47,52 @@ interface ChecklistSignosAlarmaProps {
 }
 
 /**
- * Herramienta determinista en cliente (ADR-004 y HU-04):
- * La evaluación de signos de alarma usa reglas booleanas rígidas, nunca inferencia libre del LLM.
+ * Herramienta determinista (Semana 3 · ADR-004 y /herramientas/signos-alarma):
+ * Evalúa deterministamente los signos de alarma y parámetros clínicos según la guía MSP.
  */
 export const ChecklistSignosAlarma: React.FC<ChecklistSignosAlarmaProps> = ({
   abierto,
   onCerrar,
 }) => {
   const [seleccionados, setSeleccionados] = useState<Record<string, boolean>>({});
+  const [diasFiebre, setDiasFiebre] = useState<number>(3);
+  const [edad, setEdad] = useState<number>(25);
+  const [resultadoHttp, setResultadoHttp] = useState<EvaluarSignosAlarmaHttpOut | null>(null);
+  const [evaluandoHttp, setEvaluandoHttp] = useState<boolean>(false);
+
+  // Consulta el endpoint HTTP determinista de la Semana 3 ante cambios
+  useEffect(() => {
+    if (!abierto) return;
+
+    let cancelado = false;
+    const ejecutarEvaluacionServidor = async () => {
+      setEvaluandoHttp(true);
+      try {
+        const respuesta = await evaluarSignosAlarmaHttp({
+          dias_fiebre: Math.max(0, Math.min(30, diasFiebre)),
+          dolor_abdominal: Boolean(seleccionados["dolor_abdominal"]),
+          vomitos_persistentes: Boolean(seleccionados["vomitos"]),
+          sangrado: Boolean(seleccionados["sangrado"]),
+          edad: Math.max(0, Math.min(120, edad)),
+        });
+        if (!cancelado) {
+          setResultadoHttp(respuesta);
+        }
+      } catch {
+        // En caso de estar sin conexión o error de red, se mantiene el fallback determinista local
+      } finally {
+        if (!cancelado) {
+          setEvaluandoHttp(false);
+        }
+      }
+    };
+
+    void ejecutarEvaluacionServidor();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [abierto, seleccionados, diasFiebre, edad]);
 
   if (!abierto) return null;
 
@@ -62,7 +101,7 @@ export const ChecklistSignosAlarma: React.FC<ChecklistSignosAlarmaProps> = ({
   };
 
   const totalActivos = Object.values(seleccionados).filter(Boolean).length;
-  const hayPeligro = totalActivos > 0;
+  const hayPeligro = totalActivos > 0 || resultadoHttp?.nivel === "alarma";
 
   return (
     <div
@@ -93,6 +132,41 @@ export const ChecklistSignosAlarma: React.FC<ChecklistSignosAlarmaProps> = ({
           y 7.° día):
         </p>
 
+        {/* Parámetros clínicos de la Semana 3 */}
+        <div className="parametros-clinicos-grid">
+          <div className="campo-parametro">
+            <label htmlFor="dias-fiebre-input">
+              <strong>Días con fiebre:</strong>
+            </label>
+            <input
+              id="dias-fiebre-input"
+              type="number"
+              min={0}
+              max={30}
+              value={diasFiebre}
+              onChange={(e) => setDiasFiebre(Number(e.target.value) || 0)}
+              className="input-parametro"
+            />
+            <span className="pista-parametro">Fase crítica: 3 a 7 días</span>
+          </div>
+
+          <div className="campo-parametro">
+            <label htmlFor="edad-paciente-input">
+              <strong>Edad del paciente:</strong>
+            </label>
+            <input
+              id="edad-paciente-input"
+              type="number"
+              min={0}
+              max={120}
+              value={edad}
+              onChange={(e) => setEdad(Number(e.target.value) || 0)}
+              className="input-parametro"
+            />
+            <span className="pista-parametro">Grupos vulnerables: &lt;5 y &gt;65</span>
+          </div>
+        </div>
+
         <ul className="lista-signos">
           {SIGNOS_ALARMA_OPS.map((signo) => {
             const marcado = Boolean(seleccionados[signo.id]);
@@ -114,6 +188,7 @@ export const ChecklistSignosAlarma: React.FC<ChecklistSignosAlarmaProps> = ({
           })}
         </ul>
 
+        {/* Resultado del triaje clínico */}
         {hayPeligro ? (
           <div className="resultado-checklist peligro" role="alert">
             <ShieldAlert size={24} aria-hidden="true" />
@@ -124,10 +199,29 @@ export const ChecklistSignosAlarma: React.FC<ChecklistSignosAlarmaProps> = ({
                 <strong>No espere y no automedique.</strong> Traslade al paciente de inmediato al
                 Hospital o Centro de Salud Tipo C del MSP más cercano o llame al ECU-911.
               </p>
+              {resultadoHttp && (
+                <div className="detalle-servidor-msp">
+                  <span className="etiqueta-msp">Nivel MSP: {resultadoHttp.nivel.toUpperCase()}</span>
+                  <p className="rec-msp">{resultadoHttp.recomendacion}</p>
+                  <small className="fuente-msp">Fuente: {resultadoHttp.fuente}</small>
+                </div>
+              )}
               <a href="tel:911" className="btn-emergencia-inline">
                 <PhoneCall size={16} aria-hidden="true" />
                 <span>Llamar al 911 ahora</span>
               </a>
+            </div>
+          </div>
+        ) : resultadoHttp?.nivel === "vigilancia" ? (
+          <div className="resultado-checklist vigilancia" role="status">
+            <AlertTriangle size={22} aria-hidden="true" />
+            <div>
+              <strong>Estado de Vigilancia Médica ({diasFiebre} días de fiebre)</strong>
+              <p>
+                {resultadoHttp.recomendacion}. Al cumplir 3 o más días con fiebre, entra en la fase crítica
+                donde pueden manifestarse signos de alarma.
+              </p>
+              <small className="fuente-msp">Fuente: {resultadoHttp.fuente}</small>
             </div>
           </div>
         ) : (
@@ -140,9 +234,23 @@ export const ChecklistSignosAlarma: React.FC<ChecklistSignosAlarmaProps> = ({
                 cada 4 horas. Si aparece fiebre o cualquiera de los signos superiores, acuda al
                 centro de salud del MSP.
               </p>
+              {resultadoHttp && (
+                <small className="fuente-msp">Fuente oficial: {resultadoHttp.fuente}</small>
+              )}
             </div>
           </div>
         )}
+
+        <div className="modal-pie-checklist">
+          {evaluandoHttp && (
+            <span className="pista-parametro" style={{ marginRight: "auto", alignSelf: "center" }}>
+              Consultando triaje MSP en tiempo real...
+            </span>
+          )}
+          <button type="button" className="btn-cerrar-modal" onClick={onCerrar}>
+            Cerrar lista de verificación
+          </button>
+        </div>
       </div>
     </div>
   );
