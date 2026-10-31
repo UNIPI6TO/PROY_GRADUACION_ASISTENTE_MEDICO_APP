@@ -18,6 +18,8 @@ credentials.json
 
 # Logs y temporales
 *.log
+logs/
+logs/llm.jsonl
 .pytest_cache/
 .coverage
 htmlcov/
@@ -26,6 +28,8 @@ Thumbs.db
 
 # Historial de chat (datos de usuarios)
 data/historial.db
+data/*.db
+data/*.sqlite3
 
 # Frontend (Node / Vite)
 node_modules/
@@ -34,6 +38,3 @@ frontend/dist/
 
 # Colecciones y pruebas manuales locales
 bruno/GuiaVital/
-
-data/historial.db
-logs/llm.jsonl
