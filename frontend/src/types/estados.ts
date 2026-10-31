@@ -4,6 +4,8 @@ export type SolicitudChat = components["schemas"]["Solicitud"];
 export type RespuestaChat = components["schemas"]["RespuestaChat"];
 export type ProblemaRFC9457 = components["schemas"]["ProblemaRFC9457"];
 export type Fuente = components["schemas"]["Fuente"];
+export type AccionPendiente = components["schemas"]["AccionPendiente"];
+export type EstadoAgente = components["schemas"]["EstadoAgente"];
 
 /**
  * Los 7 estados de una interfaz de IA Generativa (Clase 4 · Diapositiva 4).
@@ -17,7 +19,8 @@ export type EstadoInterfaz =
   | { tipo: "revision"; respuesta: RespuestaChat; motivo: string }
   | { tipo: "reintentar"; segundos: number; detalle: string; textoConservado: string }
   | { tipo: "caido"; segundos: number; detalle: string; textoConservado: string }
-  | { tipo: "invalido"; detalle: string; textoConservado: string };
+  | { tipo: "invalido"; detalle: string; textoConservado: string }
+  | { tipo: "confirmacion_pendiente"; accion: AccionPendiente; textoUsuario: string };
 
 export type AccionEstado =
   | { tipo: "ENVIAR" }
@@ -28,6 +31,7 @@ export type AccionEstado =
   | { tipo: "ERROR_429"; segundos: number; detalle: string; textoConservado: string }
   | { tipo: "TICK_CUENTA_REGRESIVA" }
   | { tipo: "ERROR_503"; segundos: number; detalle: string; textoConservado: string }
+  | { tipo: "ACCION_PENDIENTE"; accion: AccionPendiente; textoUsuario: string }
   | { tipo: "ABORTAR" }
   | { tipo: "REINICIAR" };
 
@@ -107,6 +111,13 @@ export function transicionarEstado(
         textoConservado: accion.textoConservado,
       };
 
+    case "ACCION_PENDIENTE":
+      return {
+        tipo: "confirmacion_pendiente",
+        accion: accion.accion,
+        textoUsuario: accion.textoUsuario,
+      };
+
     case "ABORTAR":
     case "REINICIAR":
       return { tipo: "inactiva" };
@@ -125,4 +136,6 @@ export interface MensajeHistorialUI {
   fuentes?: Fuente[];
   proveedor?: string | null;
   valoracion?: "util" | "no_util" | null;
+  accionPendiente?: AccionPendiente | null;
+  estadoAgente?: EstadoAgente;
 }
