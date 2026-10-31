@@ -34,7 +34,7 @@ ESQUEMA = {
     "type": "function",
     "function": {
         "name": "consultar_guia_msp",
-        "description": "Busca protocolos y guías oficiales del MSP sobre dengue y signos de alarma en la base documental.",
+        "description": "Busca protocolos y guías oficiales del MSP/OPS sobre dengue, arbovirosis (zika, chikungunya, fiebre amarilla) y signos de alarma en la base documental.",
         "parameters": ConsultarGuiaMspIn.model_json_schema(),
     },
 }
