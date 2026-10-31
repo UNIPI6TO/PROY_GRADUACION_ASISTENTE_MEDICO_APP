@@ -1,0 +1,31 @@
+# config/parametros.yaml · Parámetros del Asistente y Herramientas (Grupo 5)
+umbral_confianza: 0.85   # Umbral de calibración de la cinta del taller (Clase 4)
+umbral_dias_fiebre: 3    # Días de fiebre a partir de los cuales se requiere vigilancia médica
+
+agente:
+  max_iter: 6
+  mensaje_tope: "No puedo resolver la consulta completamente por este medio. Al tratarse de sospecha de dengue o arbovirosis, por favor acuda inmediatamente al centro de salud más cercano o comuníquese al 911."
+
+retriever:
+  top_k: 3
+  solo_vigentes: true
+
+signos_alarma:
+  temperatura_fiebre_alta: 38.5
+  lista_oficial:
+    - "dolor abdominal intenso y continuo"
+    - "vomitos persistentes"
+    - "sangrado de mucosas"
+    - "letargo o somnolencia"
+    - "irritabilidad"
+    - "acumulacion de liquidos"
+    - "dificultad respiratoria"
+    - "hepatomegalia"
+
+geosalud:
+  radio_max_km: 100.0
+  limite_resultados: 3
+
+emergencia:
+  telefono_nacional: "911"
+  citas_msp: "171"

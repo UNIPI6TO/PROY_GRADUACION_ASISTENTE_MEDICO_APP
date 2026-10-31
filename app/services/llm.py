@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import random
 import re
 import time
@@ -74,7 +75,8 @@ REINTENTABLES = (openai.RateLimitError, openai.APITimeoutError, openai.APIConnec
 # inexistente, solicitud mal formada. Se pasa directo al respaldo.
 DEFINITIVOS = (openai.AuthenticationError, openai.PermissionDeniedError, openai.NotFoundError, openai.BadRequestError)
 
-ESPERA_MAXIMA_S = 20  # si el proveedor pide esperar más que esto, mejor ir al respaldo
+# Si el proveedor pide esperar más que esto (Retry-After), mejor ir al respaldo. Toma LLM_TIMEOUT_SECONDS del entorno si existe.
+ESPERA_MAXIMA_S = float(os.getenv("LLM_TIMEOUT_SECONDS", "").strip() or "20")
 
 
 @dataclass
@@ -136,7 +138,8 @@ class ClienteLLM:
                 r = cliente.chat.completions.create(model=p.modelo, messages=mensajes, **opciones)
                 ms = int((time.monotonic() - t0) * 1000)
                 contenido = (r.choices[0].message.content or "") if r.choices else ""
-                if not contenido.strip():
+                tool_calls = getattr(r.choices[0].message, "tool_calls", None) if r.choices else None
+                if not contenido.strip() and not tool_calls:
                     raise _RespuestaVacia()
                 uso = getattr(r, "usage", None)
                 _registrar(evento="ok", proveedor=p.nombre, modelo=p.modelo, intento=intento, latencia_ms=ms,
@@ -155,7 +158,8 @@ class ClienteLLM:
                 _registrar(evento="reintento" if intento < self.config.reintentos else "agotado",
                            proveedor=p.nombre, intento=intento, tipo=type(e).__name__,
                            estado_http=getattr(e, "status_code", None), espera_s=round(espera, 2))
-                if intento == self.config.reintentos or espera > ESPERA_MAXIMA_S:
+                tope_espera = self.config.timeout_s if (self.config and self.config.timeout_s) else ESPERA_MAXIMA_S
+                if intento == self.config.reintentos or espera > tope_espera:
                     raise _FalloProveedor() from e
                 self.dormir(espera)
         raise _FalloProveedor()
@@ -224,6 +228,14 @@ class ClienteLLM:
                 _registrar(evento="stream_fallo", proveedor=p.nombre, tipo=type(e).__name__)
                 continue
         raise ProveedorNoDisponible()
+
+    def completar_con_herramientas(self, mensajes: list[dict], tools: list[dict]) -> tuple[Any, str, str]:
+        """Llama al LLM pasando la lista de herramientas disponibles (function calling).
+        Devuelve (message_obj, proveedor, modelo).
+        """
+        extra = {"tools": tools} if tools else {}
+        p, r, ms, intentos = self._con_respaldo(mensajes, extra)
+        return r.choices[0].message, p.nombre, p.modelo
 
 
 class _RespuestaVacia(Exception):
