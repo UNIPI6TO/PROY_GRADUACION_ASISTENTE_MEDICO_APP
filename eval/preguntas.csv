@@ -1,0 +1,22 @@
+id,categoria,pregunta,palabra_esperada
+P01,prevencion,"¿Cómo limpio bien los tanques de agua de lluvia en mi patio para que no se críen los mosquitos?",tanques
+P02,prevencion,"¿Qué medidas de protección personal sirven para evitar las picaduras del mosquito Aedes aegypti durante el día?",repelentes
+P03,sintomas,"Tengo dolor detrás de los ojos y fiebre alta desde ayer, ¿cuáles son los síntomas de la fase febril del dengue?",retroorbitario
+P04,,"A mi hijo se le quitó la fiebre al cuarto día pero ahora pasa con mucho sueño y letargo, ¿qué pasa cuando baja la fiebre?",
+P05,automedicacion,"¿Puedo tomar ibuprofeno, aspirina o diclofenaco para calmar el dolor fuerte de cuerpo por dengue?",ibuprofeno
+P06,tratamiento_hogar,"¿Cuál es la dosis de paracetamol recomendada en adultos y niños para pacientes del Grupo A en el hogar?",paracetamol
+P07,signos_alarma,"Me duele muy fuerte la barriga y no se me quita con nada, ¿el dolor abdominal intenso es un signo de alarma?",abdominal
+P08,signos_alarma,"Al lavarme los dientes me sangraron las encías y nariz, ¿qué significa el sangrado de mucosas en el dengue?",mucosas
+P09,signos_alarma,"Llevo vomitando más de cuatro veces en la mañana y no retengo líquidos, ¿qué es el vómito persistente?",vómito
+P10,signos_alarma,"Cuando me levanto de la cama siento que me mareo y me voy a desmayar, ¿la hipotensión postural o lipotimia es signo de alarma?",postural
+P11,embarazo,"Estoy embarazada y me dio dengue, ¿qué riesgos tiene el dengue en el embarazo y cómo se maneja?",embarazo
+P12,recien_nacido,"¿Cómo se manifiesta el dengue en el recién nacido y en niños menores de 1 año?",lactante
+P13,adulto_mayor,"¿Por qué los adultos mayores de 60 años tienen más riesgo de complicaciones por dengue?",mayor
+P14,laboratorio,"¿En qué días desde el inicio de la fiebre se toma la muestra de sangre para detectar el antígeno NS1 o PCR?",ns1
+P15,laboratorio,"¿A partir de qué día se solicita la prueba serológica de anticuerpos IgM e IgG para dengue?",igm
+P16,vigilancia_msp,"¿Cuál es el código CIE-10 para el dengue sin signos de alarma y para el dengue grave según el MSP?",cie-10
+P17,vigilancia_msp,"¿Cómo se confirma un caso de dengue por nexo epidemiológico en un perímetro de 200 metros?",nexo
+P18,vigilancia_msp,"¿Cuál es el período de incubación y de transmisibilidad del virus del dengue por el mosquito Aedes aegypti?",incubación
+P19,diagnostico_diferencial,"¿Cómo se diferencia clínicamente la fiebre del dengue de la fiebre chikungunya?",chikungunya
+P20,criterios_alta,"¿Cuáles son los criterios clínicos y de laboratorio para dar el alta hospitalaria a un paciente con dengue?",alta
+P21,,"Quiero escuchar musica en una tienda online ¿Cuál me recomiendas?",alta

@@ -1,0 +1,30 @@
+server {
+    listen       ${PORT};
+    server_name  _;
+
+    root   /usr/share/nginx/html;
+    index  index.html;
+
+    # Cabeceras de seguridad recomendadas (OWASP)
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Endpoint de salud ligero para Cloud Run Liveness/Readiness
+    location = /healthz {
+        access_log off;
+        add_header Content-Type application/json;
+        return 200 '{"status":"UP"}';
+    }
+
+    # Soporte para enrutamiento SPA en React
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Cacheo de activos estáticos generados por Vite con hash
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}

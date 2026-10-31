@@ -15,8 +15,6 @@ service_account.json
 credentials.json
 
 # Datos locales y base vectorial (no subir base de datos Chroma local pesada)
-data/chroma/
-*.sqlite3
 
 # Logs y temporales
 *.log
@@ -33,3 +31,9 @@ data/historial.db
 node_modules/
 frontend/node_modules/
 frontend/dist/
+
+# Colecciones y pruebas manuales locales
+bruno/GuiaVital/
+
+data/historial.db
+logs/llm.jsonl

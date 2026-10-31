@@ -13,12 +13,20 @@ interface AlertaEstadoProps {
  */
 export const AlertaEstado: React.FC<AlertaEstadoProps> = ({ estado, onReintentar }) => {
   if (estado.tipo === "invalido") {
+    const tieneTextoConservado = Boolean(
+      estado.textoConservado && estado.textoConservado.trim().length > 0
+    );
     return (
       <div className="alerta-contrato alerta-422" role="alert">
         <AlertCircle size={20} aria-hidden="true" />
         <div className="alerta-contenido">
-          <strong>Datos de consulta inválidos (422):</strong>
-          <p>{estado.detalle} Tu texto escrito se ha conservado en el cuadro inferior.</p>
+          <strong>Consulta incompleta o no válida:</strong>
+          <p>
+            {estado.detalle}
+            {tieneTextoConservado
+              ? " Tu mensaje se ha conservado en el cuadro inferior para que puedas completarlo."
+              : ""}
+          </p>
         </div>
       </div>
     );

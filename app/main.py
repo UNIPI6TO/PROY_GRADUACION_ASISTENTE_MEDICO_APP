@@ -13,22 +13,33 @@ from functools import lru_cache
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from fastapi import Depends, FastAPI, Request, Response
+from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.repositorio.historial import RepositorioHistorial
 from app.schemas import (
+    AccionPendiente,
+    EstadoAgente,
     ProblemaRFC9457,
     RespuestaAsistente,
     RespuestaChat,
+    RespuestaChatV2,
     Solicitud,
+    SolicitudConfirmacion,
 )
+from app.services.agent import ejecutar_bucle_agente, reanudar_agente
 from app.services.llm import ClienteLLM, ProveedorNoDisponible, SalidaInvalida, cargar_prompt
 from app.services.seguridad import LimiteExcedido, LimitadorTasa, delimitar_consulta
+from app.tools.evaluar_signos_alarma import (
+    EvaluarSignosAlarmaHttpIn,
+    EvaluarSignosAlarmaHttpOut,
+    evaluar_signos_alarma_clinica,
+)
 
 APP_NAME = "GuíaVital"
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.2.0-SNAPSHOT-RC1"
 SEMVER_REGEX = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
 
 PROMPT = "system_v4"
@@ -77,7 +88,37 @@ def obtener_limitador() -> LimitadorTasa:
 
 @app.exception_handler(RequestValidationError)
 async def _manejar_422(request: Request, exc: RequestValidationError):
-    return _problema(422, "Solicitud inválida", "Revisa idSesion y texto (5 a 2000 caracteres).", request)
+    # Para los endpoints de herramientas (Semana 3), devolver el formato estándar de Pydantic (loc, type, msg, input)
+    if request.url.path.startswith("/herramientas"):
+        return await request_validation_exception_handler(request, exc)
+
+    # Para los endpoints de chat (/api/...), mantener el formato RFC 9457 con mensajes amigables en español
+    mensajes_amigables: list[str] = []
+    for err in exc.errors():
+        campo = ".".join(str(l) for l in err.get("loc", [])[1:])
+        tipo = err.get("type", "")
+        if campo == "texto":
+            if "too_short" in tipo:
+                mensajes_amigables.append(
+                    "Tu consulta es muy breve. Por favor, escribe al menos 5 caracteres describiendo tu duda o los síntomas que deseas consultar."
+                )
+            elif "too_long" in tipo:
+                mensajes_amigables.append(
+                    "Tu consulta supera el límite máximo de 2000 caracteres. Por favor, resúmela para poder orientarte mejor."
+                )
+            else:
+                mensajes_amigables.append(
+                    "Por favor, ingresa un texto de consulta válido (entre 5 y 2000 caracteres)."
+                )
+        elif campo == "idSesion":
+            mensajes_amigables.append(
+                "No se pudo validar la sesión actual. Por favor, inicia una 'Nueva consulta' o recarga la página."
+            )
+        else:
+            mensajes_amigables.append(f"{campo}: {err.get('msg', 'Valor inválido')}")
+
+    detalle_final = " ".join(mensajes_amigables) if mensajes_amigables else "Por favor, verifica el texto de tu consulta antes de enviarla."
+    return _problema(422, "Solicitud inválida", detalle_final, request)
 
 
 @app.exception_handler(LimiteExcedido)
@@ -127,6 +168,134 @@ def chat(solicitud: Solicitud,
             fuentes=[],
             proveedor=None,
         )
+
+
+# Almacén en memoria de turnos pausados para confirmación humana (por idSesion)
+_ACCIONES_PENDIENTES: dict[str, dict[str, Any]] = {}
+
+
+@app.post("/api/v2/chat", response_model=RespuestaChatV2, tags=["Asistente v2 (Agente)"],
+          responses={422: {"model": ProblemaRFC9457}, 429: {"model": ProblemaRFC9457},
+                     503: {"model": ProblemaRFC9457}})
+def chat_v2(solicitud: Solicitud,
+            llm: ClienteLLM = Depends(obtener_llm),
+            repo: RepositorioHistorial = Depends(obtener_repositorio),
+            limitador: LimitadorTasa = Depends(obtener_limitador)):
+    """Endpoint v2: Agente de alcance controlado con Function Calling, RAG y límites estrictos."""
+    limitador.verificar(solicitud.idSesion)
+
+    mensajes: list[dict[str, Any]] = [
+        {"role": "system", "content": cargar_prompt("system_agente")}
+    ]
+    for t in repo.ultimos_turnos(solicitud.idSesion):
+        mensajes.append({"role": t.rol, "content": t.contenido})
+    mensajes.append({"role": "user", "content": delimitar_consulta(solicitud.texto)})
+
+    res = ejecutar_bucle_agente(mensajes, cliente_llm=llm)
+
+    if res["estado"] == "requiere_confirmacion":
+        _ACCIONES_PENDIENTES[solicitud.idSesion] = {
+            "mensajes": res["mensajes"],
+            "tool_call_id": res["tool_call_id"],
+            "nombre_herramienta": res["nombre_herramienta"],
+            "argumentos": res["argumentos"],
+            "vueltas": res["vueltas"],
+            "texto_usuario": solicitud.texto,
+        }
+        return RespuestaChatV2(
+            idSesion=solicitud.idSesion,
+            estado=EstadoAgente.REQUIERE_CONFIRMACION,
+            accion_pendiente=AccionPendiente(
+                tool_call_id=res["tool_call_id"],
+                nombre_herramienta=res["nombre_herramienta"],
+                argumentos=res["argumentos"],
+            ),
+            fuentes=res.get("fuentes", []),
+            vueltas_usadas=res["vueltas"],
+        )
+
+    # El ciclo concluyó (completado o tope alcanzado)
+    _ACCIONES_PENDIENTES.pop(solicitud.idSesion, None)
+    repo.guardar(solicitud.idSesion, "user", solicitud.texto)
+    repo.guardar(solicitud.idSesion, "assistant", res["respuesta"])
+
+    estado_final = EstadoAgente.COMPLETADO if res["estado"] == "completado" else EstadoAgente.TOPE_ALCANZADO
+    return RespuestaChatV2(
+        idSesion=solicitud.idSesion,
+        estado=estado_final,
+        respuesta=res["respuesta"],
+        fuentes=res.get("fuentes", []),
+        vueltas_usadas=res["vueltas"],
+    )
+
+
+@app.post("/api/v2/chat/confirmar", response_model=RespuestaChatV2, tags=["Asistente v2 (Agente)"],
+          responses={422: {"model": ProblemaRFC9457}, 429: {"model": ProblemaRFC9457},
+                     503: {"model": ProblemaRFC9457}})
+def confirmar_accion_v2(confirmacion: SolicitudConfirmacion,
+                        llm: ClienteLLM = Depends(obtener_llm),
+                        repo: RepositorioHistorial = Depends(obtener_repositorio)):
+    """Reanuda la ejecución del agente tras la decisión humana (Aprobar / Rechazar)."""
+    pendiente = _ACCIONES_PENDIENTES.pop(confirmacion.idSesion, None)
+    if not pendiente or pendiente["tool_call_id"] != confirmacion.tool_call_id:
+        return _problema(422, "Acción no encontrada", "No hay una acción pendiente de confirmación con ese identificador.", Request({"type": "http", "path": "/api/v2/chat/confirmar"}))
+
+    res = reanudar_agente(
+        mensajes=pendiente["mensajes"],
+        tool_call_id=confirmacion.tool_call_id,
+        aprobado=confirmacion.aprobado,
+        accion_nombre=pendiente["nombre_herramienta"],
+        argumentos=pendiente["argumentos"],
+        cliente_llm=llm,
+        vuelta_actual=pendiente["vueltas"],
+    )
+
+    if res["estado"] == "requiere_confirmacion":
+        _ACCIONES_PENDIENTES[confirmacion.idSesion] = {
+            "mensajes": res["mensajes"],
+            "tool_call_id": res["tool_call_id"],
+            "nombre_herramienta": res["nombre_herramienta"],
+            "argumentos": res["argumentos"],
+            "vueltas": res["vueltas"],
+            "texto_usuario": pendiente.get("texto_usuario", ""),
+        }
+        return RespuestaChatV2(
+            idSesion=confirmacion.idSesion,
+            estado=EstadoAgente.REQUIERE_CONFIRMACION,
+            accion_pendiente=AccionPendiente(
+                tool_call_id=res["tool_call_id"],
+                nombre_herramienta=res["nombre_herramienta"],
+                argumentos=res["argumentos"],
+            ),
+            fuentes=res.get("fuentes", []),
+            vueltas_usadas=res["vueltas"],
+        )
+
+    # Finalizado
+    texto_orig = pendiente.get("texto_usuario", "")
+    if texto_orig:
+        repo.guardar(confirmacion.idSesion, "user", texto_orig)
+    repo.guardar(confirmacion.idSesion, "assistant", res["respuesta"])
+
+    estado_final = EstadoAgente.COMPLETADO if res["estado"] == "completado" else EstadoAgente.TOPE_ALCANZADO
+    return RespuestaChatV2(
+        idSesion=confirmacion.idSesion,
+        estado=estado_final,
+        respuesta=res["respuesta"],
+        fuentes=res.get("fuentes", []),
+        vueltas_usadas=res["vueltas"],
+    )
+
+
+@app.post(
+    "/herramientas/signos-alarma",
+    response_model=EvaluarSignosAlarmaHttpOut,
+    tags=["Herramientas Deterministas"],
+    status_code=200,
+)
+def endpoint_signos_alarma(datos: EvaluarSignosAlarmaHttpIn) -> EvaluarSignosAlarmaHttpOut:
+    """Endpoint oficial Semana 3: Evaluación determinista de signos de alarma con parámetros del MSP."""
+    return evaluar_signos_alarma_clinica(datos)
 
 
 def check_health(readiness_probes: Optional[List[Callable[[], bool]]] = None) -> Tuple[Dict[str, Any], int]:
