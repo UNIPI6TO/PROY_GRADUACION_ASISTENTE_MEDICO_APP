@@ -118,3 +118,87 @@ Usaremos información validada sobre los síntomas y la prevención del dengue, 
 **Positivas:** información más confiable, respuestas consistentes y facilidad para realizar pruebas.
 
 **Negativas y riesgos:** se necesita actualizar la información y programar reglas para comprobar las respuestas.
+
+---
+
+## ADR-005: Base Vectorial Local Embebida con ChromaDB, intfloat/multilingual-e5-small y Segmentación Semántica Jerárquica
+
+### Estado
+
+Aceptado
+
+### Fecha
+
+2026-10-28
+
+### Contexto
+
+Para fundamentar las respuestas del asistente en la normativa clínica oficial de la OPS/OMS (2016) y del Ministerio de Salud Pública del Ecuador (SIVE-Alerta), se requiere una base vectorial (RAG) que permita recuperar fragmentos con alta precisión semántica, soporte búsqueda híbrida por códigos clínicos exactos (ej. `CIE-10 A90`, `CIE-10 A91`), filtre directrices por vigencia y opere sin costos de API externa ni latencias de red.
+
+### Opciones consideradas
+
+* **Opción A (APIs de Embeddings y Vector DB en la nube - OpenAI `text-embedding-3-small` + Pinecone):**
+  * *Ventajas:* Alta calidad de embeddings y escalabilidad gestionada.
+  * *Desventajas:* Costo recurrente en dólares por cada consulta, dependencia de conexión constante a internet, riesgo de latencia externa e incompatibilidad con pruebas automatizadas rápidas sin cuotas de API.
+* **Opción B (Base Vectorial Local Embebida - ChromaDB + intfloat/multilingual-e5-small):**
+  * *Ventajas:* Ejecución 100% local y gratuita; persistencia combinada en SQLite (metadatos y FTS5 para búsqueda exacta de texto) y HNSW en archivos binarios (cálculo de distancias coseno en milisegundos); modelo multilingüe de 384 dimensiones altamente optimizado para español; esquema asimétrico (`query:` / `passage:`) que maximiza la similitud pregunta-respuesta; desacoplamiento total en pruebas con dobles efímeros (`chromadb.EphemeralClient`).
+  * *Desventajas:* Requiere almacenar los pesos del modelo en el entorno local (~470 MB) y ejecutar la inferencia de embeddings en CPU/GPU del servidor.
+
+### Decisión
+
+Se adopta la **Opción B**:
+1. Motor de base vectorial: **ChromaDB persistente** (`chroma_db/`) con colección `guia_vital_dengue` y espacio métrico `cosine`.
+2. Modelo de embeddings: **`intfloat/multilingual-e5-small`** (384 dimensiones) con prefijo asimétrico obligatorio `"passage: "` para pasajes indexados y `"query: "` para preguntas de usuarios.
+3. Estrategia de corte: Segmentación semántica jerárquica guiada por encabezados clínicos, limpieza de marcas de agua, delimitación exacta por regex en SIVE-Alerta (págs. 95–100) y exclusión de la bibliografía de la Guía OPS 2016.
+4. Trazabilidad: Exportación de los 161 fragmentos resultantes en Markdown estructurado (`data/processed/fragmentos.md`) y JSON (`data/processed/fragmentos.json`).
+
+### Consecuencias
+
+* **Positivas:**
+  * Cero costos por llamadas a servicios de embeddings en la nube.
+  * Privacidad total: las consultas no viajan a proveedores de embeddings externos.
+  * Pruebas automatizadas inmediatas en `pytest` (~4 s) mediante inyección de mocks (`CarteroDeterminista` y cliente efímero en memoria).
+  * Precisión comprobada: evaluación empírica con 20 preguntas clínicas en [eval/run_eval.py](../eval/run_eval.py) alcanzando **Hit@5 = 100%** y **Hit@1 = 85%**.
+* **Negativas y riesgos:**
+  * La primera ejecución requiere la descarga local de los pesos del modelo HuggingFace (~470 MB). En entornos sin internet debe configurarse `local_files_only=True` sobre la caché local.
+
+## ADR · Diseño del agente de alcance controlado
+
+*Taller de la Clase 3 · 28 de octubre de 2026 · Grupo 5 · Orientación sobre dengue*
+*Integrantes: Wilson Salinas, Rafael Minaya, Luis Caguana*
+
+### Contexto
+El producto necesita, además de responder con nuestros documentos (RAG), ejecutar acciones. Un agente da vueltas pidiendo funciones; debemos acotar qué puede pedir, cuántas vueltas puede dar y qué acciones requieren confirmación humana.
+
+### Decisión
+- **Meta:** Orientar e informar sobre signos de alarma para Dengue y Arbovirosis
+- **Se considera terminada cuando:** Cuando se detecta signos de alarmas, se recomienda no automedicarse, acercarse a un centro de salud mas cercano o llamar al servicio de emergencia 911
+- **Usuario:** Ciudadanos y Familiar del enfermo
+
+| Herramienta | Qué hace | Nivel | Por qué |
+|---|---|---|---|
+| `consultar_guia_msp` | Busca en la guía del MSP | Libre | Solo lee |
+| `evaluar_signos_alarma` | Compara los síntomas con la lista oficial | Libre | Regla determinista, no diagnóstico |
+| `buscar_centro_salud` | Busca el centro de salud más cercano | Libre | Solo lee |
+| `notificar_contacto_emergencia` | Avisa a un contacto de emergencia | Con confirmación | Llega a otra persona |
+| `diagnosticar` | Emite un diagnóstico médico | Fuera de la lista | Solo lo hace un profesional de salud |
+
+- **MAX_ITER = 6.** Al llegar al tope el agente responde: «No puedo resolver la consulta, este asistente es dedicado solo para Dengue y Arbovirosis»
+- **Parámetros en config/:** `respuesta` (Cambia en cada consulta); `se_abstiene` (Cambia si no se habla del tema); `derivar_a` (Verdadero si encuentra un signo de alarma); `fuentes` (Es de acuerdo donde encuentra la información en la base vectorial); `documento` (Es de acuerdo donde encuentra la información en la base vectorial); `seccion` (Es de acuerdo donde encuentra la información en la base vectorial); `proveedor` (Que modelo esta disponible para responder)
+- **Herramienta especificada en el taller:** `consultar_guia_msp` (esquema Pydantic, prueba pytest y config generados).
+
+### Pruebas en el simulador del bucle
+- ✔ A · Camino feliz (5 vueltas)
+- ✔ B · Fuera de alcance (6 vueltas)
+- ✔ C · El tope (6 vueltas)
+- ✔ D · Inyección en un documento (2 vueltas; control: Protegió de enviar la notificación de correo a una dirección sospechosa)
+
+### Seguridad
+- Entradas no confiables: Los documentos que indexa su RAG; Lo que escribe el usuario; Lo que devuelve cada herramienta (incluida la búsqueda); Páginas web o APIs externas; Archivos que sube el usuario; Correos o mensajes de terceros.
+- Ningún texto leído otorga permisos: los permisos son PERMITIDAS, MAX_ITER y REQUIEREN_OK, en el código.
+- La confirmación muestra los argumentos reales (qué se hará y a quién).
+
+### Consecuencias
+- Las herramientas «fuera de la lista» no se implementan como herramientas del agente.
+- Cada herramienta tiene esquema Pydantic, implementación determinista y prueba con pytest.
+- Pendiente para la Entrega 3: implementar las funciones, el botón de confirmación en la interfaz y la evidencia de inyección en docs/evidencias/semana-3/.

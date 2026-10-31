@@ -9,7 +9,8 @@ Reglas para que el esquema funcione con el modo estricto de Gemini y Groq:
 from __future__ import annotations
 
 import re
-from typing import Literal
+from enum import Enum
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -99,3 +100,35 @@ class ProblemaRFC9457(BaseModel):
     status: int
     detail: str
     instance: str | None = None
+
+
+# ======================================================================
+# AGENTE DE ALCANCE CONTROLADO (SEMANA 3 / V2)
+# ======================================================================
+class EstadoAgente(str, Enum):
+    COMPLETADO = "completado"
+    REQUIERE_CONFIRMACION = "requiere_confirmacion"
+    TOPE_ALCANZADO = "tope_alcanzado"
+
+
+class AccionPendiente(BaseModel):
+    tool_call_id: str
+    nombre_herramienta: str
+    argumentos: dict[str, Any]
+    advertencia: str = "Esta acción requiere autorización humana explícita antes de ejecutarse."
+
+
+class RespuestaChatV2(BaseModel):
+    idSesion: str
+    estado: EstadoAgente
+    respuesta: str | None = None
+    accion_pendiente: AccionPendiente | None = None
+    fuentes: list[Fuente] = Field(default_factory=list)
+    vueltas_usadas: int = 1
+
+
+class SolicitudConfirmacion(BaseModel):
+    idSesion: str
+    tool_call_id: str
+    aprobado: bool
+

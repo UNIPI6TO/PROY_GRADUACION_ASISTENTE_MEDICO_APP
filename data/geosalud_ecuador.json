@@ -1,225 +1,927 @@
 [
-    {
-        "id": "CS-GYE-001",
-        "provincia": "Guayas",
-        "ciudad": "Guayaquil",
-        "nombre": "Hospital de Infectología Dr. José Daniel Rodríguez Maridueña",
-        "nivel": "Tercer Nivel",
-        "tipo": "Especializado en Infectología",
-        "direccion": "Julián Coronel y Esmeraldas",
-        "telefono": "(04) 228-7400",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "UCI",
-            "Laboratorio Viral",
-            "Terapia Intensiva"
-        ]
-    },
-    {
-        "id": "CS-GYE-002",
-        "provincia": "Guayas",
-        "ciudad": "Guayaquil",
-        "nombre": "Hospital General Monte Sinaí",
-        "nivel": "Segundo Nivel",
-        "tipo": "Hospital General",
-        "direccion": "Av. Casuarina s/n, Noroeste de Guayaquil",
-        "telefono": "(04) 371-3800",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "Medicina Interna",
-            "Pediatría",
-            "Cuidados Intermedios"
-        ]
-    },
-    {
-        "id": "CS-GYE-003",
-        "provincia": "Guayas",
-        "ciudad": "Guayaquil",
-        "nombre": "Hospital del Niño Dr. Roberto Gilbert Elizalde",
-        "nivel": "Tercer Nivel",
-        "tipo": "Pediátrico",
-        "direccion": "Roberto Gilbert y Numa Pompilio Llona",
-        "telefono": "(04) 228-7310",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "UCIP",
-            "Infectología Pediátrica",
-            "Triage Pediátrico"
-        ]
-    },
-    {
-        "id": "CS-GYE-004",
-        "provincia": "Guayas",
-        "ciudad": "Guayaquil",
-        "nombre": "Centro de Salud Tipo C Bastión Popular",
-        "nivel": "Primer Nivel",
-        "tipo": "Centro de Salud Tipo C",
-        "direccion": "Bastión Popular Bloque 1",
-        "telefono": "(04) 211-0420",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "Laboratorio de Plaquetas de Urgencia",
-            "Sala de Rehidratación Oral/IV"
-        ]
-    },
-    {
-        "id": "CS-MAN-001",
-        "provincia": "Manabí",
-        "ciudad": "Portoviejo",
-        "nombre": "Hospital General de Especialidades Portoviejo",
-        "nivel": "Tercer Nivel",
-        "tipo": "Especialidades",
-        "direccion": "Av. Metropolitana Eloy Alfaro",
-        "telefono": "(05) 370-1300",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "UCI Adultos",
-            "UCI Pediátrica",
-            "Infectología"
-        ]
-    },
-    {
-        "id": "CS-MAN-002",
-        "provincia": "Manabí",
-        "ciudad": "Manta",
-        "nombre": "Hospital General Dr. Rodríguez Zambrano",
-        "nivel": "Segundo Nivel",
-        "tipo": "Hospital General",
-        "direccion": "Calle 13 y Av. 24",
-        "telefono": "(05) 262-1111",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "Medicina Interna",
-            "Pediatría",
-            "Emergencias 24h"
-        ]
-    },
-    {
-        "id": "CS-MAN-003",
-        "provincia": "Manabí",
-        "ciudad": "Chone",
-        "nombre": "Hospital General Dr. Napoleón Dávila Córdova",
-        "nivel": "Segundo Nivel",
-        "tipo": "Hospital General",
-        "direccion": "Av. Marcos Aray Dueñas",
-        "telefono": "(05) 269-5300",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "Cuidados Críticos",
-            "Medicina Interna",
-            "Laboratorio Clínico"
-        ]
-    },
-    {
-        "id": "CS-ESM-001",
-        "provincia": "Esmeraldas",
-        "ciudad": "Esmeraldas",
-        "nombre": "Hospital General Delfina Torres de Concha",
-        "nivel": "Segundo Nivel",
-        "tipo": "Hospital General",
-        "direccion": "Sector La Pradera",
-        "telefono": "(06) 272-6800",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "Medicina Interna",
-            "Banco de Sangre",
-            "Cuidados Intensivos"
-        ]
-    },
-    {
-        "id": "CS-RIO-001",
-        "provincia": "Los Ríos",
-        "ciudad": "Babahoyo",
-        "nombre": "Hospital General Martín Icaza",
-        "nivel": "Segundo Nivel",
-        "tipo": "Hospital General",
-        "direccion": "Av. 5 de Junio y Sucre",
-        "telefono": "(05) 273-0144",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "Medicina Interna",
-            "Pediatría",
-            "Rehidratación Supervisada"
-        ]
-    },
-    {
-        "id": "CS-ORO-001",
-        "provincia": "El Oro",
-        "ciudad": "Machala",
-        "nombre": "Hospital General Teófilo Dávila",
-        "nivel": "Segundo Nivel",
-        "tipo": "Hospital General",
-        "direccion": "Boyacá y Buenavista",
-        "telefono": "(07) 293-0150",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "Infectología",
-            "UCI",
-            "Laboratorio de Hematocrito"
-        ]
-    },
-    {
-        "id": "CS-SDT-001",
-        "provincia": "Santo Domingo",
-        "ciudad": "Santo Domingo",
-        "nombre": "Hospital General Dr. Gustavo Domínguez Zambrano",
-        "nivel": "Segundo Nivel",
-        "tipo": "Hospital General",
-        "direccion": "Av. Quito y Chone",
-        "telefono": "(02) 275-0336",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "Medicina Interna",
-            "Cuidados Intensivos",
-            "Pediatría"
-        ]
-    },
-    {
-        "id": "CS-ORE-001",
-        "provincia": "Orellana",
-        "ciudad": "Francisco de Orellana",
-        "nombre": "Hospital General Francisco de Orellana",
-        "nivel": "Segundo Nivel",
-        "tipo": "Hospital General",
-        "direccion": "Av. 9 de Octubre y Guayaquil",
-        "telefono": "(06) 288-1210",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "Emergencias 24h",
-            "Medicina Tropical Amazónica",
-            "Laboratorio"
-        ]
-    },
-    {
-        "id": "CS-SUC-001",
-        "provincia": "Sucumbíos",
-        "ciudad": "Nueva Loja",
-        "nombre": "Hospital General Marco Vinicio Iza",
-        "nivel": "Segundo Nivel",
-        "tipo": "Hospital General",
-        "direccion": "Av. Circunvalación y Colombia",
-        "telefono": "(06) 299-1900",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "Medicina Interna",
-            "Pediatría",
-            "Cuidados Intermedios"
-        ]
-    },
-    {
-        "id": "CS-PAS-001",
-        "provincia": "Pastaza",
-        "ciudad": "Puyo",
-        "nombre": "Hospital General Puyo",
-        "nivel": "Segundo Nivel",
-        "tipo": "Hospital General",
-        "direccion": "Av. Alberto Zambrano",
-        "telefono": "(03) 288-5154",
-        "emergencia_24h": true,
-        "capacidad_critica": [
-            "Atención Comunitaria Amazónica",
-            "Medicina Interna",
-            "Emergencias"
-        ]
-    }
+  {
+    "region": "Costa",
+    "provincia": "Guayas",
+    "ciudad": "Guayaquil",
+    "nombre": "Hospital General Guasmo Sur",
+    "direccion": "Av. Cacique Tomalá y Vía Perimetral",
+    "latitud": -2.2654,
+    "longitud": -79.8931,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(04) 380-4960"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "Guayas",
+    "ciudad": "Guayaquil",
+    "nombre": "Hospital Universitario de Guayaquil",
+    "direccion": "Vía Perimetral Km 23.5",
+    "latitud": -2.1158,
+    "longitud": -79.9482,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(04) 381-1970"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "Guayas",
+    "ciudad": "Guayaquil",
+    "nombre": "Centro de Salud Tipo C Bastión Popular",
+    "direccion": "Bastión Popular, Bloque 10",
+    "latitud": -2.1035,
+    "longitud": -79.9408,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "08:00",
+        "hora_cierre": "20:00",
+        "es_24_horas": false,
+        "crontab": "* 8-19 * * *"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "Guayas",
+    "ciudad": "Guayaquil",
+    "nombre": "Centro de Salud Tipo C Cisne II",
+    "direccion": "Calle 11 y la Ch (Suburbio)",
+    "latitud": -2.2132,
+    "longitud": -79.9167,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "08:00",
+        "hora_cierre": "20:00",
+        "es_24_horas": false,
+        "crontab": "* 8-19 * * *"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "Los Ríos",
+    "ciudad": "Quevedo",
+    "nombre": "Hospital General Sagrado Corazón de Jesús",
+    "direccion": "Av. Walter Andrade Fajardo y Calle Séptima",
+    "latitud": -1.0263,
+    "longitud": -79.4675,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(05) 275-0430"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "Los Ríos",
+    "ciudad": "Quevedo",
+    "nombre": "Centro de Salud San Camilo (Tipo C)",
+    "direccion": "Av. Guayaquil y Juan Montalvo",
+    "latitud": -1.0315,
+    "longitud": -79.4589,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "08:00",
+        "hora_cierre": "20:00",
+        "es_24_horas": false,
+        "crontab": "* 8-19 * * *"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "Los Ríos",
+    "ciudad": "Quevedo",
+    "nombre": "Centro de Salud Venus de la Valdivia",
+    "direccion": "Av. Venus y Ruta del Río",
+    "latitud": -1.0189,
+    "longitud": -79.4623,
+    "horarios": [
+      {
+        "servicio": "Atención General",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "Manabí",
+    "ciudad": "Portoviejo",
+    "nombre": "Hospital de Especialidades Portoviejo",
+    "direccion": "Av. 15 de Abril y Ruta del Sol",
+    "latitud": -1.0742,
+    "longitud": -80.4561,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(05) 370-2200"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "Manabí",
+    "ciudad": "Portoviejo",
+    "nombre": "Hospital Provincial Verdi Cevallos Balda",
+    "direccion": "Calles 12 de Marzo y 15 de Abril",
+    "latitud": -1.0505,
+    "longitud": -80.4502,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(05) 263-0555"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "Manabí",
+    "ciudad": "Portoviejo",
+    "nombre": "Centro de Salud San Alejo",
+    "direccion": "Sector San Alejo, calle principal",
+    "latitud": -1.0456,
+    "longitud": -80.4712,
+    "horarios": [
+      {
+        "servicio": "Atención General",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "Manabí",
+    "ciudad": "Manta",
+    "nombre": "Hospital General Rodríguez Zambrano",
+    "direccion": "Av. de la Cultura y Vía a San Mateo",
+    "latitud": -0.9632,
+    "longitud": -80.7258,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(05) 261-1849"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "Manabí",
+    "ciudad": "Manta",
+    "nombre": "Centro de Salud Manta Tipo C",
+    "direccion": "Barrio Cuba, Av. 113",
+    "latitud": -0.9701,
+    "longitud": -80.7089,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "08:00",
+        "hora_cierre": "20:00",
+        "es_24_horas": false,
+        "crontab": "* 8-19 * * *"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "El Oro",
+    "ciudad": "Machala",
+    "nombre": "Hospital General Teófilo Dávila",
+    "direccion": "Av. 11 de Mayo y Manuel Serrano",
+    "latitud": -3.2619,
+    "longitud": -79.9602,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(07) 298-3060"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "El Oro",
+    "ciudad": "Machala",
+    "nombre": "Centro de Salud Tipo C Velasco Ibarra",
+    "direccion": "Calles 11ava Sur y 4ta Oeste",
+    "latitud": -3.2721,
+    "longitud": -79.9705,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "08:00",
+        "hora_cierre": "20:00",
+        "es_24_horas": false,
+        "crontab": "* 8-19 * * *"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "Esmeraldas",
+    "ciudad": "Esmeraldas",
+    "nombre": "Hospital General Delfina Torres de Concha",
+    "direccion": "Vía a Atacames, Sector Sur",
+    "latitud": 0.9416,
+    "longitud": -79.6738,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(06) 246-2489"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Costa",
+    "provincia": "Esmeraldas",
+    "ciudad": "Esmeraldas",
+    "nombre": "Centro de Salud Tipo C San Rafael",
+    "direccion": "Sector San Rafael, vía principal",
+    "latitud": 0.9254,
+    "longitud": -79.6642,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "08:00",
+        "hora_cierre": "20:00",
+        "es_24_horas": false,
+        "crontab": "* 8-19 * * *"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Oriente",
+    "provincia": "Sucumbíos",
+    "ciudad": "Nueva Loja",
+    "nombre": "Hospital General Marco Vinicio Iza",
+    "direccion": "Vía a Colombia km 1.5",
+    "latitud": 0.0883,
+    "longitud": -76.8776,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(06) 283-0105"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Oriente",
+    "provincia": "Sucumbíos",
+    "ciudad": "Lumbaqui",
+    "nombre": "Centro de Salud Lumbaqui",
+    "direccion": "Vía principal Lumbaqui",
+    "latitud": 0.0463,
+    "longitud": -77.3278,
+    "horarios": [
+      {
+        "servicio": "Atención General",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Oriente",
+    "provincia": "Orellana",
+    "ciudad": "El Coca",
+    "nombre": "Hospital General Francisco de Orellana",
+    "direccion": "Av. 9 de Octubre y Eugenio Espejo",
+    "latitud": -0.4651,
+    "longitud": -76.9859,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(06) 288-0628"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Oriente",
+    "provincia": "Orellana",
+    "ciudad": "Loreto",
+    "nombre": "Centro de Salud Tipo C Loreto",
+    "direccion": "Cantón Loreto, vía de acceso principal",
+    "latitud": -0.6865,
+    "longitud": -77.3167,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "08:00",
+        "hora_cierre": "20:00",
+        "es_24_horas": false,
+        "crontab": "* 8-19 * * *"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Oriente",
+    "provincia": "Napo",
+    "ciudad": "Tena",
+    "nombre": "Hospital General José María Velasco Ibarra",
+    "direccion": "Av. Jumandy y Simón Bolívar",
+    "latitud": -0.9935,
+    "longitud": -77.8173,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(06) 288-6398"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Oriente",
+    "provincia": "Napo",
+    "ciudad": "Tena",
+    "nombre": "Centro de Salud Tena Tipo B",
+    "direccion": "Calle Augusto Rueda y Av. del Chofer",
+    "latitud": -0.9922,
+    "longitud": -77.8111,
+    "horarios": [
+      {
+        "servicio": "Atención General",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Oriente",
+    "provincia": "Pastaza",
+    "ciudad": "Puyo",
+    "nombre": "Hospital General Puyo",
+    "direccion": "Paso Lateral, Vía a Macas",
+    "latitud": -1.4938,
+    "longitud": -78.0125,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(03) 299-4400"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Oriente",
+    "provincia": "Pastaza",
+    "ciudad": "Puyo",
+    "nombre": "Centro de Salud Puyo (Tipo A)",
+    "direccion": "Calle 27 de Febrero y General Villamil",
+    "latitud": -1.4827,
+    "longitud": -77.9981,
+    "horarios": [
+      {
+        "servicio": "Atención General",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Oriente",
+    "provincia": "Morona Santiago",
+    "ciudad": "Macas",
+    "nombre": "Hospital General Macas",
+    "direccion": "Calle 10 de Agosto y 24 de Mayo",
+    "latitud": -2.3021,
+    "longitud": -78.1158,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(07) 270-0196"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Oriente",
+    "provincia": "Morona Santiago",
+    "ciudad": "Macas",
+    "nombre": "Centro de Salud Macas",
+    "direccion": "Av. 29 de Mayo y Sucre",
+    "latitud": -2.3051,
+    "longitud": -78.1189,
+    "horarios": [
+      {
+        "servicio": "Atención General",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Oriente",
+    "provincia": "Zamora Chinchipe",
+    "ciudad": "Zamora",
+    "nombre": "Hospital General Julius Doepfner",
+    "direccion": "Av. Héroes de Paquisha y Jorge Mosquera",
+    "latitud": -4.0664,
+    "longitud": -78.9553,
+    "horarios": [
+      {
+        "servicio": "Emergencia",
+        "dias": "Lunes a Domingo",
+        "hora_apertura": "00:00",
+        "hora_cierre": "23:59",
+        "es_24_horas": true,
+        "crontab": "* * * * *"
+      },
+      {
+        "servicio": "Consulta Externa",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "PBX Administrativo",
+        "telefono": "(07) 260-5014"
+      },
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  },
+  {
+    "region": "Oriente",
+    "provincia": "Zamora Chinchipe",
+    "ciudad": "Zamora",
+    "nombre": "Centro de Salud Zamora",
+    "direccion": "Barrio Santa Elena, Vía a Loja",
+    "latitud": -4.0621,
+    "longitud": -78.9512,
+    "horarios": [
+      {
+        "servicio": "Atención General",
+        "dias": "Lunes a Viernes",
+        "hora_apertura": "08:00",
+        "hora_cierre": "17:00",
+        "es_24_horas": false,
+        "crontab": "* 8-16 * * 1-5"
+      }
+    ],
+    "telefonos": [
+      {
+        "tipo": "Citas MSP",
+        "telefono": "171"
+      }
+    ]
+  }
 ]
+
