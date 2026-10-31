@@ -24,6 +24,12 @@ def evaluar_signos_alarma(datos: EvaluarSignosAlarmaIn) -> dict[str, Any]:
     """Compara deterministamente los síntomas del paciente contra los signos de alarma oficiales."""
     params = cargar_parametros().get("signos_alarma", {})
     lista_oficial = [_normalizar(s) for s in params.get("lista_oficial", [])]
+    sinonimos = {_normalizar(k): [_normalizar(s) for s in v] for k, v in params.get("sinonimos", {}).items()}
+    for sintoma in datos.sintomas:
+        s_norm = _normalizar(sintoma)
+        for oficial, formas in sinonimos.items():
+            if any(f in s_norm for f in formas):
+                detectados.append(oficial)
 
     detectados: list[str] = []
     for sintoma in datos.sintomas:
