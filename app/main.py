@@ -92,9 +92,33 @@ async def _manejar_422(request: Request, exc: RequestValidationError):
     if request.url.path.startswith("/herramientas"):
         return await request_validation_exception_handler(request, exc)
 
-    # Para los endpoints de chat (/api/...), mantener el formato RFC 9457 del proyecto
-    detalles = "; ".join([f"{'.'.join(str(l) for l in e['loc'][1:])}: {e['msg']}" for e in exc.errors()])
-    return _problema(422, "Solicitud inválida", detalles or "Revisa los campos de la solicitud.", request)
+    # Para los endpoints de chat (/api/...), mantener el formato RFC 9457 con mensajes amigables en español
+    mensajes_amigables: list[str] = []
+    for err in exc.errors():
+        campo = ".".join(str(l) for l in err.get("loc", [])[1:])
+        tipo = err.get("type", "")
+        if campo == "texto":
+            if "too_short" in tipo:
+                mensajes_amigables.append(
+                    "Tu consulta es muy breve. Por favor, escribe al menos 5 caracteres describiendo tu duda o los síntomas que deseas consultar."
+                )
+            elif "too_long" in tipo:
+                mensajes_amigables.append(
+                    "Tu consulta supera el límite máximo de 2000 caracteres. Por favor, resúmela para poder orientarte mejor."
+                )
+            else:
+                mensajes_amigables.append(
+                    "Por favor, ingresa un texto de consulta válido (entre 5 y 2000 caracteres)."
+                )
+        elif campo == "idSesion":
+            mensajes_amigables.append(
+                "No se pudo validar la sesión actual. Por favor, inicia una 'Nueva consulta' o recarga la página."
+            )
+        else:
+            mensajes_amigables.append(f"{campo}: {err.get('msg', 'Valor inválido')}")
+
+    detalle_final = " ".join(mensajes_amigables) if mensajes_amigables else "Por favor, verifica el texto de tu consulta antes de enviarla."
+    return _problema(422, "Solicitud inválida", detalle_final, request)
 
 
 @app.exception_handler(LimiteExcedido)
