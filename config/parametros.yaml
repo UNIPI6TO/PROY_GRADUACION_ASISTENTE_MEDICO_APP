@@ -21,7 +21,14 @@ signos_alarma:
     - "acumulacion de liquidos"
     - "dificultad respiratoria"
     - "hepatomegalia"
-
+  sinonimos:
+    sangrado de mucosas: ["sangrado de encias", "me sangran las encias", "sangra la nariz", "sangrado nasal",
+                          "vomito con sangre", "heces negras", "moretones"]
+    dolor abdominal intenso y continuo: ["dolor de barriga fuerte", "me duele mucho el estomago", "dolor de estomago intenso"]
+    vomitos persistentes: ["vomito todo", "no paro de vomitar", "vomita varias veces"]
+    letargo o somnolencia: ["muy decaido", "no se despierta", "mucho sueno"]
+    dificultad respiratoria: ["me falta el aire", "respira rapido", "me ahogo"]
+    
 geosalud:
   radio_max_km: 100.0
   limite_resultados: 3
