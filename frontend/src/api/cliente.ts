@@ -4,6 +4,11 @@ import type { components } from "./esquema";
 export type Solicitud = components["schemas"]["Solicitud"];
 export type RespuestaChat = components["schemas"]["RespuestaChat"];
 export type ProblemaRFC9457 = components["schemas"]["ProblemaRFC9457"];
+export type EvaluarSignosAlarmaHttpIn = components["schemas"]["EvaluarSignosAlarmaHttpIn"];
+export type EvaluarSignosAlarmaHttpOut = components["schemas"]["EvaluarSignosAlarmaHttpOut"];
+export type RespuestaChatV2 = components["schemas"]["RespuestaChatV2"];
+export type AccionPendiente = components["schemas"]["AccionPendiente"];
+export type SolicitudConfirmacion = components["schemas"]["SolicitudConfirmacion"];
 
 const CLAVE_SESION_STORAGE = "sid";
 const REGEX_SESION_VALIDA = /^[A-Za-z0-9_-]{6,64}$/;
@@ -235,4 +240,129 @@ export async function consultarAsistente(
   // Respuesta JSON estándar según contrato OpenAPI
   const datos = (await respuestaHttp.json()) as RespuestaChat;
   return datos;
+}
+
+/**
+ * Consulta la herramienta oficial determinista de la Semana 3:
+ * POST /herramientas/signos-alarma
+ */
+export async function evaluarSignosAlarmaHttp(
+  datos: EvaluarSignosAlarmaHttpIn,
+  apiUrl?: string
+): Promise<EvaluarSignosAlarmaHttpOut> {
+  const base = apiUrl ?? obtenerUrlApi();
+  const respuestaHttp = await fetch(`${base}/herramientas/signos-alarma`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(datos),
+  });
+
+  if (!respuestaHttp.ok) {
+    let mensaje = "No se pudo evaluar los signos de alarma clínicamente.";
+    try {
+      const errorJson = await respuestaHttp.json();
+      if (Array.isArray(errorJson.detail)) {
+        mensaje = errorJson.detail.map((e: { msg: string; loc?: string[] }) => e.msg).join("; ");
+      } else if (typeof errorJson.detail === "string") {
+        mensaje = errorJson.detail;
+      }
+    } catch {
+      // Ignorar fallback
+    }
+    throw new ErrorContratoAPI(respuestaHttp.status, {
+      type: `/errores/${respuestaHttp.status}`,
+      title: "Error al evaluar signos de alarma",
+      status: respuestaHttp.status,
+      detail: mensaje,
+      instance: "/herramientas/signos-alarma",
+    });
+  }
+
+  return (await respuestaHttp.json()) as EvaluarSignosAlarmaHttpOut;
+}
+
+/**
+ * Consulta el endpoint v2 del Agente con Function Calling y RAG (Semana 3):
+ * POST /api/v2/chat
+ */
+export async function consultarAsistenteV2(
+  solicitud: Solicitud,
+  opciones: OpcionesConsulta = {}
+): Promise<RespuestaChatV2> {
+  const base = opciones.apiUrl ?? obtenerUrlApi();
+  const respuestaHttp = await fetch(`${base}/api/v2/chat`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      idSesion: solicitud.idSesion,
+      texto: solicitud.texto,
+    }),
+    signal: opciones.signal,
+  });
+
+  if (!respuestaHttp.ok) {
+    const retryHeader = respuestaHttp.headers.get("Retry-After");
+    const retryAfter = retryHeader ? parseInt(retryHeader, 10) : null;
+
+    let problema: ProblemaRFC9457;
+    try {
+      problema = (await respuestaHttp.json()) as ProblemaRFC9457;
+    } catch {
+      problema = {
+        type: `/errores/${respuestaHttp.status}`,
+        title: "Error del agente v2",
+        status: respuestaHttp.status,
+        detail: "No se pudo conectar con el agente inteligente.",
+        instance: "/api/v2/chat",
+      };
+    }
+
+    throw new ErrorContratoAPI(
+      respuestaHttp.status,
+      problema,
+      Number.isNaN(retryAfter) ? null : retryAfter
+    );
+  }
+
+  return (await respuestaHttp.json()) as RespuestaChatV2;
+}
+
+/**
+ * Envía la decisión humana para aprobar o rechazar una acción pendiente del agente (Human-in-the-Loop):
+ * POST /api/v2/chat/confirmar
+ */
+export async function confirmarAccionAgente(
+  confirmacion: SolicitudConfirmacion,
+  apiUrl?: string
+): Promise<RespuestaChatV2> {
+  const base = apiUrl ?? obtenerUrlApi();
+  const respuestaHttp = await fetch(`${base}/api/v2/chat/confirmar`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(confirmacion),
+  });
+
+  if (!respuestaHttp.ok) {
+    let problema: ProblemaRFC9457;
+    try {
+      problema = (await respuestaHttp.json()) as ProblemaRFC9457;
+    } catch {
+      problema = {
+        type: `/errores/${respuestaHttp.status}`,
+        title: "Error de confirmación",
+        status: respuestaHttp.status,
+        detail: "No se pudo registrar la confirmación humana.",
+        instance: "/api/v2/chat/confirmar",
+      };
+    }
+    throw new ErrorContratoAPI(respuestaHttp.status, problema);
+  }
+
+  return (await respuestaHttp.json()) as RespuestaChatV2;
 }
