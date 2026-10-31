@@ -11,11 +11,11 @@ class NotificarContactoEmergenciaIn(BaseModel):
 
 
 def notificar_contacto_emergencia(datos: NotificarContactoEmergenciaIn) -> dict[str, Any]:
-    """Acción que sale del sistema: solo se ejecuta cuando el humano dio clic en 'Aprobar'."""
+    """Acción que sale del sistema. Hoy es una simulación: no se envía nada."""
     return {
-        "estado": "enviado",
+        "estado": "simulado",
         "destinatario": datos.destinatario,
-        "mensaje": "Alerta de signos de alarma de dengue transmitida con éxito al contacto.",
+        "mensaje": "SIMULACIÓN: en producción se enviaría este aviso. No se ha notificado a nadie.",
     }
 
 
