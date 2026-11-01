@@ -506,13 +506,18 @@ export const App: React.FC = () => {
               <div className="botones-envio">
                 <button
                   type="button"
-                  className={`btn-modo-agente ${modoAgente ? "activo" : ""}`}
+                  className={`btn-modo-agente ${modoAgente ? "activo" : "inactivo"}`}
                   onClick={() => setModoAgente((prev) => !prev)}
-                  title="Alternar entre Agente v2 con herramientas y Asistente RAG v1"
+                  title={
+                    modoAgente
+                      ? "Modo Agente v2 activo (clic para desactivar y usar Versión 1)"
+                      : "Modo Agente inactivo - Usando Versión 1 (clic para activar Agente v2)"
+                  }
                   aria-pressed={modoAgente}
+                  aria-label={`Modo Agente ${modoAgente ? "activo" : "inactivo, usando versión 1"}`}
                 >
-                  {modoAgente ? <Bot size={16} aria-hidden="true" /> : <Sparkles size={16} aria-hidden="true" />}
-                  <span>{modoAgente ? "Agente" : "RAG v1"}</span>
+                  <Bot size={16} aria-hidden="true" />
+                  <span>Agente</span>
                 </button>
 
                 {estaOcupado ? (

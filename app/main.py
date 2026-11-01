@@ -39,7 +39,7 @@ from app.tools.evaluar_signos_alarma import (
 )
 
 APP_NAME = "GuíaVital"
-APP_VERSION = "0.2.0-SNAPSHOT-RC1"
+APP_VERSION = "0.2.0-SNAPSHOT-RC4"
 SEMVER_REGEX = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
 
 PROMPT = "system_v4"
@@ -52,12 +52,23 @@ app = FastAPI(
     version=APP_VERSION,
 )
 
-# CORS cerrado: solo los orígenes declarados en CORS_ORIGINS (nunca "*").
+# CORS: permitir orígenes locales de desarrollo y los declarados en CORS_ORIGINS
+ORIGENES_LOCALES = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "http://localhost:8501",
+]
+origenes_env = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
+origenes_permitidos = list(dict.fromkeys(ORIGENES_LOCALES + origenes_env))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in (os.getenv("CORS_ORIGINS", "").strip() or "http://localhost:8501,http://localhost:5173").split(",") if o.strip()],
+    allow_origins=origenes_permitidos,
+    allow_credentials=True,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Accept"],
     expose_headers=["Retry-After"],
 )
 

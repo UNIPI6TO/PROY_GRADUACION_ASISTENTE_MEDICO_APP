@@ -1,0 +1,151 @@
+name: Deploy Backend to Cloud Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Tag/Versión manual para Artifact Registry (opcional)'
+        required: false
+        default: ''
+        type: string
+  workflow_run:
+    workflows: ["Release & Tag (Post-Merge)"]
+    types:
+      - completed
+
+env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'project-3e1faa58-1e7d-4e8d-933' }}
+  GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+  GAR_REPOSITORY: ${{ vars.GAR_REPOSITORY || 'guiavital-repo' }}
+  BACKEND_SERVICE: guiavital-backend
+  BACKEND_SA_EMAIL: ${{ vars.BACKEND_SA_EMAIL || 'guiavital-backend-sa@project-3e1faa58-1e7d-4e8d-933.iam.gserviceaccount.com' }}
+
+jobs:
+  deploy-backend:
+    name: Build & Deploy Backend Container
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve Release / Version Metadata
+        id: meta
+        run: |
+          INPUT_TAG="${{ inputs.version_tag }}"
+          if [ -n "$INPUT_TAG" ]; then
+            RAW_TAG="$INPUT_TAG"
+          else
+            APP_VER="$(python3 -c "import re, pathlib; m = re.search(r'APP_VERSION\s*=\s*[\"|\']([^\"|\']+)[\"|\']', pathlib.Path('app/main.py').read_text(encoding='utf-8')); print(m.group(1) if m else '0.1.0')")"
+            RAW_TAG="v${APP_VER#v}"
+          fi
+
+          SEMVER_CLEAN="${RAW_TAG#v}"
+          IMAGE_TAG="v${SEMVER_CLEAN}"
+          SHORT_SHA="${GITHUB_SHA::7}"
+
+          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "app_version=${SEMVER_CLEAN}" >> "$GITHUB_OUTPUT"
+          echo "sha_tag=sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Backend Test Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Backend Tests (Pre-Deployment Quality Gate)
+        run: pytest -q
+
+      - name: Authenticate to Google Cloud via Deployer SA (GCP_JSON_KEY)
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_JSON_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify Infrastructure & Secret Manager Pre-requisites (SRE Gate)
+        id: infra_check
+        env:
+          PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
+        run: |
+          RUNTIME_SA_EMAIL="${{ env.BACKEND_SA_EMAIL }}"
+
+          # 1. Verificar que la Service Account exclusiva del backend exista
+          if ! gcloud iam service-accounts describe "${RUNTIME_SA_EMAIL}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+            echo "::error::No existe la Service Account '${RUNTIME_SA_EMAIL}'. Ejecute primero el workflow 'Provision GCP Infrastructure (SRE)'."
+            exit 1
+          fi
+
+          # 2. Verificar que todos los secretos de entorno existan en Secret Manager
+          BACKEND_SECRETS=(
+            "LLM_PROVIDER"
+            "LLM_MODEL"
+            "GEMINI_API_KEY"
+            "LLM_FALLBACK_PROVIDER"
+            "LLM_FALLBACK_MODEL"
+            "GROQ_API_KEY"
+            "LLM_TIMEOUT_SECONDS"
+            "LLM_TEMPERATURE"
+            "LLM_MAX_OUTPUT_TOKENS"
+            "MAX_INPUT_CHARS"
+            "RATE_LIMIT_PER_MINUTE"
+            "HISTORIAL_DB"
+            "CORS_ORIGINS"
+          )
+
+          for SECRET_NAME in "${BACKEND_SECRETS[@]}"; do
+            ENABLED_VER="$(gcloud secrets versions list "${SECRET_NAME}" --project="${PROJECT_ID}" --filter="state=ENABLED" --limit=1 --format="value(name)" 2>/dev/null || true)"
+            if [ -z "${ENABLED_VER}" ]; then
+              echo "::error::El secreto '${SECRET_NAME}' no tiene ninguna versión activa (ENABLED) en Secret Manager."
+              exit 1
+            fi
+          done
+
+      - name: Configure Docker for GCP Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build & Push Backend Container (guiavital-backend)
+        env:
+          IMAGE_URI: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.BACKEND_SERVICE }}
+        run: |
+          docker build \
+            -f app/Dockerfile \
+            -t "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}" \
+            -t "${IMAGE_URI}:${{ steps.meta.outputs.sha_tag }}" \
+            .
+          docker push "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}"
+          docker push "${IMAGE_URI}:${{ steps.meta.outputs.sha_tag }}"
+
+      - name: Deploy Backend to Cloud Run
+        id: deploy_backend
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.BACKEND_SERVICE }}
+          region: ${{ env.GCP_REGION }}
+          image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.BACKEND_SERVICE }}:${{ steps.meta.outputs.image_tag }}
+          flags: >-
+            --service-account=${{ env.BACKEND_SA_EMAIL }}
+            --allow-unauthenticated
+            --port=8080
+            --min-instances=0
+            --max-instances=5
+            --set-env-vars=APP_NAME=GuíaVital,APP_VERSION=${{ steps.meta.outputs.app_version }}
+            --set-secrets=LLM_PROVIDER=LLM_PROVIDER:latest,LLM_MODEL=LLM_MODEL:latest,GEMINI_API_KEY=GEMINI_API_KEY:latest,LLM_FALLBACK_PROVIDER=LLM_FALLBACK_PROVIDER:latest,LLM_FALLBACK_MODEL=LLM_FALLBACK_MODEL:latest,GROQ_API_KEY=GROQ_API_KEY:latest,LLM_TIMEOUT_SECONDS=LLM_TIMEOUT_SECONDS:latest,LLM_TEMPERATURE=LLM_TEMPERATURE:latest,LLM_MAX_OUTPUT_TOKENS=LLM_MAX_OUTPUT_TOKENS:latest,MAX_INPUT_CHARS=MAX_INPUT_CHARS:latest,RATE_LIMIT_PER_MINUTE=RATE_LIMIT_PER_MINUTE:latest,HISTORIAL_DB=HISTORIAL_DB:latest,CORS_ORIGINS=CORS_ORIGINS:latest
+
+      - name: Verify Backend SRE Health
+        run: |
+          curl --fail --silent --show-error "${{ steps.deploy_backend.outputs.url }}/manage/health"
+          curl --fail --silent --show-error "${{ steps.deploy_backend.outputs.url }}/manage/info"

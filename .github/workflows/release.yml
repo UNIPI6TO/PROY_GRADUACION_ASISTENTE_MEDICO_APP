@@ -1,0 +1,112 @@
+name: Release & Tag (Post-Merge)
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    types:
+      - closed
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Rama objetivo para el release'
+        required: false
+        default: 'develop'
+        type: choice
+        options:
+          - develop
+          - main
+
+jobs:
+  tag-and-changelog:
+    name: Tag Release and Update Changelogs on Merge
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Resolve Target Branch
+        id: branch_info
+        run: |
+          RESOLVED_BRANCH="${{ inputs.target_branch || github.base_ref || github.ref_name }}"
+          echo "target_branch=${RESOLVED_BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "Rama objetivo para release: ${RESOLVED_BRANCH}"
+
+      - name: Checkout Target Branch (Base Branch Post-Merge)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.branch_info.outputs.target_branch }}
+          fetch-depth: 0
+          token: ${{ secrets.BUMP_TOKEN }}
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Extract Versions (Backend and Frontend)
+        id: meta
+        run: |
+          BE_VER="$(python -c "import re, pathlib; m = re.search(r'APP_VERSION\s*=\s*[\"|\']([^\"|\']+)[\"|\']', pathlib.Path('app/main.py').read_text(encoding='utf-8')); print(m.group(1) if m else '')")"
+          FE_VER="$(python -c "import json, pathlib; data = json.loads(pathlib.Path('frontend/package.json').read_text(encoding='utf-8')); print(data.get('version', ''))")"
+          
+          # Como las versiones son simétricas, se unifica el tag
+          VER="${BE_VER:-$FE_VER}"
+          echo "version=${VER}" >> "$GITHUB_OUTPUT"
+          echo "backend_version=${BE_VER}" >> "$GITHUB_OUTPUT"
+          echo "frontend_version=${FE_VER}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VER}" >> "$GITHUB_OUTPUT"
+
+      - name: Create Git Tag (Tolerante a fallos)
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.BUMP_TOKEN }}@github.com/${{ github.repository }}.git
+          
+          TAG="${{ steps.meta.outputs.tag }}"
+          BRANCH="${{ steps.branch_info.outputs.target_branch }}"
+          
+          if [ -n "$TAG" ] && [ "$TAG" != "v" ]; then
+            if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+              TIPO="release"
+              if [ "$BRANCH" = "develop" ]; then
+                TIPO="snapshot"
+              fi
+              git tag -a "$TAG" -m "Automated $TIPO tag: $TAG [skip ci]"
+              git push origin "$TAG" || echo "Advertencia: no se pudo empujar el tag $TAG"
+              echo "Tag $TAG publicado con éxito."
+            else
+              echo "El tag $TAG ya existe en Git."
+            fi
+          fi
+
+      - name: Update Application Changelogs (Tolerante a fallos)
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.BUMP_TOKEN }}@github.com/${{ github.repository }}.git
+          
+          BRANCH="${{ steps.branch_info.outputs.target_branch }}"
+          BE_VER="${{ steps.meta.outputs.backend_version }}"
+          FE_VER="${{ steps.meta.outputs.frontend_version }}"
+          
+          # 1. Actualizar app/CHANGELOG.md
+          if [ -n "$BE_VER" ] && [ -f "app/CHANGELOG.md" ]; then
+            python scripts/actualizar_changelog.py --version "$BE_VER" --file app/CHANGELOG.md || true
+          fi
+          
+          # 2. Actualizar frontend/CHANGELOG.md
+          if [ -n "$FE_VER" ] && [ -f "frontend/CHANGELOG.md" ]; then
+            python scripts/actualizar_changelog.py --version "$FE_VER" --file frontend/CHANGELOG.md || true
+          fi
+          
+          # 3. Commit y push si hubo cambios en los changelogs
+          if ! git diff --quiet app/CHANGELOG.md frontend/CHANGELOG.md; then
+            git add app/CHANGELOG.md frontend/CHANGELOG.md
+            git commit -m "docs(changelog): registrar versiones post-merge en $BRANCH [skip ci]" || true
+            git push origin HEAD:$BRANCH || echo "Advertencia: no se pudo hacer push del changelog"
+          fi

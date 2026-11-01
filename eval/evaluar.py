@@ -23,34 +23,17 @@ def leer(ruta):
         return []
     return [json.loads(line) for line in open(p, encoding="utf-8") if line.strip()]
 
-
 def evaluar_rag(preguntas, k=3):
-    """Verifica si la fuente o contenido relevante está dentro de los k primeros fragmentos."""
-    from app.services.retriever import BuscadorVectorial
-    try:
-        buscador = BuscadorVectorial()
-    except Exception as e:
-        print(f"[Aviso] Base vectorial Chroma no inicializada en este entorno: {e}")
-        return 1.0  # Pasar en entornos sin embeddings locales pesados
-
-    aciertos = 0
-    con_fuente = [p for p in preguntas if p.get("fuente")]
-    if not con_fuente:
-        return 1.0
-
-    for p in con_fuente:
-        try:
-            resultados = buscador.buscar(p["pregunta"], k=k, solo_vigentes=True)
-            textos = " ".join([r.texto.lower() for r in resultados])
-            docs = " ".join([r.documento.lower() for r in resultados])
-            kws = p.get("keywords", [])
-            if any(kw.lower() in textos for kw in kws) or "guia" in docs:
-                aciertos += 1
-        except Exception:
-            aciertos += 1  # Fallback tolerante
-
-    return aciertos / len(con_fuente)
-
+    from app.tools.consultar_guia_msp import consultar_guia_msp, ConsultarGuiaMspIn
+    aciertos = callados = 0
+    con, sin = [p for p in preguntas if p.get("fuente")], [p for p in preguntas if not p.get("fuente")]
+    for p in con:
+        r = consultar_guia_msp(ConsultarGuiaMspIn(texto=p["pregunta"]))
+        texto = " ".join(r["fragmentos"]).lower()
+        aciertos += r["encontrado"] and any(kw.lower() in texto for kw in p["keywords"])
+    for p in sin:
+        callados += not consultar_guia_msp(ConsultarGuiaMspIn(texto=p["pregunta"]))["encontrado"]
+    return aciertos / len(con), callados / len(sin)       # si Chroma no carga, que el script falle
 
 def evaluar_flujo(casos):
     auto = rev = silenciosos = 0

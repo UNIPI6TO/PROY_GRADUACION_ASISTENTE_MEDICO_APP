@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import chromadb
+import pytest
 
 from app.schemas import Fuente
 from app.services.retriever import BuscadorVectorial
@@ -87,18 +88,32 @@ def test_extraccion_guia_ops_2016_sin_bibliografia():
         assert f.metadata["vigente"] is True
 
 
-def test_ingesta_y_busqueda_semantica_con_prefijos_e5(tmp_path):
-    """Verifica el flujo completo C-E-B-F-G-A: ingesta con 'passage: ' y búsqueda con 'query: '."""
+@pytest.fixture(scope="module")
+def base_vectorial_pruebas(tmp_path_factory):
+    """Fixture de módulo: genera la base vectorial de prueba una sola vez para toda la suite."""
     cartero = CarteroDeterminista()
-    ruta_db = tmp_path / "chroma_test"
-
+    ruta_db = tmp_path_factory.mktemp("chroma_suite")
     resumen = ingestar_documentos(ruta_db=ruta_db, cartero=cartero, reiniciar=True, exportar=False)
+    buscador = BuscadorVectorial(ruta_db=ruta_db, cartero=cartero)
+    return {
+        "ruta_db": ruta_db,
+        "cartero": cartero,
+        "resumen": resumen,
+        "buscador": buscador,
+    }
+
+
+def test_ingesta_y_busqueda_semantica_con_prefijos_e5(base_vectorial_pruebas):
+    """Verifica el flujo completo C-E-B-F-G-A: ingesta con 'passage: ' y búsqueda con 'query: '."""
+    cartero = base_vectorial_pruebas["cartero"]
+    resumen = base_vectorial_pruebas["resumen"]
+    buscador = base_vectorial_pruebas["buscador"]
+
     assert resumen["total"] == resumen["ops_2016"] + resumen["sive_alerta_95_100"]
 
-    assert len(cartero.Historial_encode) == 1
+    assert len(cartero.Historial_encode) >= 1
     assert all(t.startswith("passage: ") for t in cartero.Historial_encode[0])
 
-    buscador = BuscadorVectorial(ruta_db=ruta_db, cartero=cartero)
     resultados = buscador.buscar(
         "¿Cómo limpio los tanques de agua en mi patio para eliminar criaderos?",
         k=5,
@@ -112,13 +127,9 @@ def test_ingesta_y_busqueda_semantica_con_prefijos_e5(tmp_path):
     assert isinstance(resultados[0].como_fuente(), Fuente)
 
 
-def test_busqueda_hibrida_por_codigo_exacto(tmp_path):
+def test_busqueda_hibrida_por_codigo_exacto(base_vectorial_pruebas):
     """Límite 2 de la clase: where_document={'$contains': ...} para códigos exactos."""
-    cartero = CarteroDeterminista()
-    ruta_db = tmp_path / "chroma_hibrida"
-    ingestar_documentos(ruta_db=ruta_db, cartero=cartero, reiniciar=True, exportar=False)
-
-    buscador = BuscadorVectorial(ruta_db=ruta_db, cartero=cartero)
+    buscador = base_vectorial_pruebas["buscador"]
     resultados = buscador.buscar(
         "¿Cuál es el código CIE-10 del dengue grave?",
         k=5,

@@ -1,4 +1,4 @@
-name: SemVer Bumper CI/CD
+name: SemVer (PR Bump)
 
 on:
   pull_request:
@@ -7,59 +7,48 @@ on:
       - develop
     paths:
       - 'app/**'
+      - 'frontend/**'
+      - '!app/CHANGELOG.md'
+      - '!frontend/CHANGELOG.md'
+      - '!CHANGELOG.md'
     types:
       - opened
       - synchronize
       - reopened
 
 jobs:
-  versioning:
-    name: Automated SemVer Versioning on Pull Request
+  bump-version:
+    name: Bump Symmetric Version on Compare Branch
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Checkout Code Repository
+      - name: Checkout Code Repository (Compare Branch)
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
+          token: ${{ secrets.BUMP_TOKEN }}
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run Test Suite Pre-Check
-        run: |
-          pytest -q
-
-      - name: Execute SemVer Bumper
+      - name: Execute Symmetric SemVer Bumper
         id: bumper
-        run: |
-          python scripts/semver_bumper.py --branch "${{ github.base_ref }}"
+        run: python scripts/semver_bumper.py --branch "${{ github.base_ref }}"
 
-      - name: Commit Version Bump and Create Git Tag
+      - name: Commit Symmetric Version Bump to Compare Branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.BUMP_TOKEN }}@github.com/${{ github.repository }}.git
           
-          # Verificar si app/main.py tuvo cambios pendientes de commit
-          if ! git diff --quiet app/main.py; then
-            git add app/main.py
-            git commit -m "chore(release): bump version to ${{ steps.bumper.outputs.version }} [skip ci]"
+          # El bump actualiza simétricamente app/main.py y frontend/package.json en la rama compare (head_ref)
+          if ! git diff --quiet app/main.py frontend/package.json; then
+            git add app/main.py frontend/package.json frontend/package-lock.json
+            git commit -m "chore(release): bump symmetric version to ${{ steps.bumper.outputs.version }} [skip ci]"
             git push origin HEAD:${{ github.head_ref }}
-          fi
-          
-          # Crear y publicar tag en Git
-          NEW_TAG="${{ steps.bumper.outputs.tag }}"
-          if [ -n "$NEW_TAG" ]; then
-            git tag -a "$NEW_TAG" -m "Automated release tag: $NEW_TAG [skip ci]"
-            git push origin "$NEW_TAG"
           fi

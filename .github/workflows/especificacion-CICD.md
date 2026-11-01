@@ -1,101 +1,122 @@
-# 05. Especificación de CI/CD: Automatización de Versionado SemVer del Backend
+# 05. Especificación de CI/CD: Automatización de Versionado SemVer y Despliegue Continuo (Backend y Frontend)
 
 **Rol:** Site Reliability Engineer (SRE)  
-**Proyecto:** Asistente de Orientación en Salud Pública sobre Dengue y Arbovirosis (Backend)
+**Proyecto:** GuíaVital · Asistente de Orientación en Salud Pública sobre Dengue y Arbovirosis  
 
 ---
 
 ## 1. Reglas y Convenciones de Versionado SemVer
 
 ### 1.1. Convención de Commits y Reglas de Incremento
-El pipeline de GitHub Actions analiza los mensajes de commit (*Conventional Commits*) para determinar el incremento SemVer:
-- **`feat:`** Nuevas funcionalidades o endpoints (FastAPI, servicios, herramientas del agente) $\rightarrow$ Incremento **MINOR** (ej. `0.1.0` $\rightarrow$ `0.2.0`).
+Los pipelines de GitHub Actions analizan los mensajes de commit (*Conventional Commits*) para determinar el incremento SemVer:
+- **`feat:`** Nuevas funcionalidades o endpoints $\rightarrow$ Incremento **MINOR** (ej. `0.1.0` $\rightarrow$ `0.2.0`).
 - **`fix:`** Corrección de errores o bugs $\rightarrow$ Incremento **PATCH** (ej. `0.1.0` $\rightarrow$ `0.1.1`).
 - **`refactor:`** Reestructuración de código sin alterar funcionalidad externa $\rightarrow$ Incremento **PATCH**.
-- **`chore:`** Tareas de mantenimiento, dependencias, configuración $\rightarrow$ Incremento **PATCH**.
+- **`chore:`** Tareas de mantenimiento, dependencias o configuración $\rightarrow$ Incremento **PATCH**.
 - **`test:`** Pruebas unitarias o de integración $\rightarrow$ Incremento **PATCH**.
-- **`docs:`** Cambios en documentación técnica y especificaciones (`docs/` o README). Si solo afecta `docs/`, se omite la ejecución por filtro de rutas; si se incluye con cambios en `app/`, aplica **PATCH**.
+- **`docs:`** Cambios en documentación técnica y especificaciones $\rightarrow$ Incremento **PATCH** (si acompaña cambios en código).
 - **`BREAKING CHANGE:` o sufijo `!` (ej. `feat!:`, `fix!:`):** Cambios incompatibles con versiones previas $\rightarrow$ Incremento **MAJOR** (ej. `0.1.0` $\rightarrow$ `1.0.0`).
 
-### 1.2. Estrategia por Ramas
-- **Rama `main` (Releases):**
-  - Genera versiones oficiales de producción con formato SemVer estricto: `X.Y.Z`.
-  - Actualiza la variable `APP_VERSION` en `app/main.py`.
-  - Crea un Git Tag formal (ej. `vX.Y.Z`).
-- **Rama `develop` (Snapshots):**
-  - Genera versiones pre-release con nomenclatura `X.Y.Z-SNAPSHOT-RC#`.
-  - El correlativo `RC#` incrementa secuencialmente en cada Pull Request integrado hacia `develop` (ej. `0.1.0-SNAPSHOT-RC1`, `0.1.0-SNAPSHOT-RC2`).
-  - Actualiza la variable `APP_VERSION` en `app/main.py`.
-  - Crea el Git Tag respectivo (ej. `v0.1.0-SNAPSHOT-RC1`).
+### 1.2. Estrategia por Ramas (Releases vs Snapshots con Simetría Backend/Frontend)
+- **Simetría de Versiones y Tags:** Backend y Frontend comparten exactamente la misma versión SemVer y el mismo formato de tag Git (`vX.Y.Z` o `vX.Y.Z-SNAPSHOT-RC#`), garantizando paridad de entrega.
+- **Rama `main` (Releases de Producción):**
+  - Genera versiones oficiales definitivas con formato SemVer estricto: `X.Y.Z` (sin sufijos pre-release).
+  - Tags Git simétricos: `vX.Y.Z`.
+- **Rama `develop` (Snapshots de Pre-producción):**
+  - Genera versiones con nomenclatura `X.Y.Z-SNAPSHOT-RC#`.
+  - El correlativo `RC#` incrementa secuencialmente en cada entrega hacia `develop` (ej. `0.2.0-SNAPSHOT-RC1`, `0.2.0-SNAPSHOT-RC2`).
+  - Tags Git simétricos: `vX.Y.Z-SNAPSHOT-RC#`.
 
-### 1.3. Expresión Regular Oficial SemVer
-Toda versión generada o manual debe validar contra:
+### 1.3. Expresión Regular Oficial SemVer 2.0
+Toda versión generada o manual valida estrictamente contra:
 ```regex
 r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
 ```
 
 ### 1.4. Manejo de Modificaciones Manuales de Versión
-Si el desarrollador ya modificó manualmente la variable `APP_VERSION` en `app/main.py` dentro del commit, el pipeline respeta dicha versión (validando que cumpla el patrón SemVer) y evita sobreescribirla, procediendo a generar el Git Tag correspondiente.
+Si el desarrollador ya modificó manualmente `APP_VERSION` en `app/main.py` o `version` en `frontend/package.json`, el pipeline valida el formato SemVer y respeta dicho valor sin sobreescribirlo.
 
 ---
 
-## 2. Historia de Usuario
+## 2. Arquitectura de Ciclo de Vida en Dos Fases
 
-### HU-CICD-01: Automatización de Versionado SemVer y Generación de Tags en GitHub Actions
+Para evitar tags huérfanos o modificaciones prematuras en `CHANGELOG.md` por Pull Requests cancelados o rechazados, el versionado opera en dos fases desacopladas:
 
-- **Historia:**
-  Como **Site Reliability Engineer (SRE)**,  
-  quiero implementar un workflow de GitHub Actions que se dispare ante cambios en la ruta `app/` para actualizar la variable `APP_VERSION` en `app/main.py` bajo reglas SemVer (Release en `main` y `SNAPSHOT-RC#` en `develop`) y generar el Git Tag respectivo respetando posibles cambios manuales,  
-  para estandarizar la entrega continua del Backend, asegurar trazabilidad de despliegues y eliminar errores operativos manuales.
+```mermaid
+flowchart TD
+    subgraph FASE_1["FASE 1: Pull Request (Rama Entrante)"]
+        A["PR abierto / actualizado"] --> B{"Ruta modificada"}
+        B -->|app/**| C[".github/workflows/semver.yml"]
+        B -->|frontend/**| D[".github/workflows/semver-frontend.yml"]
+        C --> E["Quality Gate (pytest) + Bump app/main.py"]
+        D --> F["Quality Gate (npm test) + Bump package.json"]
+        E --> G["Commit y Push a la rama del PR [skip ci]"]
+        F --> G
+    end
 
-- **Estimación:** 2 días (implementación y pruebas completas en menos de 3 días).
+    subgraph FASE_2["FASE 2: Post-Merge (develop / main)"]
+        H["PR aprobado y fusionado (Merge)"] --> I{"Rama destino"}
+        I -->|Push app/**| J[".github/workflows/tag-backend.yml"]
+        I -->|Push frontend/**| K[".github/workflows/tag-frontend.yml"]
+        J --> L["develop: SNAPSHOT-RC# | main: Release X.Y.Z"]
+        K --> L
+        L --> M["Crea y publica Git Tag (v... / frontend-v...)"]
+        M --> N["Actualiza CHANGELOG.md (actualizar_changelog.py)"]
+        N --> O["Commit y Push directo a la rama base [skip ci]"]
+    end
 
-- **Criterios de Aceptación (Gherkin):**
+    subgraph FASE_3["FASE 3: Despliegue Paralelo a Cloud Run"]
+        O -.->|Automático por workflow_run| P[".github/workflows/deploy-backend.yml"]
+        O -.->|Automático por workflow_run| Q[".github/workflows/deploy-frontend.yml"]
+        R["Disparo Manual (workflow_dispatch)"] --> P
+        R --> Q
+        P --> S["Build Docker CPU (450 MB) + Cloud Run Backend"]
+        Q --> T["Build Docker Nginx + Cloud Run Frontend"]
+        S --> U["Sondas SRE /manage/health y /manage/info"]
+        T --> V["Sonda SRE /healthz"]
+    end
 
-  - **Criterio 1: Generación de versión Release en rama `main` y creación de Git Tag**
-    - **Dado** que se realiza un Pull Request hacia la rama `main` con cambios en archivos dentro de `app/` sin modificación manual de `APP_VERSION`,
-    - **Cuando** el workflow de GitHub Actions analiza los mensajes de commit según Conventional Commits (`feat:`, `fix:`, etc.),
-    - **Entonces** calcula el incremento SemVer correspondiente (MAJOR, MINOR o PATCH), valida la versión contra el regex oficial, actualiza `APP_VERSION` en `app/main.py`, persiste el cambio y crea el Git Tag con prefijo `v` (ej. `v0.2.0`).
-
-  - **Criterio 2: Generación de versión Snapshot incremental en rama `develop`**
-    - **Dado** que se realiza un Pull Request hacia la rama `develop` modificando archivos en `app/`,
-    - **Cuando** se ejecuta el GitHub Action de versionado para `develop`,
-    - **Entonces** el pipeline calcula la versión base y le concatena el sufijo `SNAPSHOT-RC#` (incrementando el correlativo `RC` respecto al último snapshot registrado), valida la cadena contra el regex SemVer, actualiza `APP_VERSION` en `app/main.py` y genera el tag en Git (ej. `v0.1.0-SNAPSHOT-RC2`).
-
-  - **Criterio 3: Respeto de actualización manual de versión definida por el usuario**
-    - **Dado** que un Pull Request entrante en `main` o `develop` con modificaciones en `app/` ya incluye un cambio manual sobre la variable `APP_VERSION` en `app/main.py`,
-    - **Cuando** el workflow inspecciona el diff y valida que la nueva versión manual cumple con el regex de SemVer,
-    - **Entonces** el sistema respeta el valor provisto por el usuario sin sobreescribirlo y procede a crear el Git Tag con dicha versión.
-
-  - **Criterio 4: Omisión del workflow si no hay cambios dentro de `app/`**
-    - **Dado** que se abre o actualiza un Pull Request a `main` o `develop` afectando únicamente archivos fuera del directorio `app/` (como `docs/`, `tests/` o configuración raíz),
-    - **Cuando** GitHub Actions evalúa los filtros de rutas (`paths: ['app/**']`),
-    - **Entonces** el pipeline no se activa, no se genera tag y `APP_VERSION` en `app/main.py` permanece intacto.
-
-  - **Criterio 5: Detención y fallo de pipeline ante versión SemVer no válida**
-    - **Dado** que se procesa una versión calculada o introducida manualmente en `app/main.py`,
-    - **Cuando** la cadena de versión no cumple estrictamente con el regex SemVer oficial:
-      `r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"`
-    - **Entonces** el workflow detiene la ejecución inmediatamente con código de error, bloquea la creación de tags y reporta la falla en el resumen de GitHub Actions.
+    FASE_1 --> FASE_2
+    FASE_2 --> FASE_3
+```
 
 ---
 
-## 3. Arquitectura Técnica Implementada
+## 3. Matriz de Workflows de GitHub Actions
 
-Para asegurar la alta mantenibilidad, trazabilidad y cumplimiento del principio SOLID (Responsabilidad Única), la solución se estructura en dos capas:
+| Archivo de Workflow | Disparador (Trigger) | Evento / Alcance | Responsabilidad (SOLID) |
+| :--- | :--- | :--- | :--- |
+| **`semver.yml`** | `pull_request` (`app/**` o `frontend/**`) | En rama compare del PR | **Fase 1 SemVer Unificado**: Bump simétrico simultáneo en `app/main.py` y `frontend/package.json` en la rama compare del PR (ligero, sin ejecución de pruebas). |
+| **`release.yml`** | `pull_request` (`closed` & `merged`) hacia `main`/`develop` | Post-Merge Unificado | **Fase 2 Release & Tag**: Tag Git simétrico (`v...`) + Actualización de `app/CHANGELOG.md` y `frontend/CHANGELOG.md` con tolerancia a fallos (`continue-on-error`). |
+| **`deploy-backend.yml`** | `workflow_dispatch` o `workflow_run` de `release` | Despliegue Paralelo | **Instalación Backend**: Quality Gate previo (`pytest`) + Build Docker CPU + Despliegue `guiavital-backend` a Cloud Run. |
+| **`deploy-frontend.yml`** | `workflow_dispatch` o `workflow_run` de `release` | Despliegue Paralelo | **Instalación Frontend**: Quality Gate previo (`Vitest` & `secrets`) + Inyección URL API + Despliegue `guiavital` a Cloud Run. |
 
-1. **Núcleo de Reglas SemVer (`scripts/semver_bumper.py`):**
-   - Módulo en Python 3 que contiene la lógica de negocio pura:
-     - `validate_semver(version)`: Validación contra el regex oficial.
-     - `determine_increment(commits)`: Jerarquía de incremento según Conventional Commits.
-     - `calculate_next_release(base_version, increment)`: Cálculo de versión limpia de producción.
-     - `calculate_next_snapshot(base_version, existing_tags)`: Cálculo de pre-release `SNAPSHOT-RC#`.
-     - `detect_manual_version_change(diff_text)`: Detección y respeto de versiones manuales válidas.
-     - `update_app_version_in_file(file_path, new_version)`: Sustitución segura en `app/main.py`.
+---
 
-2. **Orquestación en CI/CD (`.github/workflows/semver.yml`):**
-   - Workflow de GitHub Actions que se activa ante eventos `pull_request` hacia `main` y `develop` con filtro `paths: ['app/**']`.
-   - Ejecuta las pruebas unitarias automáticas con `pytest`.
-   - Invoca `scripts/semver_bumper.py --branch ${{ github.base_ref }}`.
-   - Realiza commit automático con bandera `[skip ci]` para prevenir loops de ejecución.
-   - Genera y publica el tag Git correspondiente (`vX.Y.Z` o `vX.Y.Z-SNAPSHOT-RC#`).
+## 4. Historias de Usuario SRE
+
+### HU-CICD-01: Versionado SemVer y Bump en Pull Request (Fase 1)
+- **Historia:** Como SRE, quiero que al abrir o sincronizar un Pull Request hacia `develop` o `main`, el pipeline calcule e incremente la versión exclusivamente en la rama compare (`github.head_ref`), ignorando modificaciones en los archivos CHANGELOG, para asegurar trazabilidad antes de la integración sin alterar la rama base ni ciclar ejecuciones.
+- **Criterios de Aceptación:**
+  1. Si el PR modifica código en `app/**` o `frontend/**`, calcula la versión SemVer simétrica e incrementa los archivos correspondientes.
+  2. **Exclusión de Changelogs:** La modificación de `app/CHANGELOG.md`, `frontend/CHANGELOG.md` o `CHANGELOG.md` **no** activa el pipeline de SemVer (`paths` con `!**CHANGELOG.md`).
+  3. **Actualización de Compare Branch:** El commit con la versión incrementada se empuja exclusivamente a la rama compare (`HEAD:${{ github.head_ref }}`), **nunca** a la rama base (`base_ref`).
+  4. **No** crea tags Git ni modifica archivos changelog en esta fase.
+
+### HU-CICD-02: Publicación de Tag Simétrico y Actualización de Changelogs Post-Merge (Fase 2)
+- **Historia:** Como SRE, quiero que cuando un PR se fusione en `develop` o `main`, se genere el tag formal simétrico de Git (`v...`) y se actualice automáticamente la bitácora específica de cada aplicación (`app/CHANGELOG.md` para backend y `frontend/CHANGELOG.md` para frontend, registrando 'No hubo cambios' si no hubo commits), para garantizar paridad y trazabilidad limpia.
+- **Criterios de Aceptación:**
+  1. En `develop`, genera tags simétricos con formato `vX.Y.Z-SNAPSHOT-RC#`.
+  2. En `main`, genera tags simétricos de release oficial `vX.Y.Z`.
+  3. Ejecuta `scripts/actualizar_changelog.py --version "$VERSION" --file <ruta>`, promocionando la sección `[Unreleased]`. Si no hay notas o commits en la carpeta, registra `- No hubo cambios.` sin fallar.
+  4. Realiza commit y push directo a la rama base con `[skip ci]`.
+
+### HU-CICD-03: Despliegue Continuo en Paralelo y Manual a GCP Cloud Run (Fase 3)
+- **Historia:** Como SRE, quiero contar con workflows de instalación y despliegue desacoplados que ejecuten su Quality Gate de pruebas automatizadas antes del build y puedan ejecutarse automáticamente tras el merge en paralelo o dispararse manualmente por demanda, para minimizar el tiempo de entrega y garantizar que ningún artefacto defectuoso llegue a producción.
+- **Criterios de Aceptación:**
+  1. `deploy-backend.yml` y `deploy-frontend.yml` ejecutan sus pruebas unitarias respectivas (`pytest` y `npm test`) como paso bloqueante antes de la compilación de contenedores y despliegue a Cloud Run.
+  2. `deploy-backend.yml` y `deploy-frontend.yml` pueden ejecutarse manualmente en cualquier momento mediante `workflow_dispatch`.
+  3. Al completarse el post-merge (`release.yml`), los workflows de despliegue correspondientes se activan automáticamente vía `workflow_run`.
+  4. Si ambos servicios se fusionan simultáneamente, ambos despliegues se ejecutan **en paralelo** sin bloquearse entre sí.
+  5. `deploy-backend.yml` utiliza la imagen optimizada con PyTorch CPU (`~450 MB`) e inyecta secretos desde GCP Secret Manager.
+  6. `deploy-frontend.yml` resuelve dinámicamente la URL del backend mediante `gcloud run services describe`, compila los estáticos con Nginx y verifica los endpoints SRE `/manage/health` y `/manage/info` del frontend y la salud del backend.

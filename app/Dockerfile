@@ -12,13 +12,16 @@ WORKDIR /workspace
 RUN groupadd --gid 10001 appgroup && \
     useradd --uid 10001 --gid appgroup --shell /sbin/nologin --no-create-home appuser
 
-# Instalar dependencias definidas en requirements.txt
+# Instalar dependencias: primero PyTorch CPU (evita descargar ~2.5 GB de binarios CUDA de NVIDIA en Cloud Run)
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copiar código fuente del backend
+# Copiar configuración operativa, código fuente del backend y la base vectorial indexada
+COPY config/ ./config/
 COPY app/ ./app/
+COPY chroma_db/ ./chroma_db/
 
 # Asegurar permisos de lectura/ejecución para el usuario no-root
 RUN chown -R appuser:appgroup /workspace

@@ -100,12 +100,30 @@ def calculate_next_release(base_version: str, increment: str) -> str:
     return new_version
 
 
-def calculate_next_snapshot(base_version: str, existing_tags: List[str]) -> str:
+def calculate_next_snapshot(
+    base_version: str,
+    existing_tags: List[str],
+    increment: Optional[str] = None,
+) -> str:
     """
     Calcula la versión Snapshot para la rama 'develop' con nomenclatura X.Y.Z-SNAPSHOT-RC#.
-    Busca los tags existentes para incrementar el correlativo RC# iniciando en RC1.
+    Busca los tags existentes y la versión actual para incrementar el correlativo RC# iniciando en RC1.
     """
     major, minor, patch = parse_semver_core(base_version)
+
+    # Si la versión base no tiene sufijo snapshot o el incremento es MAJOR, se actualiza el core
+    if increment and not "-SNAPSHOT" in base_version:
+        inc = increment.upper()
+        if inc == "MAJOR":
+            major += 1
+            minor = 0
+            patch = 0
+        elif inc == "MINOR":
+            minor += 1
+            patch = 0
+        elif inc == "PATCH":
+            patch += 1
+
     base_core = f"{major}.{minor}.{patch}"
 
     tag_pattern = re.compile(rf"^v?{re.escape(base_core)}-SNAPSHOT-RC([1-9]\d*)$")
@@ -117,6 +135,13 @@ def calculate_next_snapshot(base_version: str, existing_tags: List[str]) -> str:
             rc_num = int(match.group(1))
             if rc_num > highest_rc:
                 highest_rc = rc_num
+
+    # Inspeccionar el RC de la versión actual si pertenece al mismo core
+    current_rc_match = re.search(rf"^{re.escape(base_core)}-SNAPSHOT-RC([1-9]\d*)$", base_version)
+    if current_rc_match:
+        current_rc = int(current_rc_match.group(1))
+        if current_rc > highest_rc:
+            highest_rc = current_rc
 
     next_rc = highest_rc + 1
     new_snapshot = f"{base_core}-SNAPSHOT-RC{next_rc}"
@@ -180,17 +205,42 @@ def get_git_tags() -> List[str]:
 
 
 def get_git_commit_messages(base_ref: Optional[str] = None) -> List[str]:
-    """Obtiene los mensajes de commit recientes."""
+    """
+    Obtiene los mensajes de commit de la rama compare respecto a la base.
+    Soporta entornos de GitHub Actions (origin/{base}..HEAD) y locales ({base}..HEAD).
+    """
     import subprocess
 
-    try:
+    if not base_ref:
         cmd = ["git", "log", "-n", "20", "--pretty=format:%s"]
-        if base_ref:
-            cmd = ["git", "log", f"{base_ref}..HEAD", "--pretty=format:%s"]
-        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        return [line.strip() for line in res.stdout.splitlines() if line.strip()]
-    except Exception:
-        return []
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            return [line.strip() for line in res.stdout.splitlines() if line.strip()]
+        except Exception:
+            return []
+
+    clean_base = base_ref.replace("refs/heads/", "").strip()
+    candidates = [
+        f"origin/{clean_base}..HEAD",
+        f"{clean_base}..HEAD",
+        "HEAD~1..HEAD",
+        "-n 20",
+    ]
+
+    for spec in candidates:
+        try:
+            if spec.startswith("-n"):
+                cmd = ["git", "log", "-n", "20", "--pretty=format:%s"]
+            else:
+                cmd = ["git", "log", spec, "--pretty=format:%s"]
+            res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            commits = [line.strip() for line in res.stdout.splitlines() if line.strip()]
+            if commits:
+                return commits
+        except Exception:
+            continue
+
+    return []
 
 
 def get_git_diff_app() -> str:
@@ -206,6 +256,29 @@ def get_git_diff_app() -> str:
         return res.stdout
     except Exception:
         return ""
+
+
+def update_frontend_versions(new_version: str, pkg_path: Path = Path("frontend/package.json"), lock_path: Path = Path("frontend/package-lock.json")) -> None:
+    """Actualiza simétricamente la versión en package.json y package-lock.json si existen."""
+    import json
+    if not validate_semver(new_version) or not pkg_path.exists():
+        return
+
+    try:
+        data = json.loads(pkg_path.read_text(encoding="utf-8"))
+        data["version"] = new_version
+        pkg_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"Archivo {pkg_path} actualizado con version = \"{new_version}\"")
+
+        if lock_path.exists():
+            data_lock = json.loads(lock_path.read_text(encoding="utf-8"))
+            data_lock["version"] = new_version
+            if "packages" in data_lock and "" in data_lock["packages"]:
+                data_lock["packages"][""]["version"] = new_version
+            lock_path.write_text(json.dumps(data_lock, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            print(f"Archivo {lock_path} actualizado con version = \"{new_version}\"")
+    except Exception as e:
+        print(f"Advertencia al actualizar archivos frontend: {e}", file=sys.stderr)
 
 
 def main() -> int:
@@ -239,21 +312,16 @@ def main() -> int:
     current_match = re.search(r'APP_VERSION\s*=\s*["\']([^"\']+)["\']', content)
     current_version = current_match.group(1) if current_match else "0.1.0"
 
-    # 1. Comprobar si hubo modificación manual de versión
-    diff_text = get_git_diff_app()
-    manual_version = detect_manual_version_change(diff_text)
-    if manual_version:
-        print(f"Versión manual detectada y respetada: {manual_version}")
-        new_version = manual_version
+    branch_name = args.branch.lower().replace("refs/heads/", "")
+    commits = get_git_commit_messages(base_ref=args.branch)
+    increment = determine_increment(commits)
+    print(f"Commits detectados en compare branch vs '{args.branch}': {len(commits)} (Incremento: {increment})")
+
+    if "main" in branch_name:
+        new_version = calculate_next_release(current_version, increment)
     else:
-        branch_name = args.branch.lower().replace("refs/heads/", "")
-        if "main" in branch_name:
-            commits = get_git_commit_messages()
-            increment = determine_increment(commits)
-            new_version = calculate_next_release(current_version, increment)
-        else:
-            tags = get_git_tags()
-            new_version = calculate_next_snapshot(current_version, tags)
+        tags = get_git_tags()
+        new_version = calculate_next_snapshot(current_version, tags, increment=increment)
 
     print(f"Nueva versión calculada: {new_version}")
 
@@ -264,9 +332,10 @@ def main() -> int:
             f.write(f"version={new_version}\n")
             f.write(f"tag=v{new_version}\n")
 
-    if not args.dry_run and not manual_version:
+    if not args.dry_run:
         update_app_version_in_file(target_file, new_version)
         print(f"Archivo {target_file} actualizado con APP_VERSION = \"{new_version}\"")
+        update_frontend_versions(new_version)
 
     return 0
 
