@@ -22,8 +22,8 @@ flowchart TD
     end
 
     subgraph FASE3["3. Fase de Despliegue (Cloud Run en Paralelo)"]
-        TAG_BE -.->|workflow_run<br/>(continúa si hay fallos)| WF_DEP_BE["deploy-backend.yml<br/>(Deploy Backend)"]
-        TAG_BE -.->|workflow_run<br/>(continúa si hay fallos)| WF_DEP_FE["deploy-frontend.yml<br/>(Deploy Frontend)"]
+        TAG_BE -.->|gh workflow run (API) / workflow_run| WF_DEP_BE["deploy-backend.yml<br/>(Deploy Backend)"]
+        TAG_BE -.->|gh workflow run (API) / workflow_run| WF_DEP_FE["deploy-frontend.yml<br/>(Deploy Frontend)"]
         MANUAL["workflow_dispatch (Manual)"] --> WF_DEP_BE
         MANUAL --> WF_DEP_FE
         WF_DEP_BE --> DEPLOY_BE["Build Docker CPU (~450 MB)<br/>Deploy guiavital-backend"]
@@ -41,7 +41,7 @@ flowchart TD
 ### 1. Versionado en Pull Request (Fase 1)
 | Workflow | Archivo | Disparador | Acción Principal |
 | :--- | :--- | :--- | :--- |
-| **SemVer Unificado (PR Bump)** | [`semver.yml`](semver.yml) | `pull_request` (`app/**` o `frontend/**`) hacia `main`/`develop` (excluye changelogs) | Calcula la versión SemVer simétrica e incrementa simultáneamente `app/main.py` y `frontend/package.json` en la rama **compare** (`head_ref`) de forma ligera. |
+| **SemVer Unificado (PR Bump)** | [`semver.yml`](semver.yml) | Automático: `pull_request` (`app/**` o `frontend/**`)<br/>Manual: `workflow_dispatch` | Calcula la versión SemVer simétrica e incrementa simultáneamente `app/main.py` y `frontend/package.json` en la rama **compare** de forma ligera. |
 
 > [!NOTE]
 > - **Actualización exclusiva de la rama compare:** El commit de bump se empuja únicamente a la rama del PR (`HEAD:${{ github.head_ref }}`), **nunca** a la rama base (`develop`/`main`), autenticado con `BUMP_TOKEN`.
@@ -52,7 +52,7 @@ flowchart TD
 ### 2. Publicación de Tags y Changelog Post-Merge (Fase 2)
 | Workflow | Archivo | Disparador | Acción Principal |
 | :--- | :--- | :--- | :--- |
-| **Release & Tag Unificado** | [`release.yml`](release.yml) | `pull_request: closed` (merged) hacia `main`/`develop` | Genera el tag simétrico (`v...`), actualiza `app/CHANGELOG.md` y `frontend/CHANGELOG.md` de forma resiliente (`continue-on-error: true`). Si falla, la instalación continúa de todos modos. |
+| **Release & Tag Unificado** | [`release.yml`](release.yml) | Automático: `pull_request: closed` (merged)<br/>Manual: `workflow_dispatch` | Genera el tag simétrico (`v...`), actualiza bitácoras con tolerancia a fallos (`continue-on-error: true`) y dispara los despliegues en paralelo. |
 
 #### Regla de Ramas:
 * **Rama `develop`:** Genera versiones **Snapshot** de pre-producción simétricas (`v0.2.0-SNAPSHOT-RC1`, `v0.2.0-SNAPSHOT-RC2`).

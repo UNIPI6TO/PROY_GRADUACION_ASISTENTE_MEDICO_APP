@@ -15,6 +15,21 @@ on:
       - opened
       - synchronize
       - reopened
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Rama compare a incrementar (dejar en blanco para usar la rama actual)'
+        required: false
+        default: ''
+        type: string
+      base_branch:
+        description: 'Rama base de comparación para el bump'
+        required: false
+        default: 'develop'
+        type: choice
+        options:
+          - develop
+          - main
 
 jobs:
   bump-version:
@@ -24,10 +39,23 @@ jobs:
       contents: write
 
     steps:
+      - name: Resolve Branch Context
+        id: context
+        run: |
+          # 1. Rama compare (la rama que recibe el incremento de versión)
+          COMPARE_BRANCH="${{ inputs.target_branch || github.head_ref || github.ref_name }}"
+          # 2. Rama base (contra la cual se comparan los commits para SemVer)
+          BASE_BRANCH="${{ inputs.base_branch || github.base_ref || 'develop' }}"
+          
+          echo "compare_branch=${COMPARE_BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "base_branch=${BASE_BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "Rama compare objetivo: ${COMPARE_BRANCH}"
+          echo "Rama base de comparación: ${BASE_BRANCH}"
+
       - name: Checkout Code Repository (Compare Branch)
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ steps.context.outputs.compare_branch }}
           fetch-depth: 0
           token: ${{ secrets.BUMP_TOKEN }}
 
@@ -38,7 +66,7 @@ jobs:
 
       - name: Execute Symmetric SemVer Bumper
         id: bumper
-        run: python scripts/semver_bumper.py --branch "${{ github.base_ref }}"
+        run: python scripts/semver_bumper.py --branch "${{ steps.context.outputs.base_branch }}"
 
       - name: Commit Symmetric Version Bump to Compare Branch
         run: |
@@ -46,9 +74,10 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.BUMP_TOKEN }}@github.com/${{ github.repository }}.git
           
-          # El bump actualiza simétricamente app/main.py y frontend/package.json en la rama compare (head_ref)
+          TARGET_REF="${{ steps.context.outputs.compare_branch }}"
+          # El bump actualiza simétricamente app/main.py y frontend/package.json en la rama compare
           if ! git diff --quiet app/main.py frontend/package.json; then
             git add app/main.py frontend/package.json frontend/package-lock.json
             git commit -m "chore(release): bump symmetric version to ${{ steps.bumper.outputs.version }} [skip ci]"
-            git push origin HEAD:${{ github.head_ref }}
+            git push origin HEAD:${TARGET_REF}
           fi
