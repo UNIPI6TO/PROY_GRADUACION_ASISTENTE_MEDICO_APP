@@ -47,11 +47,13 @@ jobs:
           fi
 
           SEMVER_CLEAN="${RAW_TAG#v}"
+          GCP_LABEL_VER="$(echo "${SEMVER_CLEAN}" | tr '[:upper:]' '[:lower:]' | tr '.' '-' | tr '+' '-')"
           IMAGE_TAG="v${SEMVER_CLEAN}"
           SHORT_SHA="${GITHUB_SHA::7}"
 
           echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
           echo "app_version=${SEMVER_CLEAN}" >> "$GITHUB_OUTPUT"
+          echo "gcp_label_version=${GCP_LABEL_VER}" >> "$GITHUB_OUTPUT"
           echo "sha_tag=sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node.js 22
@@ -100,6 +102,7 @@ jobs:
           docker build \
             -f frontend/Dockerfile \
             --build-arg VITE_API_URL="${{ steps.backend_info.outputs.backend_url }}" \
+            --label "version=${{ steps.meta.outputs.app_version }}" \
             -t "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}" \
             -t "${IMAGE_URI}:${{ steps.meta.outputs.sha_tag }}" \
             ./frontend
@@ -116,11 +119,16 @@ jobs:
           env_vars: |
             APP_VERSION=${{ steps.meta.outputs.app_version }}
             VITE_API_URL=${{ steps.backend_info.outputs.backend_url }}
-          flags: '--allow-unauthenticated --port=8080 --min-instances=0 --max-instances=5'
+          flags: >-
+            --allow-unauthenticated
+            --port=8080
+            --min-instances=0
+            --max-instances=5
+            --update-labels=version=${{ steps.meta.outputs.gcp_label_version }}
 
       - name: Verify Frontend SRE Health & Info
         run: |
           # 1. Verificar endpoint SRE de salud del frontend
           curl --fail --silent --show-error "${{ steps.deploy_frontend.outputs.url }}/manage/health"
-          # 3. Verificar salud del servicio backend
+          # 2. Verificar salud del servicio backend
           curl --fail --silent --show-error "${{ steps.backend_info.outputs.backend_url }}/manage/health"
