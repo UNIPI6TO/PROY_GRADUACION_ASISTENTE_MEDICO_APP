@@ -312,23 +312,16 @@ def main() -> int:
     current_match = re.search(r'APP_VERSION\s*=\s*["\']([^"\']+)["\']', content)
     current_version = current_match.group(1) if current_match else "0.1.0"
 
-    # 1. Comprobar si hubo modificación manual de versión
-    diff_text = get_git_diff_app()
-    manual_version = detect_manual_version_change(diff_text)
-    if manual_version:
-        print(f"Versión manual detectada y respetada: {manual_version}")
-        new_version = manual_version
-    else:
-        branch_name = args.branch.lower().replace("refs/heads/", "")
-        commits = get_git_commit_messages(base_ref=args.branch)
-        increment = determine_increment(commits)
-        print(f"Commits detectados en compare branch vs '{args.branch}': {len(commits)} (Incremento: {increment})")
+    branch_name = args.branch.lower().replace("refs/heads/", "")
+    commits = get_git_commit_messages(base_ref=args.branch)
+    increment = determine_increment(commits)
+    print(f"Commits detectados en compare branch vs '{args.branch}': {len(commits)} (Incremento: {increment})")
 
-        if "main" in branch_name:
-            new_version = calculate_next_release(current_version, increment)
-        else:
-            tags = get_git_tags()
-            new_version = calculate_next_snapshot(current_version, tags, increment=increment)
+    if "main" in branch_name:
+        new_version = calculate_next_release(current_version, increment)
+    else:
+        tags = get_git_tags()
+        new_version = calculate_next_snapshot(current_version, tags, increment=increment)
 
     print(f"Nueva versión calculada: {new_version}")
 
@@ -339,7 +332,7 @@ def main() -> int:
             f.write(f"version={new_version}\n")
             f.write(f"tag=v{new_version}\n")
 
-    if not args.dry_run and not manual_version:
+    if not args.dry_run:
         update_app_version_in_file(target_file, new_version)
         print(f"Archivo {target_file} actualizado con APP_VERSION = \"{new_version}\"")
         update_frontend_versions(new_version)
