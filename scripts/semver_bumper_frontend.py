@@ -20,7 +20,7 @@ SEMVER_REGEX = (
     r"(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
 )
 
-TAG_PREFIX = "frontend-v"
+TAG_PREFIX = "v"
 
 
 def validate_semver(version: str) -> bool:
