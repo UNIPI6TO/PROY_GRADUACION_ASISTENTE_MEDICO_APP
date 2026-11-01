@@ -113,3 +113,9 @@ def cargar_parametros() -> dict[str, Any]:
 
 PARAMETROS = cargar_parametros()
 
+# Configuración RAG / Base Vectorial (Semana 2 y 4)
+RUTA_BASE_PROYECTO = Path(__file__).resolve().parent.parent
+MODELO_EMBEDDINGS = "intfloat/multilingual-e5-small"
+NOMBRE_COLECCION = "guia_vital_dengue"
+RUTA_CHROMA_DEFAULT = Path(os.getenv("CHROMA_DB_PATH", str(RUTA_BASE_PROYECTO / "chroma_db")))
+

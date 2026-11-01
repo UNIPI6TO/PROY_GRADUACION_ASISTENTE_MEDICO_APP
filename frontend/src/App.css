@@ -199,16 +199,28 @@ body {
   background: #dcfce7;
 }
 
+/* Botón modo Agente v2 / Versión 1 */
 .btn-modo-agente {
-  background: #f5f3ff;
-  color: #5b21b6;
-  border-color: #c4b5fd;
+  background: #f1f5f9;
+  color: #64748b;
+  border-color: #cbd5e1;
+}
+
+.btn-modo-agente:hover {
+  background: #e2e8f0;
+  color: #475569;
+  border-color: #94a3b8;
 }
 
 .btn-modo-agente.activo {
   background: #6d28d9;
   color: #ffffff;
   border-color: #5b21b6;
+}
+
+.btn-modo-agente.activo:hover {
+  background: #5b21b6;
+  color: #ffffff;
 }
 
 .btn-emergencia {

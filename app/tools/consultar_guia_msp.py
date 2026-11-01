@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from app.services.retriever import BuscadorVectorial
 
+from app.config import cargar_parametros
 
 class ConsultarGuiaMspIn(BaseModel):
     texto: str = Field(min_length=3, max_length=1000, description="Consulta o síntomas a buscar en las guías oficiales del MSP.")
@@ -14,14 +15,12 @@ class ConsultarGuiaMspIn(BaseModel):
 def consultar_guia_msp(datos: ConsultarGuiaMspIn, buscador: BuscadorVectorial | None = None) -> dict[str, Any]:
     """Busca en la guía clínica del MSP a través de la base vectorial."""
     b = buscador or BuscadorVectorial()
-    resultados = b.buscar(datos.texto, k=3, solo_vigentes=True)
+    tope = cargar_parametros().get("retriever", {}).get("distancia_max", 0.25)
+    resultados = [r for r in b.buscar(datos.texto, k=3, solo_vigentes=True) if r.distancia <= tope]
+    # resultados = b.buscar(datos.texto, k=3, solo_vigentes=True)
     if not resultados:
-        return {
-            "encontrado": False,
-            "fragmentos": [],
-            "fuentes": [],
-            "mensaje": "No se encontraron secciones específicas para esa consulta.",
-        }
+        return {"encontrado": False, "fragmentos": [], "fuentes": [],
+                "mensaje": "La guía del MSP no trata este tema. No respondas con conocimiento propio."}
 
     return {
         "encontrado": True,
