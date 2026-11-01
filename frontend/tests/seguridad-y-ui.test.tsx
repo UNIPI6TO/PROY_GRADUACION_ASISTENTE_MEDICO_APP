@@ -9,6 +9,7 @@ import { MensajeChat } from "../src/components/MensajeChat";
 import { ChecklistSignosAlarma } from "../src/components/ChecklistSignosAlarma";
 import { AlertaEstado } from "../src/components/AlertaEstado";
 import { Cabecera } from "../src/components/Cabecera";
+import { App } from "../src/App";
 
 describe("Reto 6, 7 y 8 · Seguridad OWASP LLM05, Sesión Anónima y Accesibilidad WCAG 2.2", () => {
   beforeEach(() => {
@@ -140,5 +141,39 @@ describe("Reto 6, 7 y 8 · Seguridad OWASP LLM05, Sesión Anónima y Accesibilid
     const btnAprobar = screen.getByRole("button", { name: /Aprobar acción/i });
     fireEvent.click(btnAprobar);
     expect(fnConfirmar).toHaveBeenCalledWith("call_123", true);
+  });
+it("Alternancia del botón Agente: inicia activo con 'Agente' e ícono, y al desactivar mantiene ícono y texto cambiando a inactivo", () => {
+    // scrollIntoView mock for jsdom if needed
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
+
+    render(<App />);
+
+    // 1. Estado inicial: debe iniciar activo, con texto 'Agente' y clase 'activo'
+    const btnAgente = screen.getByRole("button", { name: /Modo Agente activo/i });
+    expect(btnAgente).toBeInTheDocument();
+    expect(btnAgente).toHaveTextContent("Agente");
+    expect(btnAgente).toHaveClass("btn-modo-agente", "activo");
+    expect(btnAgente).not.toHaveClass("inactivo");
+    expect(btnAgente).toHaveAttribute("aria-pressed", "true");
+
+    // 2. Al hacer clic (desactivar):
+    fireEvent.click(btnAgente);
+
+    // No debe cambiar el texto ni el ícono, solo el estado/color a inactivo
+    expect(btnAgente).toHaveTextContent("Agente");
+    expect(btnAgente).not.toHaveTextContent("RAG v1");
+    expect(btnAgente).toHaveClass("btn-modo-agente", "inactivo");
+    expect(btnAgente).not.toHaveClass("activo");
+    expect(btnAgente).toHaveAttribute("aria-pressed", "false");
+    expect(btnAgente).toHaveAttribute(
+      "aria-label",
+      "Modo Agente inactivo, usando versión 1"
+    );
+
+    // 3. Al hacer clic nuevamente vuelve a activarse
+    fireEvent.click(btnAgente);
+    expect(btnAgente).toHaveClass("btn-modo-agente", "activo");
+    expect(btnAgente).not.toHaveClass("inactivo");
+    expect(btnAgente).toHaveTextContent("Agente");
   });
 });
