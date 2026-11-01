@@ -39,7 +39,7 @@ from app.tools.evaluar_signos_alarma import (
 )
 
 APP_NAME = "GuíaVital"
-APP_VERSION = "0.2.0-SNAPSHOT-RC5"
+APP_VERSION = "0.2.1"
 SEMVER_REGEX = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
 
 PROMPT = "system_v4"
