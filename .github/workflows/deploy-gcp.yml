@@ -166,6 +166,7 @@ jobs:
             --port=8080
             --min-instances=0
             --max-instances=5
+            --memory=1Gi
             --set-env-vars=APP_NAME=GuíaVital,APP_VERSION=${{ steps.meta.outputs.app_version }}
             --set-secrets=LLM_PROVIDER=LLM_PROVIDER:latest,LLM_MODEL=LLM_MODEL:latest,GEMINI_API_KEY=GEMINI_API_KEY:latest,LLM_FALLBACK_PROVIDER=LLM_FALLBACK_PROVIDER:latest,LLM_FALLBACK_MODEL=LLM_FALLBACK_MODEL:latest,GROQ_API_KEY=GROQ_API_KEY:latest,LLM_TIMEOUT_SECONDS=LLM_TIMEOUT_SECONDS:latest,LLM_TEMPERATURE=LLM_TEMPERATURE:latest,LLM_MAX_OUTPUT_TOKENS=LLM_MAX_OUTPUT_TOKENS:latest,MAX_INPUT_CHARS=MAX_INPUT_CHARS:latest,RATE_LIMIT_PER_MINUTE=RATE_LIMIT_PER_MINUTE:latest,HISTORIAL_DB=HISTORIAL_DB:latest,CORS_ORIGINS=CORS_ORIGINS:latest
 
