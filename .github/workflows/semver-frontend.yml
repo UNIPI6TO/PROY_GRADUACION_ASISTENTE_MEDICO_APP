@@ -7,6 +7,9 @@ on:
       - develop
     paths:
       - 'frontend/**'
+      - '!frontend/CHANGELOG.md'
+      - '!app/CHANGELOG.md'
+      - '!CHANGELOG.md'
     types:
       - opened
       - synchronize
@@ -14,13 +17,13 @@ on:
 
 jobs:
   bump-frontend-version:
-    name: Bump Frontend Version on PR
+    name: Bump Frontend Version on Compare Branch
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Checkout Code Repository
+      - name: Checkout Code Repository (Compare Branch)
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
@@ -50,12 +53,12 @@ jobs:
         id: bumper
         run: python scripts/semver_bumper_frontend.py --branch "${{ github.base_ref }}"
 
-      - name: Commit Version Bump to PR Branch
+      - name: Commit Version Bump to Compare Branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Verificar si package.json tuvo cambios pendientes de commit
+          # El bump actualiza exclusivamente la rama compare (head_ref), nunca la base branch
           if ! git diff --quiet frontend/package.json; then
             git add frontend/package.json frontend/package-lock.json
             git commit -m "chore(release): bump frontend version to ${{ steps.bumper.outputs.version }} [skip ci]"

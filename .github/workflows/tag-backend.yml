@@ -1,24 +1,31 @@
 name: Release & Tag Backend (Post-Merge)
 
 on:
-  push:
+  pull_request:
     branches:
       - main
       - develop
+    types:
+      - closed
     paths:
       - 'app/**'
+      - '!app/CHANGELOG.md'
+      - '!frontend/CHANGELOG.md'
+      - '!CHANGELOG.md'
 
 jobs:
   tag-and-changelog:
-    name: Tag Release and Update Changelog
+    name: Tag Release and Update Changelog on Merge
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Checkout Code Repository
+      - name: Checkout Target Branch (Base Branch Post-Merge)
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.base_ref }}
           fetch-depth: 0
           token: ${{ secrets.BUMP_TOKEN || secrets.GITHUB_TOKEN }}
 
@@ -41,7 +48,7 @@ jobs:
           
           TAG="${{ steps.meta.outputs.tag }}"
           VERSION="${{ steps.meta.outputs.version }}"
-          BRANCH="${{ github.ref_name }}"
+          BRANCH="${{ github.base_ref }}"
           
           # 1. Crear y publicar tag en Git si no existe
           if ! git rev-parse "$TAG" >/dev/null 2>&1; then
@@ -56,12 +63,12 @@ jobs:
             echo "El tag $TAG ya existe en Git."
           fi
           
-          # 2. Actualizar CHANGELOG.md tras el tageo
+          # 2. Actualizar app/CHANGELOG.md tras el tageo
           if [ -n "$VERSION" ]; then
-            python scripts/actualizar_changelog.py --version "$VERSION"
+            python scripts/actualizar_changelog.py --version "$VERSION" --file app/CHANGELOG.md
             
-            if ! git diff --quiet CHANGELOG.md; then
-              git add CHANGELOG.md
+            if ! git diff --quiet app/CHANGELOG.md; then
+              git add app/CHANGELOG.md
               git commit -m "docs(changelog): registrar backend en $BRANCH ($VERSION) [skip ci]"
               git push origin HEAD:$BRANCH
             fi
