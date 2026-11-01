@@ -54,6 +54,19 @@ jobs:
           echo "app_version=${SEMVER_CLEAN}" >> "$GITHUB_OUTPUT"
           echo "sha_tag=sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Backend Test Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Backend Tests (Pre-Deployment Quality Gate)
+        run: pytest -q
+
       - name: Authenticate to Google Cloud via Deployer SA (GCP_JSON_KEY)
         id: auth
         uses: google-github-actions/auth@v2

@@ -41,7 +41,7 @@ flowchart TD
 ### 1. Versionado en Pull Request (Fase 1)
 | Workflow | Archivo | Disparador | Acción Principal |
 | :--- | :--- | :--- | :--- |
-| **SemVer Unificado (PR Bump)** | [`semver.yml`](semver.yml) | `pull_request` (`app/**` o `frontend/**`) hacia `main`/`develop` (excluye changelogs) | Ejecuta los Quality Gates (Backend `pytest` y Frontend `Vitest` + `secrets`), calcula la versión SemVer y actualiza simultáneamente `app/main.py` y `frontend/package.json` en la rama **compare** (`head_ref`). |
+| **SemVer Unificado (PR Bump)** | [`semver.yml`](semver.yml) | `pull_request` (`app/**` o `frontend/**`) hacia `main`/`develop` (excluye changelogs) | Calcula la versión SemVer simétrica e incrementa simultáneamente `app/main.py` y `frontend/package.json` en la rama **compare** (`head_ref`) de forma ligera. |
 
 > [!NOTE]
 > - **Actualización exclusiva de la rama compare:** El commit de bump se empuja únicamente a la rama del PR (`HEAD:${{ github.head_ref }}`), **nunca** a la rama base (`develop`/`main`), autenticado con `BUMP_TOKEN`.
@@ -63,8 +63,8 @@ flowchart TD
 ### 3. Instalación y Despliegue en GCP Cloud Run (Fase 3)
 | Workflow | Archivo | Disparador | Acción Principal |
 | :--- | :--- | :--- | :--- |
-| **Deploy Backend to Cloud Run** | [`deploy-backend.yml`](deploy-backend.yml) | `workflow_run` (post-tag backend) o Manual (`workflow_dispatch`) | Compila la imagen Docker optimizada con PyTorch CPU (`app/Dockerfile`, ~450 MB), la publica en Artifact Registry y despliega `guiavital-backend`. |
-| **Deploy Frontend to Cloud Run** | [`deploy-frontend.yml`](deploy-frontend.yml) | `workflow_run` (post-tag frontend) o Manual (`workflow_dispatch`) | Resuelve dinámicamente la URL del backend, compila `frontend/Dockerfile` con Nginx y despliega el servicio `guiavital`. |
+| **Deploy Backend to Cloud Run** | [`deploy-backend.yml`](deploy-backend.yml) | `workflow_run` (post-release) o Manual (`workflow_dispatch`) | Ejecuta el Quality Gate de pruebas (`pytest`), compila la imagen Docker optimizada con PyTorch CPU (`app/Dockerfile`, ~450 MB), la publica en Artifact Registry y despliega `guiavital-backend`. |
+| **Deploy Frontend to Cloud Run** | [`deploy-frontend.yml`](deploy-frontend.yml) | `workflow_run` (post-release) o Manual (`workflow_dispatch`) | Ejecuta el Quality Gate de pruebas (`Vitest` y `secrets`), resuelve dinámicamente la URL del backend, compila `frontend/Dockerfile` con Nginx y despliega el servicio `guiavital`. |
 
 > [!TIP]
 > Ambos despliegues se ejecutan **en paralelo**. Si un cambio solo afecta al Frontend, el Backend no se re-despliega, optimizando tiempos de build y cuotas de cómputo en GCP.

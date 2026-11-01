@@ -114,6 +114,13 @@ def test_snapshot_rc_progression_develop():
     assert snapshot_4 == "0.1.0-SNAPSHOT-RC3"
     assert validate_semver(snapshot_4) is True
 
+    # 5. Cuando la versión actual ya es RC2 pero en git tags solo existe RC1 (caso pre-merge PR)
+    base_actual_rc2 = "0.2.0-SNAPSHOT-RC2"
+    tags_solo_rc1 = ["v0.2.0-SNAPSHOT-RC1"]
+    snapshot_5 = calculate_next_snapshot(base_actual_rc2, tags_solo_rc1)
+    assert snapshot_5 == "0.2.0-SNAPSHOT-RC3"
+    assert validate_semver(snapshot_5) is True
+
 
 def test_manual_version_change_and_file_update(tmp_path):
     """
