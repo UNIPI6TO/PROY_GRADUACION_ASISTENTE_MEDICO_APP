@@ -1,4 +1,4 @@
-name: SemVer Bumper CI/CD
+name: SemVer Backend (PR Bump)
 
 on:
   pull_request:
@@ -13,8 +13,8 @@ on:
       - reopened
 
 jobs:
-  versioning:
-    name: Automated SemVer Versioning on Pull Request
+  bump-version:
+    name: Bump Backend Version on PR
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -25,6 +25,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
+          token: ${{ secrets.BUMP_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -37,15 +38,13 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Test Suite Pre-Check
-        run: |
-          pytest -q
+        run: pytest -q
 
       - name: Execute SemVer Bumper
         id: bumper
-        run: |
-          python scripts/semver_bumper.py --branch "${{ github.base_ref }}"
+        run: python scripts/semver_bumper.py --branch "${{ github.base_ref }}"
 
-      - name: Commit Version Bump and Create Git Tag
+      - name: Commit Version Bump to PR Branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -53,13 +52,6 @@ jobs:
           # Verificar si app/main.py tuvo cambios pendientes de commit
           if ! git diff --quiet app/main.py; then
             git add app/main.py
-            git commit -m "chore(release): bump version to ${{ steps.bumper.outputs.version }} [skip ci]"
+            git commit -m "chore(release): bump backend version to ${{ steps.bumper.outputs.version }} [skip ci]"
             git push origin HEAD:${{ github.head_ref }}
-          fi
-          
-          # Crear y publicar tag en Git
-          NEW_TAG="${{ steps.bumper.outputs.tag }}"
-          if [ -n "$NEW_TAG" ]; then
-            git tag -a "$NEW_TAG" -m "Automated release tag: $NEW_TAG [skip ci]"
-            git push origin "$NEW_TAG"
           fi

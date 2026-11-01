@@ -1,0 +1,63 @@
+name: SemVer Frontend (PR Bump)
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'frontend/**'
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  bump-frontend-version:
+    name: Bump Frontend Version on PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          token: ${{ secrets.BUMP_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies & Run Quality Gate
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run verify:secrets
+          npm test
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Execute SemVer Frontend Bumper
+        id: bumper
+        run: python scripts/semver_bumper_frontend.py --branch "${{ github.base_ref }}"
+
+      - name: Commit Version Bump to PR Branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Verificar si package.json tuvo cambios pendientes de commit
+          if ! git diff --quiet frontend/package.json; then
+            git add frontend/package.json frontend/package-lock.json
+            git commit -m "chore(release): bump frontend version to ${{ steps.bumper.outputs.version }} [skip ci]"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
