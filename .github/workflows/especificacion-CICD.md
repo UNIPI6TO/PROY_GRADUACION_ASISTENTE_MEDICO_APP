@@ -86,10 +86,10 @@ flowchart TD
 
 | Archivo de Workflow | Disparador (Trigger) | Evento / Alcance | Responsabilidad (SOLID) |
 | :--- | :--- | :--- | :--- |
-| **`semver.yml`** | `pull_request` (`app/**` o `frontend/**`) | En rama compare del PR | **Fase 1 SemVer Unificado**: Bump simétrico simultáneo en `app/main.py` y `frontend/package.json` en la rama compare del PR (ligero, sin ejecución de pruebas). |
-| **`release.yml`** | `pull_request` (`closed` & `merged`) hacia `main`/`develop` | Post-Merge Unificado | **Fase 2 Release & Tag**: Tag Git simétrico (`v...`) + Actualización de `app/CHANGELOG.md` y `frontend/CHANGELOG.md` con tolerancia a fallos (`continue-on-error`). |
-| **`deploy-backend.yml`** | `workflow_dispatch` o `workflow_run` de `release` | Despliegue Paralelo | **Instalación Backend**: Quality Gate previo (`pytest`) + Build Docker CPU + Despliegue `guiavital-backend` a Cloud Run. |
-| **`deploy-frontend.yml`** | `workflow_dispatch` o `workflow_run` de `release` | Despliegue Paralelo | **Instalación Frontend**: Quality Gate previo (`Vitest` & `secrets`) + Inyección URL API + Despliegue `guiavital` a Cloud Run. |
+| **`semver.yml`** | Automático: `pull_request` (`app/**` o `frontend/**`)<br/>Manual: `workflow_dispatch` | En rama compare | **Fase 1 SemVer Unificado**: Bump simétrico simultáneo en `app/main.py` y `frontend/package.json` en la rama compare (ligero, sin ejecución de pruebas). |
+| **`release.yml`** | Automático: `pull_request` (`closed` & `merged`)<br/>Manual: `workflow_dispatch` | Post-Merge | **Fase 2 Release & Tag**: Tag Git simétrico (`v...`) + Actualización de `app/CHANGELOG.md` y `frontend/CHANGELOG.md` con tolerancia a fallos (`continue-on-error`) + Disparo automático de despliegues. |
+| **`deploy-backend.yml`** | Automático: Post-release (vía `gh workflow run` / `workflow_run`)<br/>Manual: `workflow_dispatch` | Despliegue Paralelo | **Instalación Backend**: Quality Gate previo (`pytest`) + Build Docker CPU + Despliegue `guiavital-backend` a Cloud Run. |
+| **`deploy-frontend.yml`** | Automático: Post-release (vía `gh workflow run` / `workflow_run`)<br/>Manual: `workflow_dispatch` | Despliegue Paralelo | **Instalación Frontend**: Quality Gate previo (`Vitest` & `secrets`) + Inyección URL API + Despliegue `guiavital` a Cloud Run. |
 
 ---
 
