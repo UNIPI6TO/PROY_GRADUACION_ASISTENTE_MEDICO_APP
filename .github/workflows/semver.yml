@@ -28,7 +28,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
-          token: ${{ secrets.BUMP_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.BUMP_TOKEN }}
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -51,6 +51,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.BUMP_TOKEN }}@github.com/${{ github.repository }}.git
           
           # El bump actualiza exclusivamente la rama compare (head_ref), nunca la base branch
           if ! git diff --quiet app/main.py; then
