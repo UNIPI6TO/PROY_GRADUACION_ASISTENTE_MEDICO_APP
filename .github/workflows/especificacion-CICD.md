@@ -86,12 +86,11 @@ flowchart TD
 
 | Archivo de Workflow | Disparador (Trigger) | Evento / Alcance | Responsabilidad (SOLID) |
 | :--- | :--- | :--- | :--- |
-| **`semver.yml`** | `pull_request` (`app/**`) | En rama del PR | **Fase 1 Backend**: Tests backend + Bump de `APP_VERSION` en `app/main.py`. |
-| **`tag-backend.yml`** | `pull_request` (`closed` & `merged`) hacia `main`/`develop` | Post-Merge | **Fase 2 Backend**: Tag Git simétrico (`v...`) + Actualización de `app/CHANGELOG.md`. |
+| **`semver.yml`** | `pull_request` (`app/**`) | En rama compare del PR | **Fase 1 Backend**: Tests backend + Bump de `APP_VERSION` en `app/main.py`. |
 | **`semver-frontend.yml`** | `pull_request` (`frontend/**`) | En rama compare del PR | **Fase 1 Frontend**: Tests frontend + Bump en `package.json` y `package-lock.json`. |
-| **`tag-frontend.yml`** | `pull_request` (`closed` & `merged`) hacia `main`/`develop` | Post-Merge | **Fase 2 Frontend**: Tag Git simétrico (`v...`) + Actualización de `frontend/CHANGELOG.md`. |
-| **`deploy-backend.yml`** | `workflow_dispatch` o `workflow_run` de `tag-backend` | Despliegue | **Instalación Backend**: Build Docker CPU + Despliegue `guiavital-backend` a Cloud Run. |
-| **`deploy-frontend.yml`** | `workflow_dispatch` o `workflow_run` de `tag-frontend` | Despliegue | **Instalación Frontend**: Inyección URL API + Despliegue `guiavital` a Cloud Run. |
+| **`release.yml`** | `pull_request` (`closed` & `merged`) hacia `main`/`develop` | Post-Merge Unificado | **Fase 2 Release & Tag**: Tag Git simétrico (`v...`) + Actualización de `app/CHANGELOG.md` y `frontend/CHANGELOG.md` con tolerancia a fallos (`continue-on-error`). |
+| **`deploy-backend.yml`** | `workflow_dispatch` o `workflow_run` de `release` | Despliegue Paralelo | **Instalación Backend**: Build Docker CPU + Despliegue `guiavital-backend` a Cloud Run (continúa incluso si el tag falla). |
+| **`deploy-frontend.yml`** | `workflow_dispatch` o `workflow_run` de `release` | Despliegue Paralelo | **Instalación Frontend**: Inyección URL API + Despliegue `guiavital` a Cloud Run (continúa incluso si el tag falla). |
 
 ---
 

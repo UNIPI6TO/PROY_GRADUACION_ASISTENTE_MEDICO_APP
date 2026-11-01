@@ -9,7 +9,7 @@ on:
         default: ''
         type: string
   workflow_run:
-    workflows: ["Release & Tag Frontend (Post-Merge)"]
+    workflows: ["Release & Tag (Post-Merge)"]
     types:
       - completed
 
@@ -23,7 +23,7 @@ env:
 jobs:
   deploy-frontend:
     name: Build & Deploy Frontend Container
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

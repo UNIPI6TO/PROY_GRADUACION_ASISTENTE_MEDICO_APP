@@ -16,17 +16,14 @@ flowchart TD
         WF_PR_FE --> TEST_FE["Quality Gate: Vitest + Secrets<br/>Bump: package.json"]
     end
 
-    subgraph FASE2["2. Fase Post-Merge (Tageo & Changelog)"]
-        MERGE["Merge de Pull Request a develop o main"] --> CHECK_MERGE{"Componente"}
-        CHECK_MERGE -->|PR merge app/**| WF_TAG_BE["tag-backend.yml<br/>(Tag Backend)"]
-        CHECK_MERGE -->|PR merge frontend/**| WF_TAG_FE["tag-frontend.yml<br/>(Tag Frontend)"]
-        WF_TAG_BE --> TAG_BE["Tag: vX.Y.Z[-RC#]<br/>Update app/CHANGELOG.md"]
-        WF_TAG_FE --> TAG_FE["Tag: vX.Y.Z[-RC#]<br/>Update frontend/CHANGELOG.md"]
+    subgraph FASE2["2. Fase Post-Merge (Tageo & Changelog Unificado)"]
+        MERGE["Merge de Pull Request a develop o main"] --> WF_REL["release.yml<br/>(Tageo Simétrico & Changelogs)"]
+        WF_REL --> TAG_BE["Tag: vX.Y.Z[-RC#]<br/>Update app/CHANGELOG.md & frontend/CHANGELOG.md"]
     end
 
     subgraph FASE3["3. Fase de Despliegue (Cloud Run en Paralelo)"]
-        TAG_BE -.->|workflow_run| WF_DEP_BE["deploy-backend.yml<br/>(Deploy Backend)"]
-        TAG_FE -.->|workflow_run| WF_DEP_FE["deploy-frontend.yml<br/>(Deploy Frontend)"]
+        TAG_BE -.->|workflow_run<br/>(continúa si hay fallos)| WF_DEP_BE["deploy-backend.yml<br/>(Deploy Backend)"]
+        TAG_BE -.->|workflow_run<br/>(continúa si hay fallos)| WF_DEP_FE["deploy-frontend.yml<br/>(Deploy Frontend)"]
         MANUAL["workflow_dispatch (Manual)"] --> WF_DEP_BE
         MANUAL --> WF_DEP_FE
         WF_DEP_BE --> DEPLOY_BE["Build Docker CPU (~450 MB)<br/>Deploy guiavital-backend"]
@@ -56,8 +53,7 @@ flowchart TD
 ### 2. Publicación de Tags y Changelog Post-Merge (Fase 2)
 | Workflow | Archivo | Disparador | Acción Principal |
 | :--- | :--- | :--- | :--- |
-| **Release & Tag Backend** | [`tag-backend.yml`](tag-backend.yml) | `pull_request: closed` (merged) hacia `main`/`develop` | Genera y publica el tag Git simétrico (`v...`) y documenta los cambios en `app/CHANGELOG.md` mediante `scripts/actualizar_changelog.py`. |
-| **Release & Tag Frontend** | [`tag-frontend.yml`](tag-frontend.yml) | `pull_request: closed` (merged) hacia `main`/`develop` | Genera y publica el tag Git simétrico (`v...`) y documenta los cambios en `frontend/CHANGELOG.md`. |
+| **Release & Tag Unificado** | [`release.yml`](release.yml) | `pull_request: closed` (merged) hacia `main`/`develop` | Genera el tag simétrico (`v...`), actualiza `app/CHANGELOG.md` y `frontend/CHANGELOG.md` de forma resiliente (`continue-on-error: true`). Si falla, la instalación continúa de todos modos. |
 
 #### Regla de Ramas:
 * **Rama `develop`:** Genera versiones **Snapshot** de pre-producción simétricas (`v0.2.0-SNAPSHOT-RC1`, `v0.2.0-SNAPSHOT-RC2`).
