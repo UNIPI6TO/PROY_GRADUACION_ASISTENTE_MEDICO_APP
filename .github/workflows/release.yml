@@ -21,10 +21,11 @@ on:
 jobs:
   tag-and-changelog:
     name: Tag Release and Update Changelogs on Merge
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
 
     steps:
       - name: Resolve Target Branch
@@ -110,3 +111,18 @@ jobs:
             git commit -m "docs(changelog): registrar versiones post-merge en $BRANCH [skip ci]" || true
             git push origin HEAD:$BRANCH || echo "Advertencia: no se pudo hacer push del changelog"
           fi
+
+      - name: Trigger Parallel Deployments (Backend & Frontend)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.BUMP_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.meta.outputs.tag }}"
+          BRANCH="${{ steps.branch_info.outputs.target_branch }}"
+          echo "Disparando despliegues en paralelo para la rama $BRANCH con tag $TAG..."
+          
+          # 1. Disparar despliegue de backend a Cloud Run
+          gh workflow run deploy-backend.yml --ref "$BRANCH" -f version_tag="$TAG" || echo "Advertencia: no se pudo disparar deploy-backend"
+          
+          # 2. Disparar despliegue de frontend a Cloud Run
+          gh workflow run deploy-frontend.yml --ref "$BRANCH" -f version_tag="$TAG" || echo "Advertencia: no se pudo disparar deploy-frontend"
