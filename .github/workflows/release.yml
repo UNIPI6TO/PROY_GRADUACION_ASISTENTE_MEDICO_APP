@@ -31,7 +31,11 @@ jobs:
       - name: Resolve Target Branch
         id: branch_info
         run: |
-          RESOLVED_BRANCH="${{ inputs.target_branch || github.base_ref || github.ref_name }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RESOLVED_BRANCH="${{ github.event.pull_request.base.ref }}"
+          else
+            RESOLVED_BRANCH="${{ inputs.target_branch || github.ref_name }}"
+          fi
           echo "target_branch=${RESOLVED_BRANCH}" >> "$GITHUB_OUTPUT"
           echo "Rama objetivo para release: ${RESOLVED_BRANCH}"
 
