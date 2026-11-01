@@ -9,6 +9,14 @@ y el frontend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.2.0-SNAPSHOT-RC4] - 2026-11-01
+
+- fix: (frontend) mejorar estado del botón Agente
+- feat: (ci) mover quality gates a deploy y mejorar SemVer
+- feat: (frontend) agregar endpoints SRE /manage/health e info
+- chore: (changelog) separar bitácoras por aplicación
+- feat: (app) integrar agente v2 y arbovirosis
+
 ## [0.2.0-SNAPSHOT-RC2] - 2026-10-31
 
 ### Conectividad y Resiliencia
