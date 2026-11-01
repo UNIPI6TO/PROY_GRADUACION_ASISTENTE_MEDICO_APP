@@ -1,7 +1,7 @@
 {
   "name": "guiavital-frontend",
   "private": true,
-  "version": "0.2.0-SNAPSHOT-RC4",
+  "version": "0.2.0-SNAPSHOT-RC5",
   "type": "module",
   "scripts": {
     "dev": "vite",
