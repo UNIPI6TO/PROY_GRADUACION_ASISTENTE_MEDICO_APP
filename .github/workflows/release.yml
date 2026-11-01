@@ -7,26 +7,37 @@ on:
       - develop
     types:
       - closed
-    paths:
-      - 'app/**'
-      - 'frontend/**'
-      - '!app/CHANGELOG.md'
-      - '!frontend/CHANGELOG.md'
-      - '!CHANGELOG.md'
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Rama objetivo para el release'
+        required: false
+        default: 'develop'
+        type: choice
+        options:
+          - develop
+          - main
 
 jobs:
   tag-and-changelog:
     name: Tag Release and Update Changelogs on Merge
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
+      - name: Resolve Target Branch
+        id: branch_info
+        run: |
+          RESOLVED_BRANCH="${{ inputs.target_branch || github.base_ref || github.ref_name }}"
+          echo "target_branch=${RESOLVED_BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "Rama objetivo para release: ${RESOLVED_BRANCH}"
+
       - name: Checkout Target Branch (Base Branch Post-Merge)
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.base_ref }}
+          ref: ${{ steps.branch_info.outputs.target_branch }}
           fetch-depth: 0
           token: ${{ secrets.BUMP_TOKEN }}
 
@@ -56,7 +67,7 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.BUMP_TOKEN }}@github.com/${{ github.repository }}.git
           
           TAG="${{ steps.meta.outputs.tag }}"
-          BRANCH="${{ github.base_ref }}"
+          BRANCH="${{ steps.branch_info.outputs.target_branch }}"
           
           if [ -n "$TAG" ] && [ "$TAG" != "v" ]; then
             if ! git rev-parse "$TAG" >/dev/null 2>&1; then
@@ -79,7 +90,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.BUMP_TOKEN }}@github.com/${{ github.repository }}.git
           
-          BRANCH="${{ github.base_ref }}"
+          BRANCH="${{ steps.branch_info.outputs.target_branch }}"
           BE_VER="${{ steps.meta.outputs.backend_version }}"
           FE_VER="${{ steps.meta.outputs.frontend_version }}"
           
