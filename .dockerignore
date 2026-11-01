@@ -15,5 +15,9 @@ eval/
 logs/
 state/
 tests/
+data/raw/
+data/processed/
 *.db
 *.sqlite3
+!chroma_db/
+!chroma_db/**

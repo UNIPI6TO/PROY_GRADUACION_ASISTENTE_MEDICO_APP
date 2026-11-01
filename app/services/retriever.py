@@ -16,8 +16,8 @@ from typing import Any
 import chromadb
 from chromadb.config import Settings
 
+from app.config import MODELO_EMBEDDINGS, NOMBRE_COLECCION, RUTA_CHROMA_DEFAULT
 from app.schemas import Fuente
-from scripts.ingest import MODELO_EMBEDDINGS, NOMBRE_COLECCION, RUTA_CHROMA_DEFAULT
 
 
 @dataclass(frozen=True)

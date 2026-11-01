@@ -22,8 +22,7 @@ import chromadb
 from chromadb.config import Settings
 import pymupdf
 
-MODELO_EMBEDDINGS = "intfloat/multilingual-e5-small"
-NOMBRE_COLECCION = "guia_vital_dengue"
+from app.config import MODELO_EMBEDDINGS, NOMBRE_COLECCION, RUTA_CHROMA_DEFAULT
 
 RUTA_BASE = Path(__file__).resolve().parent.parent
 RUTA_OPS_PDF = RUTA_BASE / "data" / "raw" / "Guia-dengue-OPS-2016.pdf"
