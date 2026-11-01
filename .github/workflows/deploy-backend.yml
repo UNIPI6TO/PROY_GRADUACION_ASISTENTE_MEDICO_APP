@@ -12,9 +12,6 @@ on:
     workflows: ["Release & Tag Backend (Post-Merge)"]
     types:
       - completed
-    branches:
-      - main
-      - develop
 
 env:
   GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'project-3e1faa58-1e7d-4e8d-933' }}

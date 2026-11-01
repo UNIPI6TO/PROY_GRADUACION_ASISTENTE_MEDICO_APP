@@ -17,11 +17,11 @@ flowchart TD
     end
 
     subgraph FASE2["2. Fase Post-Merge (Tageo & Changelog)"]
-        MERGE["Merge a develop o main"] --> CHECK_MERGE{"Componente"}
-        CHECK_MERGE -->|Push app/**| WF_TAG_BE["tag-backend.yml<br/>(Tag Backend)"]
-        CHECK_MERGE -->|Push frontend/**| WF_TAG_FE["tag-frontend.yml<br/>(Tag Frontend)"]
-        WF_TAG_BE --> TAG_BE["Tag: vX.Y.Z[-RC#]<br/>Update CHANGELOG.md"]
-        WF_TAG_FE --> TAG_FE["Tag: frontend-vX.Y.Z[-RC#]<br/>Update CHANGELOG.md"]
+        MERGE["Merge de Pull Request a develop o main"] --> CHECK_MERGE{"Componente"}
+        CHECK_MERGE -->|PR merge app/**| WF_TAG_BE["tag-backend.yml<br/>(Tag Backend)"]
+        CHECK_MERGE -->|PR merge frontend/**| WF_TAG_FE["tag-frontend.yml<br/>(Tag Frontend)"]
+        WF_TAG_BE --> TAG_BE["Tag: vX.Y.Z[-RC#]<br/>Update app/CHANGELOG.md"]
+        WF_TAG_FE --> TAG_FE["Tag: vX.Y.Z[-RC#]<br/>Update frontend/CHANGELOG.md"]
     end
 
     subgraph FASE3["3. Fase de Despliegue (Cloud Run en Paralelo)"]
@@ -44,23 +44,24 @@ flowchart TD
 ### 1. Versionado en Pull Request (Fase 1)
 | Workflow | Archivo | Disparador | Acción Principal |
 | :--- | :--- | :--- | :--- |
-| **SemVer Backend (PR Bump)** | [`semver.yml`](semver.yml) | `pull_request` (`app/**`) hacia `main`/`develop` | Ejecuta `pytest`, calcula la versión SemVer y actualiza `APP_VERSION` en `app/main.py` de la rama entrante. |
-| **SemVer Frontend (PR Bump)** | [`semver-frontend.yml`](semver-frontend.yml) | `pull_request` (`frontend/**`) hacia `main`/`develop` | Ejecuta `verify:secrets` y `npm test`, calcula la versión e incrementa `package.json` y `package-lock.json` de la rama entrante. |
+| **SemVer Backend (PR Bump)** | [`semver.yml`](semver.yml) | `pull_request` (`app/**`) hacia `main`/`develop` (excluye changelogs) | Ejecuta `pytest`, calcula la versión SemVer y actualiza `APP_VERSION` en `app/main.py` de la rama **compare** (`head_ref`). |
+| **SemVer Frontend (PR Bump)** | [`semver-frontend.yml`](semver-frontend.yml) | `pull_request` (`frontend/**`) hacia `main`/`develop` (excluye changelogs) | Ejecuta `verify:secrets` y `npm test`, calcula la versión e incrementa `package.json` en la rama **compare** (`head_ref`). |
 
 > [!NOTE]
-> En la Fase 1 **no se crean tags Git ni se altera `CHANGELOG.md`**. Esto previene tags huérfanos o notas de versión si un PR es rechazado o cancelado.
+> - **Actualización exclusiva de la rama compare:** El commit de bump se empuja únicamente a la rama del PR (`HEAD:${{ github.head_ref }}`), **nunca** a la rama base (`develop`/`main`).
+> - **Exclusión de Changelogs:** Modificar `app/CHANGELOG.md`, `frontend/CHANGELOG.md` o `CHANGELOG.md` **no** activa los pipelines de SemVer, evitando ejecuciones redundantes.
 
 ---
 
 ### 2. Publicación de Tags y Changelog Post-Merge (Fase 2)
 | Workflow | Archivo | Disparador | Acción Principal |
 | :--- | :--- | :--- | :--- |
-| **Release & Tag Backend** | [`tag-backend.yml`](tag-backend.yml) | `push` (`app/**`) en `main`/`develop` | Genera y publica el tag Git (`v...`) y documenta los cambios en `CHANGELOG.md` mediante `scripts/actualizar_changelog.py`. |
-| **Release & Tag Frontend** | [`tag-frontend.yml`](tag-frontend.yml) | `push` (`frontend/**`) en `main`/`develop` | Genera y publica el tag Git (`frontend-v...`) y documenta los cambios en `CHANGELOG.md`. |
+| **Release & Tag Backend** | [`tag-backend.yml`](tag-backend.yml) | `pull_request: closed` (merged) hacia `main`/`develop` | Genera y publica el tag Git simétrico (`v...`) y documenta los cambios en `app/CHANGELOG.md` mediante `scripts/actualizar_changelog.py`. |
+| **Release & Tag Frontend** | [`tag-frontend.yml`](tag-frontend.yml) | `pull_request: closed` (merged) hacia `main`/`develop` | Genera y publica el tag Git simétrico (`v...`) y documenta los cambios en `frontend/CHANGELOG.md`. |
 
 #### Regla de Ramas:
-* **Rama `develop`:** Genera versiones **Snapshot** de pre-producción (`v0.2.0-SNAPSHOT-RC1`, `frontend-v0.2.0-SNAPSHOT-RC1`).
-* **Rama `main`:** Genera versiones oficiales definitivas **Release** (`v0.2.0`, `frontend-v0.2.0`).
+* **Rama `develop`:** Genera versiones **Snapshot** de pre-producción simétricas (`v0.2.0-SNAPSHOT-RC1`, `v0.2.0-SNAPSHOT-RC2`).
+* **Rama `main`:** Genera versiones oficiales definitivas **Release** simétricas (`v0.2.0`).
 
 ---
 

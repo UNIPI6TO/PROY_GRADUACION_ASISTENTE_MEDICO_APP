@@ -24,7 +24,7 @@ def test_snapshot_progression_frontend():
     tags_vacio = []
     assert calculate_next_snapshot(base, tags_vacio) == "0.2.0-SNAPSHOT-RC1"
 
-    tags_con_rc1 = ["frontend-v0.2.0-SNAPSHOT-RC1", "v0.2.0-SNAPSHOT-RC5"]
+    tags_con_rc1 = ["v0.2.0-SNAPSHOT-RC1"]
     assert calculate_next_snapshot(base, tags_con_rc1) == "0.2.0-SNAPSHOT-RC2"
 
 
