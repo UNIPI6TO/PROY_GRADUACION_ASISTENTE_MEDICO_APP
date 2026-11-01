@@ -97,12 +97,26 @@ def calculate_next_snapshot(
     base_version: str,
     existing_tags: List[str],
     prefix: str = TAG_PREFIX,
+    increment: Optional[str] = None,
 ) -> str:
     """
     Calcula la versión Snapshot para la rama 'develop' con nomenclatura X.Y.Z-SNAPSHOT-RC#.
-    Busca los tags existentes con prefijo 'frontend-v' para incrementar el correlativo RC#.
+    Busca los tags existentes y la versión actual para incrementar el correlativo RC#.
     """
     major, minor, patch = parse_semver_core(base_version)
+
+    if increment and not "-SNAPSHOT" in base_version:
+        inc = increment.upper()
+        if inc == "MAJOR":
+            major += 1
+            minor = 0
+            patch = 0
+        elif inc == "MINOR":
+            minor += 1
+            patch = 0
+        elif inc == "PATCH":
+            patch += 1
+
     base_core = f"{major}.{minor}.{patch}"
 
     tag_pattern = re.compile(rf"^{re.escape(prefix)}{re.escape(base_core)}-SNAPSHOT-RC([1-9]\d*)$")
@@ -114,6 +128,13 @@ def calculate_next_snapshot(
             rc_num = int(match.group(1))
             if rc_num > highest_rc:
                 highest_rc = rc_num
+
+    # Considerar también el RC de la versión actual si pertenece al mismo core
+    current_rc_match = re.search(rf"^{re.escape(base_core)}-SNAPSHOT-RC([1-9]\d*)$", base_version)
+    if current_rc_match:
+        current_rc = int(current_rc_match.group(1))
+        if current_rc > highest_rc:
+            highest_rc = current_rc
 
     next_rc = highest_rc + 1
     new_snapshot = f"{base_core}-SNAPSHOT-RC{next_rc}"
@@ -162,14 +183,29 @@ def get_git_tags() -> List[str]:
 
 def get_git_commit_messages_frontend(base_ref: Optional[str] = None) -> List[str]:
     """Obtiene los mensajes de commit recientes que afectan al frontend/."""
-    try:
+    if not base_ref:
         cmd = ["git", "log", "-n", "20", "--pretty=format:%s", "--", "frontend/"]
-        if base_ref:
-            cmd = ["git", "log", f"{base_ref}..HEAD", "--pretty=format:%s", "--", "frontend/"]
-        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        return [line.strip() for line in res.stdout.splitlines() if line.strip()]
-    except Exception:
-        return []
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            return [line.strip() for line in res.stdout.splitlines() if line.strip()]
+        except Exception:
+            return []
+
+    clean_base = base_ref.replace("refs/heads/", "").strip()
+    candidates = [
+        ["git", "log", f"origin/{clean_base}..HEAD", "--pretty=format:%s", "--", "frontend/"],
+        ["git", "log", f"{clean_base}..HEAD", "--pretty=format:%s", "--", "frontend/"],
+        ["git", "log", "-n", "20", "--pretty=format:%s", "--", "frontend/"],
+    ]
+    for cmd in candidates:
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            commits = [line.strip() for line in res.stdout.splitlines() if line.strip()]
+            if commits:
+                return commits
+        except Exception:
+            continue
+    return []
 
 
 def main() -> int:
@@ -202,13 +238,14 @@ def main() -> int:
     current_version = pkg_data.get("version", "0.1.0")
 
     branch_name = args.branch.lower().replace("refs/heads/", "")
+    commits = get_git_commit_messages_frontend(base_ref=args.branch)
+    increment = determine_increment(commits)
+
     if "main" in branch_name:
-        commits = get_git_commit_messages_frontend()
-        increment = determine_increment(commits)
         new_version = calculate_next_release(current_version, increment)
     else:
         tags = get_git_tags()
-        new_version = calculate_next_snapshot(current_version, tags, prefix=TAG_PREFIX)
+        new_version = calculate_next_snapshot(current_version, tags, prefix=TAG_PREFIX, increment=increment)
 
     tag_name = f"{TAG_PREFIX}{new_version}"
     print(f"Nueva versión de Frontend calculada: {new_version} (tag: {tag_name})")
