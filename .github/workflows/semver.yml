@@ -1,4 +1,4 @@
-name: SemVer Backend (PR Bump)
+name: SemVer (PR Bump)
 
 on:
   pull_request:
@@ -7,6 +7,7 @@ on:
       - develop
     paths:
       - 'app/**'
+      - 'frontend/**'
       - '!app/CHANGELOG.md'
       - '!frontend/CHANGELOG.md'
       - '!CHANGELOG.md'
@@ -17,7 +18,7 @@ on:
 
 jobs:
   bump-version:
-    name: Bump Backend Version on Compare Branch
+    name: Bump Symmetric Version on Compare Branch
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -35,27 +36,41 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Dependencies
+      - name: Install Backend Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Test Suite Pre-Check
+      - name: Run Backend Quality Gate (pytest)
         run: pytest -q
 
-      - name: Execute SemVer Bumper
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Run Frontend Quality Gate (Vitest & Secrets)
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run verify:secrets
+          npm test
+
+      - name: Execute Symmetric SemVer Bumper
         id: bumper
         run: python scripts/semver_bumper.py --branch "${{ github.base_ref }}"
 
-      - name: Commit Version Bump to Compare Branch
+      - name: Commit Symmetric Version Bump to Compare Branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.BUMP_TOKEN }}@github.com/${{ github.repository }}.git
           
-          # El bump actualiza exclusivamente la rama compare (head_ref), nunca la base branch
-          if ! git diff --quiet app/main.py; then
-            git add app/main.py
-            git commit -m "chore(release): bump backend version to ${{ steps.bumper.outputs.version }} [skip ci]"
+          # El bump actualiza simétricamente app/main.py y frontend/package.json en la rama compare (head_ref)
+          if ! git diff --quiet app/main.py frontend/package.json; then
+            git add app/main.py frontend/package.json frontend/package-lock.json
+            git commit -m "chore(release): bump symmetric version to ${{ steps.bumper.outputs.version }} [skip ci]"
             git push origin HEAD:${{ github.head_ref }}
           fi
