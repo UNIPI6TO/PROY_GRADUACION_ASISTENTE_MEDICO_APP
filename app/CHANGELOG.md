@@ -9,6 +9,14 @@ y el backend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.2.0-SNAPSHOT-RC4] - 2026-11-01
+
+- feat: (ci) mover quality gates a deploy y mejorar SemVer
+- chore: (changelog) separar bitácoras por aplicación
+- feat: separar CI/CD en tag y deploy por componente
+- feat: (tools) filtrar RAG por distancia y simular notificación
+- feat: (app) integrar agente v2 y arbovirosis
+
 ## [0.2.0-SNAPSHOT-RC2] - 2026-10-31
 
 ### Agente Clínico y Proveedores LLM
