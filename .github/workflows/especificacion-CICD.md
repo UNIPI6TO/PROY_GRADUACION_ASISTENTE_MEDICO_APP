@@ -118,4 +118,4 @@ flowchart TD
   2. Al completarse exitosamente el post-merge (`tag-backend.yml` o `tag-frontend.yml`), el workflow de despliegue correspondiente se activa automáticamente vía `workflow_run`.
   3. Si ambos servicios se fusionan simultáneamente, ambos despliegues se ejecutan **en paralelo** sin bloquearse entre sí.
   4. `deploy-backend.yml` utiliza la imagen optimizada con PyTorch CPU (`~450 MB`) e inyecta secretos desde GCP Secret Manager.
-  5. `deploy-frontend.yml` resuelve dinámicamente la URL del backend mediante `gcloud run services describe`, compila los estáticos con Nginx y verifica `/healthz`.
+  5. `deploy-frontend.yml` resuelve dinámicamente la URL del backend mediante `gcloud run services describe`, compila los estáticos con Nginx y verifica los endpoints SRE `/manage/health` y `/manage/info` del frontend y la salud del backend.
