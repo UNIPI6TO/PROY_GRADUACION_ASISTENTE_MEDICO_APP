@@ -208,6 +208,29 @@ def get_git_diff_app() -> str:
         return ""
 
 
+def update_frontend_versions(new_version: str, pkg_path: Path = Path("frontend/package.json"), lock_path: Path = Path("frontend/package-lock.json")) -> None:
+    """Actualiza simétricamente la versión en package.json y package-lock.json si existen."""
+    import json
+    if not validate_semver(new_version) or not pkg_path.exists():
+        return
+
+    try:
+        data = json.loads(pkg_path.read_text(encoding="utf-8"))
+        data["version"] = new_version
+        pkg_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"Archivo {pkg_path} actualizado con version = \"{new_version}\"")
+
+        if lock_path.exists():
+            data_lock = json.loads(lock_path.read_text(encoding="utf-8"))
+            data_lock["version"] = new_version
+            if "packages" in data_lock and "" in data_lock["packages"]:
+                data_lock["packages"][""]["version"] = new_version
+            lock_path.write_text(json.dumps(data_lock, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            print(f"Archivo {lock_path} actualizado con version = \"{new_version}\"")
+    except Exception as e:
+        print(f"Advertencia al actualizar archivos frontend: {e}", file=sys.stderr)
+
+
 def main() -> int:
     """Punto de entrada CLI para GitHub Actions y ejecución local."""
     parser = argparse.ArgumentParser(description="Automatización de versionado SemVer.")
@@ -267,6 +290,7 @@ def main() -> int:
     if not args.dry_run and not manual_version:
         update_app_version_in_file(target_file, new_version)
         print(f"Archivo {target_file} actualizado con APP_VERSION = \"{new_version}\"")
+        update_frontend_versions(new_version)
 
     return 0
 

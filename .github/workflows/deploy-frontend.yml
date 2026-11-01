@@ -104,6 +104,9 @@ jobs:
             VITE_API_URL=${{ steps.backend_info.outputs.backend_url }}
           flags: '--allow-unauthenticated --port=8080 --min-instances=0 --max-instances=5'
 
-      - name: Verify Frontend SRE Health
+      - name: Verify Frontend SRE Health & Info
         run: |
-          curl --fail --silent --show-error "${{ steps.deploy_frontend.outputs.url }}/healthz"
+          # 1. Verificar endpoint SRE de salud del frontend
+          curl --fail --silent --show-error "${{ steps.deploy_frontend.outputs.url }}/manage/health"
+          # 3. Verificar salud del servicio backend
+          curl --fail --silent --show-error "${{ steps.backend_info.outputs.backend_url }}/manage/health"

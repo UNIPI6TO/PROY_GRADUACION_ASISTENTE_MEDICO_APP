@@ -10,11 +10,25 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
-    # Endpoint de salud ligero para Cloud Run Liveness/Readiness
+    # Endpoint de salud ligero para Cloud Run Liveness/Readiness (retrocompatibilidad)
     location = /healthz {
         access_log off;
-        add_header Content-Type application/json;
+        default_type application/json;
         return 200 '{"status":"UP"}';
+    }
+
+    # Endpoint SRE de salud con paridad al Backend (/manage/health)
+    location = /manage/health {
+        access_log off;
+        default_type application/json;
+        return 200 '{"status":"UP","checks":{"liveness":{"status":"UP"},"readiness":{"status":"UP"}}}';
+    }
+
+    # Endpoint SRE de metadatos de versión con paridad al Backend (/manage/info)
+    location = /manage/info {
+        access_log off;
+        default_type application/json;
+        return 200 '{"name":"GuíaVital","version":"${APP_VERSION}"}';
     }
 
     # Soporte para enrutamiento SPA en React

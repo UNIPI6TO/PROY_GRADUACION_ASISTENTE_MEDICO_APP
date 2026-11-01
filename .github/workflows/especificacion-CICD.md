@@ -86,8 +86,7 @@ flowchart TD
 
 | Archivo de Workflow | Disparador (Trigger) | Evento / Alcance | Responsabilidad (SOLID) |
 | :--- | :--- | :--- | :--- |
-| **`semver.yml`** | `pull_request` (`app/**`) | En rama compare del PR | **Fase 1 Backend**: Tests backend + Bump de `APP_VERSION` en `app/main.py`. |
-| **`semver-frontend.yml`** | `pull_request` (`frontend/**`) | En rama compare del PR | **Fase 1 Frontend**: Tests frontend + Bump en `package.json` y `package-lock.json`. |
+| **`semver.yml`** | `pull_request` (`app/**` o `frontend/**`) | En rama compare del PR | **Fase 1 SemVer Unificado**: Quality Gates (Backend `pytest` + Frontend `Vitest` & `secrets`) + Bump simétrico simultáneo en `app/main.py` y `frontend/package.json`. |
 | **`release.yml`** | `pull_request` (`closed` & `merged`) hacia `main`/`develop` | Post-Merge Unificado | **Fase 2 Release & Tag**: Tag Git simétrico (`v...`) + Actualización de `app/CHANGELOG.md` y `frontend/CHANGELOG.md` con tolerancia a fallos (`continue-on-error`). |
 | **`deploy-backend.yml`** | `workflow_dispatch` o `workflow_run` de `release` | Despliegue Paralelo | **Instalación Backend**: Build Docker CPU + Despliegue `guiavital-backend` a Cloud Run (continúa incluso si el tag falla). |
 | **`deploy-frontend.yml`** | `workflow_dispatch` o `workflow_run` de `release` | Despliegue Paralelo | **Instalación Frontend**: Inyección URL API + Despliegue `guiavital` a Cloud Run (continúa incluso si el tag falla). |
@@ -119,4 +118,4 @@ flowchart TD
   2. Al completarse exitosamente el post-merge (`tag-backend.yml` o `tag-frontend.yml`), el workflow de despliegue correspondiente se activa automáticamente vía `workflow_run`.
   3. Si ambos servicios se fusionan simultáneamente, ambos despliegues se ejecutan **en paralelo** sin bloquearse entre sí.
   4. `deploy-backend.yml` utiliza la imagen optimizada con PyTorch CPU (`~450 MB`) e inyecta secretos desde GCP Secret Manager.
-  5. `deploy-frontend.yml` resuelve dinámicamente la URL del backend mediante `gcloud run services describe`, compila los estáticos con Nginx y verifica `/healthz`.
+  5. `deploy-frontend.yml` resuelve dinámicamente la URL del backend mediante `gcloud run services describe`, compila los estáticos con Nginx y verifica los endpoints SRE `/manage/health` y `/manage/info` del frontend y la salud del backend.
