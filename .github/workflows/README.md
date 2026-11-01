@@ -8,12 +8,12 @@ Este directorio contiene los flujos de trabajo (*workflows*) automatizados de **
 
 ```mermaid
 flowchart TD
-    subgraph FASE1["1. Fase de Pull Request (Bump)"]
-        PR["Apertura / Sincronización de PR"] --> CHECK_PATH{"Ruta de cambios"}
-        CHECK_PATH -->|app/**| WF_PR_BE["semver.yml<br/>(Backend PR)"]
-        CHECK_PATH -->|frontend/**| WF_PR_FE["semver-frontend.yml<br/>(Frontend PR)"]
-        WF_PR_BE --> TEST_BE["Quality Gate: pytest<br/>Bump: app/main.py"]
-        WF_PR_FE --> TEST_FE["Quality Gate: Vitest + Secrets<br/>Bump: package.json"]
+    subgraph FASE1["1. Fase de Pull Request (Bump Simétrico Unificado)"]
+        PR["Apertura / Sincronización de PR a develop o main"] --> WF_PR["semver.yml<br/>(Quality Gates + Bump Simétrico)"]
+        WF_PR --> TEST_BE["Quality Gate Backend (pytest)"]
+        WF_PR --> TEST_FE["Quality Gate Frontend (Vitest + Secrets)"]
+        TEST_BE --> BUMP_SYNC["Bump Simétrico:<br/>app/main.py & frontend/package.json"]
+        TEST_FE --> BUMP_SYNC
     end
 
     subgraph FASE2["2. Fase Post-Merge (Tageo & Changelog Unificado)"]
@@ -41,11 +41,10 @@ flowchart TD
 ### 1. Versionado en Pull Request (Fase 1)
 | Workflow | Archivo | Disparador | Acción Principal |
 | :--- | :--- | :--- | :--- |
-| **SemVer Backend (PR Bump)** | [`semver.yml`](semver.yml) | `pull_request` (`app/**`) hacia `main`/`develop` (excluye changelogs) | Ejecuta `pytest`, calcula la versión SemVer y actualiza `APP_VERSION` en `app/main.py` de la rama **compare** (`head_ref`). |
-| **SemVer Frontend (PR Bump)** | [`semver-frontend.yml`](semver-frontend.yml) | `pull_request` (`frontend/**`) hacia `main`/`develop` (excluye changelogs) | Ejecuta `verify:secrets` y `npm test`, calcula la versión e incrementa `package.json` en la rama **compare** (`head_ref`). |
+| **SemVer Unificado (PR Bump)** | [`semver.yml`](semver.yml) | `pull_request` (`app/**` o `frontend/**`) hacia `main`/`develop` (excluye changelogs) | Ejecuta los Quality Gates (Backend `pytest` y Frontend `Vitest` + `secrets`), calcula la versión SemVer y actualiza simultáneamente `app/main.py` y `frontend/package.json` en la rama **compare** (`head_ref`). |
 
 > [!NOTE]
-> - **Actualización exclusiva de la rama compare:** El commit de bump se empuja únicamente a la rama del PR (`HEAD:${{ github.head_ref }}`), **nunca** a la rama base (`develop`/`main`).
+> - **Actualización exclusiva de la rama compare:** El commit de bump se empuja únicamente a la rama del PR (`HEAD:${{ github.head_ref }}`), **nunca** a la rama base (`develop`/`main`), autenticado con `BUMP_TOKEN`.
 > - **Exclusión de Changelogs:** Modificar `app/CHANGELOG.md`, `frontend/CHANGELOG.md` o `CHANGELOG.md` **no** activa los pipelines de SemVer, evitando ejecuciones redundantes.
 
 ---

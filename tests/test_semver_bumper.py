@@ -165,3 +165,19 @@ def test_manual_version_change_and_file_update(tmp_path):
     assert 'APP_VERSION = "0.5.0"' in nuevo_contenido
     assert 'APP_NAME = "test-app"' in nuevo_contenido
     assert 'SEMVER_REGEX = r"^..."' in nuevo_contenido
+
+
+def test_actualizacion_simetrica_frontend(tmp_path):
+    import json
+    from scripts.semver_bumper import update_frontend_versions
+
+    pkg = tmp_path / "package.json"
+    lock = tmp_path / "package-lock.json"
+
+    pkg.write_text(json.dumps({"name": "front", "version": "0.1.0"}), encoding="utf-8")
+    lock.write_text(json.dumps({"name": "front", "version": "0.1.0", "packages": {"": {"version": "0.1.0"}}}), encoding="utf-8")
+
+    update_frontend_versions("0.2.0-SNAPSHOT-RC2", pkg_path=pkg, lock_path=lock)
+
+    assert json.loads(pkg.read_text(encoding="utf-8"))["version"] == "0.2.0-SNAPSHOT-RC2"
+    assert json.loads(lock.read_text(encoding="utf-8"))["version"] == "0.2.0-SNAPSHOT-RC2"
