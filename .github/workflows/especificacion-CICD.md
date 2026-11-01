@@ -17,14 +17,15 @@ Los pipelines de GitHub Actions analizan los mensajes de commit (*Conventional C
 - **`docs:`** Cambios en documentación técnica y especificaciones $\rightarrow$ Incremento **PATCH** (si acompaña cambios en código).
 - **`BREAKING CHANGE:` o sufijo `!` (ej. `feat!:`, `fix!:`):** Cambios incompatibles con versiones previas $\rightarrow$ Incremento **MAJOR** (ej. `0.1.0` $\rightarrow$ `1.0.0`).
 
-### 1.2. Estrategia por Ramas (Releases vs Snapshots)
+### 1.2. Estrategia por Ramas (Releases vs Snapshots con Simetría Backend/Frontend)
+- **Simetría de Versiones y Tags:** Backend y Frontend comparten exactamente la misma versión SemVer y el mismo formato de tag Git (`vX.Y.Z` o `vX.Y.Z-SNAPSHOT-RC#`), garantizando paridad de entrega.
 - **Rama `main` (Releases de Producción):**
   - Genera versiones oficiales definitivas con formato SemVer estricto: `X.Y.Z` (sin sufijos pre-release).
-  - Tags Git: `vX.Y.Z` (Backend) y `frontend-vX.Y.Z` (Frontend).
+  - Tags Git simétricos: `vX.Y.Z`.
 - **Rama `develop` (Snapshots de Pre-producción):**
   - Genera versiones con nomenclatura `X.Y.Z-SNAPSHOT-RC#`.
   - El correlativo `RC#` incrementa secuencialmente en cada entrega hacia `develop` (ej. `0.2.0-SNAPSHOT-RC1`, `0.2.0-SNAPSHOT-RC2`).
-  - Tags Git: `vX.Y.Z-SNAPSHOT-RC#` (Backend) y `frontend-vX.Y.Z-SNAPSHOT-RC#` (Frontend).
+  - Tags Git simétricos: `vX.Y.Z-SNAPSHOT-RC#`.
 
 ### 1.3. Expresión Regular Oficial SemVer 2.0
 Toda versión generada o manual valida estrictamente contra:
@@ -86,9 +87,9 @@ flowchart TD
 | Archivo de Workflow | Disparador (Trigger) | Evento / Alcance | Responsabilidad (SOLID) |
 | :--- | :--- | :--- | :--- |
 | **`semver.yml`** | `pull_request` (`app/**`) | En rama del PR | **Fase 1 Backend**: Tests backend + Bump de `APP_VERSION` en `app/main.py`. |
-| **`tag-backend.yml`** | `push` (`app/**`) en `main`/`develop` | Post-Merge | **Fase 2 Backend**: Tag Git (`v...`) + Actualización de `CHANGELOG.md`. |
-| **`semver-frontend.yml`** | `pull_request` (`frontend/**`) | En rama del PR | **Fase 1 Frontend**: Tests frontend + Bump en `package.json` y `package-lock.json`. |
-| **`tag-frontend.yml`** | `push` (`frontend/**`) en `main`/`develop` | Post-Merge | **Fase 2 Frontend**: Tag Git (`frontend-v...`) + Actualización de `CHANGELOG.md`. |
+| **`tag-backend.yml`** | `pull_request` (`closed` & `merged`) hacia `main`/`develop` | Post-Merge | **Fase 2 Backend**: Tag Git simétrico (`v...`) + Actualización de `app/CHANGELOG.md`. |
+| **`semver-frontend.yml`** | `pull_request` (`frontend/**`) | En rama compare del PR | **Fase 1 Frontend**: Tests frontend + Bump en `package.json` y `package-lock.json`. |
+| **`tag-frontend.yml`** | `pull_request` (`closed` & `merged`) hacia `main`/`develop` | Post-Merge | **Fase 2 Frontend**: Tag Git simétrico (`v...`) + Actualización de `frontend/CHANGELOG.md`. |
 | **`deploy-backend.yml`** | `workflow_dispatch` o `workflow_run` de `tag-backend` | Despliegue | **Instalación Backend**: Build Docker CPU + Despliegue `guiavital-backend` a Cloud Run. |
 | **`deploy-frontend.yml`** | `workflow_dispatch` o `workflow_run` de `tag-frontend` | Despliegue | **Instalación Frontend**: Inyección URL API + Despliegue `guiavital` a Cloud Run. |
 
@@ -97,19 +98,19 @@ flowchart TD
 ## 4. Historias de Usuario SRE
 
 ### HU-CICD-01: Versionado SemVer y Bump en Pull Request (Fase 1)
-- **Historia:** Como SRE, quiero que al abrir o sincronizar un Pull Request hacia `develop` o `main`, el pipeline ejecute los tests automatizados e incremente la versión en el código de la rama entrante (`app/main.py` o `frontend/package.json`), para asegurar trazabilidad antes de la integración sin crear tags prematuros.
+- **Historia:** Como SRE, quiero que al abrir o sincronizar un Pull Request hacia `develop` o `main`, el pipeline ejecute los tests automatizados e incremente la versión exclusivamente en la rama compare (`github.head_ref`), ignorando modificaciones en los archivos CHANGELOG, para asegurar trazabilidad antes de la integración sin alterar la rama base ni ciclar ejecuciones.
 - **Criterios de Aceptación:**
-  1. Si el PR modifica `app/**`, ejecuta `pytest` y actualiza `APP_VERSION` vía `scripts/semver_bumper.py`.
-  2. Si el PR modifica `frontend/**`, ejecuta `npm test` y actualiza `package.json` vía `scripts/semver_bumper_frontend.py`.
-  3. Realiza commit con `[skip ci]` hacia `HEAD:${{ github.head_ref }}`.
-  4. **No** crea tags Git ni modifica `CHANGELOG.md` en esta fase.
+  1. Si el PR modifica código en `app/**` o `frontend/**`, ejecuta sus pruebas respectivas y calcula la versión SemVer.
+  2. **Exclusión de Changelogs:** La modificación de `app/CHANGELOG.md`, `frontend/CHANGELOG.md` o `CHANGELOG.md` **no** activa el pipeline de SemVer (`paths` con `!**CHANGELOG.md`).
+  3. **Actualización de Compare Branch:** El commit con la versión incrementada se empuja exclusivamente a la rama compare (`HEAD:${{ github.head_ref }}`), **nunca** a la rama base (`base_ref`).
+  4. **No** crea tags Git ni modifica archivos changelog en esta fase.
 
-### HU-CICD-02: Publicación de Tag y Actualización de Changelog Post-Merge (Fase 2)
-- **Historia:** Como SRE, quiero que cuando un PR se fusione en `develop` o `main`, se genere el tag formal de Git y se actualice automáticamente `CHANGELOG.md`, para garantizar que el historial solo refleje código efectivamente integrado.
+### HU-CICD-02: Publicación de Tag Simétrico y Actualización de Changelogs Post-Merge (Fase 2)
+- **Historia:** Como SRE, quiero que cuando un PR se fusione en `develop` o `main`, se genere el tag formal simétrico de Git (`v...`) y se actualice automáticamente la bitácora específica de cada aplicación (`app/CHANGELOG.md` para backend y `frontend/CHANGELOG.md` para frontend, registrando 'No hubo cambios' si no hubo commits), para garantizar paridad y trazabilidad limpia.
 - **Criterios de Aceptación:**
-  1. En `develop`, genera tags con formato `vX.Y.Z-SNAPSHOT-RC#` o `frontend-vX.Y.Z-SNAPSHOT-RC#`.
-  2. En `main`, genera tags de release oficial `vX.Y.Z` o `frontend-vX.Y.Z`.
-  3. Ejecuta `scripts/actualizar_changelog.py --version "$TAG"`, promocionando la sección `[Unreleased]` y organizándola por componentes (Backend / Frontend).
+  1. En `develop`, genera tags simétricos con formato `vX.Y.Z-SNAPSHOT-RC#`.
+  2. En `main`, genera tags simétricos de release oficial `vX.Y.Z`.
+  3. Ejecuta `scripts/actualizar_changelog.py --version "$VERSION" --file <ruta>`, promocionando la sección `[Unreleased]`. Si no hay notas o commits en la carpeta, registra `- No hubo cambios.` sin fallar.
   4. Realiza commit y push directo a la rama base con `[skip ci]`.
 
 ### HU-CICD-03: Despliegue Continuo en Paralelo y Manual a GCP Cloud Run (Fase 3)

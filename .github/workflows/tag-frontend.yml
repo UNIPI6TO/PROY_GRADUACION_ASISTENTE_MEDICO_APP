@@ -1,24 +1,31 @@
 name: Release & Tag Frontend (Post-Merge)
 
 on:
-  push:
+  pull_request:
     branches:
       - main
       - develop
+    types:
+      - closed
     paths:
       - 'frontend/**'
+      - '!frontend/CHANGELOG.md'
+      - '!app/CHANGELOG.md'
+      - '!CHANGELOG.md'
 
 jobs:
   tag-and-changelog:
-    name: Tag Frontend Release and Update Changelog
+    name: Tag Frontend Release and Update Changelog on Merge
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Checkout Code Repository
+      - name: Checkout Target Branch (Base Branch Post-Merge)
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.base_ref }}
           fetch-depth: 0
           token: ${{ secrets.BUMP_TOKEN || secrets.GITHUB_TOKEN }}
 
@@ -32,7 +39,7 @@ jobs:
         run: |
           VERSION="$(python -c "import json, pathlib; data = json.loads(pathlib.Path('frontend/package.json').read_text(encoding='utf-8')); print(data.get('version', ''))")"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "tag=frontend-v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Create Git Tag and Update CHANGELOG
         run: |
@@ -40,7 +47,8 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
           TAG="${{ steps.meta.outputs.tag }}"
-          BRANCH="${{ github.ref_name }}"
+          VERSION="${{ steps.meta.outputs.version }}"
+          BRANCH="${{ github.base_ref }}"
           
           # 1. Crear y publicar tag en Git si no existe
           if ! git rev-parse "$TAG" >/dev/null 2>&1; then
@@ -55,13 +63,13 @@ jobs:
             echo "El tag $TAG ya existe en Git."
           fi
           
-          # 2. Actualizar CHANGELOG.md tras el tageo
-          if [ -n "$TAG" ]; then
-            python scripts/actualizar_changelog.py --version "$TAG"
+          # 2. Actualizar frontend/CHANGELOG.md tras el tageo
+          if [ -n "$VERSION" ]; then
+            python scripts/actualizar_changelog.py --version "$VERSION" --file frontend/CHANGELOG.md
             
-            if ! git diff --quiet CHANGELOG.md; then
-              git add CHANGELOG.md
-              git commit -m "docs(changelog): registrar frontend en $BRANCH ($TAG) [skip ci]"
+            if ! git diff --quiet frontend/CHANGELOG.md; then
+              git add frontend/CHANGELOG.md
+              git commit -m "docs(changelog): registrar frontend en $BRANCH ($VERSION) [skip ci]"
               git push origin HEAD:$BRANCH
             fi
           fi
