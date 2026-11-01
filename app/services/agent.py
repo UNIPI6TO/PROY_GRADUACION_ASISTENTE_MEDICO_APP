@@ -92,17 +92,23 @@ def ejecutar_bucle_agente(
                 "proveedor": proveedor,
             }
 
-        # Serializar mensaje del asistente con las llamadas
+        # Serializar mensaje del asistente con las llamadas preservando metadatos (ej. extra_content / thought_signature)
         tool_calls_dict = []
         for tc in tool_calls:
-            tool_calls_dict.append({
-                "id": tc.id,
-                "type": "function",
-                "function": {
-                    "name": tc.function.name,
-                    "arguments": tc.function.arguments,
-                },
-            })
+            if hasattr(tc, "model_dump"):
+                tc_dict = tc.model_dump(exclude_none=True)
+            elif isinstance(tc, dict):
+                tc_dict = dict(tc)
+            else:
+                tc_dict = {
+                    "id": getattr(tc, "id", None),
+                    "type": getattr(tc, "type", "function"),
+                    "function": {
+                        "name": getattr(tc.function, "name", ""),
+                        "arguments": getattr(tc.function, "arguments", ""),
+                    },
+                }
+            tool_calls_dict.append(tc_dict)
 
         mensajes.append({
             "role": "assistant",

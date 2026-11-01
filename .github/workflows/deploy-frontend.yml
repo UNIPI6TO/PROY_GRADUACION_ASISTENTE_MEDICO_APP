@@ -1,0 +1,112 @@
+name: Deploy Frontend to Cloud Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Tag/Versión manual para Artifact Registry (opcional)'
+        required: false
+        default: ''
+        type: string
+  workflow_run:
+    workflows: ["Release & Tag Frontend (Post-Merge)"]
+    types:
+      - completed
+    branches:
+      - main
+      - develop
+
+env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'project-3e1faa58-1e7d-4e8d-933' }}
+  GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+  GAR_REPOSITORY: ${{ vars.GAR_REPOSITORY || 'guiavital-repo' }}
+  FRONTEND_SERVICE: guiavital
+  BACKEND_SERVICE: guiavital-backend
+
+jobs:
+  deploy-frontend:
+    name: Build & Deploy Frontend Container
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve Release / Version Metadata
+        id: meta
+        run: |
+          INPUT_TAG="${{ inputs.version_tag }}"
+          if [ -n "$INPUT_TAG" ]; then
+            RAW_TAG="$INPUT_TAG"
+          else
+            FRONT_VER="$(python3 -c "import json, pathlib; data = json.loads(pathlib.Path('frontend/package.json').read_text(encoding='utf-8')); print(data.get('version', '0.1.0'))")"
+            RAW_TAG="v${FRONT_VER#v}"
+          fi
+
+          SEMVER_CLEAN="${RAW_TAG#v}"
+          IMAGE_TAG="v${SEMVER_CLEAN}"
+          SHORT_SHA="${GITHUB_SHA::7}"
+
+          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "app_version=${SEMVER_CLEAN}" >> "$GITHUB_OUTPUT"
+          echo "sha_tag=sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Authenticate to Google Cloud via Deployer SA (GCP_JSON_KEY)
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_JSON_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Resolve Backend Cloud Run URL
+        id: backend_info
+        env:
+          PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
+        run: |
+          BACKEND_URL="$(gcloud run services describe "${{ env.BACKEND_SERVICE }}" --project="${PROJECT_ID}" --region="${{ env.GCP_REGION }}" --format='value(status.url)' 2>/dev/null || echo '')"
+          if [ -z "${BACKEND_URL}" ]; then
+            echo "::warning::No se pudo resolver la URL del backend dinámicamente; usando fallback regional."
+            BACKEND_URL="https://${{ env.BACKEND_SERVICE }}-$(echo ${PROJECT_ID} | cut -c1-10)-${{ env.GCP_REGION }}.a.run.app"
+          fi
+          echo "backend_url=${BACKEND_URL}" >> "$GITHUB_OUTPUT"
+          echo "Backend URL para Frontend: ${BACKEND_URL}"
+
+      - name: Configure Docker for GCP Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build & Push Frontend Container (guiavital)
+        env:
+          IMAGE_URI: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.FRONTEND_SERVICE }}
+        run: |
+          docker build \
+            -f frontend/Dockerfile \
+            --build-arg VITE_API_URL="${{ steps.backend_info.outputs.backend_url }}" \
+            -t "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}" \
+            -t "${IMAGE_URI}:${{ steps.meta.outputs.sha_tag }}" \
+            ./frontend
+          docker push "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}"
+          docker push "${IMAGE_URI}:${{ steps.meta.outputs.sha_tag }}"
+
+      - name: Deploy Frontend to Cloud Run (guiavital)
+        id: deploy_frontend
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.FRONTEND_SERVICE }}
+          region: ${{ env.GCP_REGION }}
+          image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.FRONTEND_SERVICE }}:${{ steps.meta.outputs.image_tag }}
+          env_vars: |
+            APP_VERSION=${{ steps.meta.outputs.app_version }}
+            VITE_API_URL=${{ steps.backend_info.outputs.backend_url }}
+          flags: '--allow-unauthenticated --port=8080 --min-instances=0 --max-instances=5'
+
+      - name: Verify Frontend SRE Health
+        run: |
+          curl --fail --silent --show-error "${{ steps.deploy_frontend.outputs.url }}/healthz"
