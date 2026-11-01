@@ -9,6 +9,14 @@ y el backend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.2.0-SNAPSHOT-RC5] - 2026-11-01
+
+- chore: (config) quitar línea vacía final
+- feat: (ci) mover quality gates a deploy y mejorar SemVer
+- chore: (changelog) separar bitácoras por aplicación
+- feat: separar CI/CD en tag y deploy por componente
+- feat: (tools) filtrar RAG por distancia y simular notificación
+
 ## [0.2.0-SNAPSHOT-RC4] - 2026-11-01
 
 - feat: (ci) mover quality gates a deploy y mejorar SemVer
