@@ -202,3 +202,29 @@ El producto necesita, además de responder con nuestros documentos (RAG), ejecut
 - Las herramientas «fuera de la lista» no se implementan como herramientas del agente.
 - Cada herramienta tiene esquema Pydantic, implementación determinista y prueba con pytest.
 - Pendiente para la Entrega 3: implementar las funciones, el botón de confirmación en la interfaz y la evidencia de inyección en docs/evidencias/semana-3/.
+
+# ADR-0006 · Plataforma de despliegue
+
+- Estado: aceptada
+- Fecha: 4/11/2026
+- Grupo 5 · Orientación sobre dengue
+
+## Contexto
+
+- Embeddings: Con una API (Gemini, OpenAI…)
+- Tarjeta disponible: Sí
+- Backend: Python (FastAPI)
+- Datos escritos en ejecución: No: solo lee un índice ya construido
+- Administración de servidores: Sí
+
+## Decisión
+
+Google Cloud Run. Empaquetamos el backend en Docker con FastAPI, ChromaDB embebido y los pesos de intfloat/multilingual-e5-small (~470 MB). Google Cloud Run nos permite desplegar contenedores con 1 GiB de RAM, escala a cero instancias (min-instances=0) para no generar costos y se integra nativamente con GCP Secret Manager para proteger las llaves de Gemini y Groq.
+
+## Alternativas descartadas
+
+Descartamos AWS Lambda / Vercel Serverless por el límite estricto de tamaño de paquete (250 MB) que no soporta las dependencias de PyTorch y el modelo de embeddings (~470 MB). También descartamos máquinas virtuales tradicionales (GCP Compute Engine / EC2) por el costo fijo continuo 24/7 innecesario para un prototipo académico.
+
+## Consecuencias
+
+Aceptamos una latencia de arranque en frío (cold start) de aproximadamente 6 a 10 segundos al activarse desde 0 instancias mientras carga la memoria de la base vectorial. Además, aceptamos el sistema de archivos efímero del contenedor, lo cual mantiene la base de datos SQLite de historial anónimo acotada por sesión, operando dentro de la capa gratuita de GCP ($0).
