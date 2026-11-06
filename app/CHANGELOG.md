@@ -9,7 +9,7 @@ y el backend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
-## [0.2.2] - 2026-11-01
+## [0.2.2] - 2026-11-05
 
 - chore: (config) quitar línea vacía final
 - feat: (ci) mover quality gates a deploy y mejorar SemVer

@@ -9,7 +9,7 @@ y el frontend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
-## [0.2.2] - 2026-11-01
+## [0.2.2] - 2026-11-05
 
 - fix: (frontend) mejorar estado del botón Agente
 - feat: (ci) mover quality gates a deploy y mejorar SemVer
