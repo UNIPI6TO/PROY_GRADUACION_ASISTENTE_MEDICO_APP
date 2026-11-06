@@ -190,6 +190,10 @@ jobs:
           curl --fail --silent --show-error "${{ steps.deploy_backend.outputs.url }}/manage/health"
           curl --fail --silent --show-error "${{ steps.deploy_backend.outputs.url }}/manage/info"
 
+      - name: Ejecutar pruebas funcionales de humo contra Backend desplegado (Smoke Tests)
+        run: |
+          python3 tests/smoke.py "${{ steps.deploy_backend.outputs.url }}"
+
   # =========================================================================
   # FASE 5: Despliegue del Frontend en Cloud Run (Consolidado Post-Tag)
   # =========================================================================
