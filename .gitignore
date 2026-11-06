@@ -38,3 +38,4 @@ frontend/dist/
 
 # Colecciones y pruebas manuales locales
 bruno/GuiaVital/
+chroma_db/chroma.sqlite3
