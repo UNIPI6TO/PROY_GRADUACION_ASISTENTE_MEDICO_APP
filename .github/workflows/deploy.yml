@@ -151,12 +151,14 @@ jobs:
       - name: Configurar autenticación de Docker con Artifact Registry
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
 
-      # Construcción consolidada: 1 sola imagen canónica + 1 puntero ambiental
+      # Construcción consolidada: 1 sola imagen canónica + 1 puntero ambiental (sin atestaciones OCI)
       - name: Construir y publicar imagen consolidada del Backend
         env:
+          BUILDX_NO_DEFAULT_ATTESTATIONS: 1
           IMAGE_URI: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.BACKEND_SERVICE }}
         run: |
           docker build \
+            --provenance=false \
             -f app/Dockerfile \
             --label "version=${{ steps.meta.outputs.app_version }}" \
             -t "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}" \
@@ -262,12 +264,14 @@ jobs:
       - name: Configurar autenticación de Docker con Artifact Registry
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
 
-      # Construcción consolidada: 1 sola imagen canónica + 1 puntero ambiental
+      # Construcción consolidada: 1 sola imagen canónica + 1 puntero ambiental (sin atestaciones OCI)
       - name: Construir y publicar imagen consolidada del Frontend
         env:
+          BUILDX_NO_DEFAULT_ATTESTATIONS: 1
           IMAGE_URI: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.FRONTEND_SERVICE }}
         run: |
           docker build \
+            --provenance=false \
             -f frontend/Dockerfile \
             --build-arg VITE_API_URL="${{ steps.backend_info.outputs.backend_url }}" \
             --label "version=${{ steps.meta.outputs.app_version }}" \

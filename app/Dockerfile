@@ -4,7 +4,8 @@ FROM python:3.12-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8080
+    PORT=8080 \
+    HF_HOME=/workspace/.cache/huggingface
 
 WORKDIR /workspace
 
@@ -17,6 +18,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r requirements.txt
+
+# Descargar el modelo de embeddings durante el build (RUN ...), no al arrancar
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-small')"
 
 # Copiar configuración operativa, código fuente del backend y la base vectorial indexada
 COPY config/ ./config/
