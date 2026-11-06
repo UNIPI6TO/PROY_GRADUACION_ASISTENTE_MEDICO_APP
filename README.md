@@ -1,11 +1,11 @@
 # GuíaVital · Asistente de Orientación en Salud Pública sobre Dengue y Arbovirosis
 
 > **Nombre Oficial / Nombre Corto (`APP_NAME`):** `GuíaVital`  
-> **Versión Actual:** `0.2.2` (SemVer)  
+> **Versión Actual:** `0.2.3-SNAPSHOT-RC2` (SemVer)  
 > **Caso:** 05 - Grupo 5 · Seminario de Titulación UNIANDES  
 > **Repositorio Oficial en GitHub:** `https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP`  
-> **Despliegue Público (Cloud Run):** `https://guiavital-533967484439.us-central1.run.app`  
-> **API Backend Pública (Swagger UI):** `https://guiavital-backend-533967484439.us-central1.run.app/docs`
+> **Despliegue Público Frontend (Cloud Run):** `https://guiavital-533967484439.us-central1.run.app`  
+> **API Backend Pública Oficial (Swagger UI):** `https://guiavital-backend-448060764458.us-central1.run.app/docs`
 
 ---
 
@@ -192,6 +192,7 @@ PROY_GRADUACION_ASISTENTE_MEDICO_APP/
 │   ├── run_eval.py              # Evaluador de recuperación vectorial (Hit@1 = 85%, Hit@5 = 100%)
 │   └── entradas_prompts.csv     # Conjunto de entradas para evaluación comparativa de prompts
 ├── tests/                       # Pruebas automatizadas del backend con pytest y dobles (mocks)
+│   ├── smoke.py                 # Pruebas funcionales de humo E2E (6 casos contra app desplegada en Cloud Run)
 │   ├── test_flujo.py            # Pruebas de confianza, umbral (0.85) y decisiones de desvío de la cinta
 │   ├── test_endpoint_signos_alarma.py # Pruebas del endpoint HTTP determinista (casos 200 y validación 422)
 │   ├── test_dengue.py           # Pruebas de /api/v1/chat, memoria SQLite, rate limit y seguridad
@@ -202,7 +203,7 @@ PROY_GRADUACION_ASISTENTE_MEDICO_APP/
 │   ├── test_buscar_centro_salud.py # Pruebas de GeoSalud con orden por distancia Haversine
 │   ├── test_retriever.py        # Pruebas de ingesta, prefijos E5, código exacto y filtro de vigencia
 │   ├── test_llm.py              # Pruebas unitarias de ClienteLLM (reintentos, backoff, fallback, validación JSON)
-│   ├── test_main.py             # Pruebas de /manage/health y /manage/info
+│   ├── test_main.py             # Pruebas de /manage/health, /manage/info y endpoint /api/v1/flujo
 │   └── test_semver_bumper.py    # Pruebas del calculador de versiones SemVer
 ├── docs/                        # Documentación de ingeniería (01-propuesta a 11-plan-de-calidad, riesgos y evidencias)
 │   ├── 01-propuesta.md          # Propuesta y justificación del caso 05
@@ -343,9 +344,9 @@ El sistema cuenta con un pipeline de Integración y Despliegue Continuo (CI/CD) 
 
 ### URLs Públicas de Producción:
 - **Frontend Web de Orientación:** `https://guiavital-533967484439.us-central1.run.app`
-- **Backend API & Swagger Docs:** `https://guiavital-backend-533967484439.us-central1.run.app/docs`
-- **Sonda de Liveness & Readiness:** `https://guiavital-backend-533967484439.us-central1.run.app/manage/health`
-- **Metadatos de Versión SemVer:** `https://guiavital-backend-533967484439.us-central1.run.app/manage/info`
+- **Backend API & Swagger Docs:** `https://guiavital-backend-448060764458.us-central1.run.app/docs`
+- **Sonda de Liveness & Readiness:** `https://guiavital-backend-448060764458.us-central1.run.app/manage/health`
+- **Metadatos de Versión SemVer:** `https://guiavital-backend-448060764458.us-central1.run.app/manage/info`
 
 ---
 
@@ -353,6 +354,7 @@ El sistema cuenta con un pipeline de Integración y Despliegue Continuo (CI/CD) 
 
 | Método | Ruta | Descripción | Códigos de Respuesta |
 |---|---|---|---|
+| `POST` | `/api/v1/flujo` | **Flujo Automatizado (Semana 3/4):** Cinta de 7 estaciones de triaje determinista y clasificación según directrices del MSP (`SolicitudFlujo` / `RespuestaFlujo`). | `200 OK` (`RespuestaFlujo`), `422 Unprocessable Content` |
 | `POST` | `/herramientas/signos-alarma` | **Herramienta Determinista (Semana 3):** Evaluación algorítmica de signos de alarma de dengue según la Guía del MSP con modelos Pydantic de entrada y salida. | `200 OK` (`EvaluarSignosAlarmaHttpOut`), `422 Unprocessable Content` |
 | `POST` | `/api/v2/chat` | **v2 (Semana 3):** Agente de alcance controlado con Function Calling, hasta 6 iteraciones, herramientas modulares y parada por confirmación humana. | `200 OK` (`RespuestaChatV2`), `422`, `429`, `503`, `500` |
 | `POST` | `/api/v2/chat/confirmar` | **v2 (Semana 3):** Reanuda el agente tras la autorización o rechazo humano de una acción sensible. | `200 OK` (`RespuestaChatV2`), `422`, `429`, `503`, `500` |
@@ -464,8 +466,8 @@ pytest -q
 ```
 **Resultado real obtenido en consola:**
 ```text
-.................................................................................. [100%]
-84 passed in 4.12s
+...................................................................................... [100%]
+86 passed in 4.15s
 ```
 
 | Archivo de Prueba | Qué Valida |
@@ -480,7 +482,7 @@ pytest -q
 | `tests/test_dengue.py` | Contrato `200` de `/api/v1/chat`, persistencia y memoria multi-turno en SQLite, aislamiento entre sesiones, *rate limit* `429` + cabecera `Retry-After`, delimitación `<consulta_usuario>`, validaciones `422`, errores `503`/`500` en formato RFC 9457 sin *stack trace*, abstención ante salida inválida y vigencia de `system_v4`. |
 | `tests/test_retriever.py` | Extracción de páginas 95 a 100 de SIVE-Alerta, exclusión de referencias bibliográficas de OPS 2016, asimetría de prefijos E5 (`query: ` / `passage: `), orden por distancia coseno, búsqueda híbrida por código exacto (`CIE-10 A 91`) y filtro por vigencia (`vigente: True`). |
 | `tests/test_llm.py` | Validación de esquema JSON estricto, autocorrección en 1 intento, reintentos ante `429`/`503`/respuesta vacía, respeto de `Retry-After`, espera exponencial con *jitter* y conmutación al proveedor de respaldo. |
-| `tests/test_main.py` | Diagnóstico `/manage/health` (`200` UP / `503` DOWN) y cumplimiento de expresión regular SemVer en `/manage/info`. |
+| `tests/test_main.py` | Diagnóstico `/manage/health` (`200` UP / `503` DOWN), cumplimiento de expresión regular SemVer en `/manage/info` y contrato de triage determinista en `/api/v1/flujo` (flujo automático vs desvío a revisión manual). |
 | `tests/test_semver_bumper.py` | Reglas de incremento SemVer (*MAJOR*, *MINOR*, *PATCH*) según *Conventional Commits* y generación de versiones *SNAPSHOT-RC*. |
 
 ---
@@ -508,11 +510,12 @@ npm test
 ```
 **Resultado real:**
 ```text
-✓ src/tests/App.test.tsx (3 tests)
-✓ src/tests/ChecklistSignosAlarma.test.tsx (4 tests)
-✓ src/tests/api.test.ts (5 tests)
-Test Files  3 passed (3)
-Tests  12 passed (12)
+✓ tests/cliente.test.ts (7 tests)
+✓ tests/estados.test.ts (6 tests)
+✓ tests/manage.test.ts (4 tests)
+✓ tests/seguridad-y-ui.test.tsx (9 tests)
+Test Files  4 passed (4)
+Tests  26 passed (26)
 ```
 
 Auditoría automática contra exposición inadvertida de claves en el bundle web:
@@ -523,6 +526,29 @@ npm run verify:secrets
 ```text
 [OK] Auditoría de frontend finalizada: Cero claves privadas encontradas en el bundle de distribución.
 ```
+
+---
+
+### 4. Pruebas Funcionales de Humo contra la App Desplegada (`tests/smoke.py`)
+Pruebas funcionales integrales ejecutadas en vivo contra el backend desplegado en Google Cloud Run. Utilizan exclusivamente la biblioteca estándar de Python sin requerir secretos, simulando interacciones reales de usuarios para validar endpoints operativos, flujos conversacionales, triaje clínico del MSP, salvaguardas de automedicación, neutralización de inyección de prompts y manejo de errores 422:
+
+**URL Oficial Backend:** `https://guiavital-backend-448060764458.us-central1.run.app`
+
+```bash
+python tests/smoke.py https://guiavital-backend-448060764458.us-central1.run.app
+```
+
+**Resultado real obtenido en vivo (100% éxito):**
+```text
+PASA   1. [salud] GET /health -> 200 en 0.7 s
+PASA   2. [caso] POST /api/v1/chat -> 200 en 1.9 s
+PASA   3. [caso] POST /api/v2/chat -> 200 en 61.2 s
+PASA   4. [fuera] POST /api/v2/chat -> 200 en 3.7 s
+PASA   5. [inyeccion] POST /api/v2/chat -> 200 en 2.9 s
+PASA   6. [invalida] POST / -> 422 en 0.3 s
+RESULTADO: 6/6 pasan · p95 61.2 s · más lento 61.2 s
+```
+*Evidencia completa registrada en:* [`docs/evidencias/semana-4/README.md`](docs/evidencias/semana-4/README.md).
 
 ---
 
