@@ -38,9 +38,10 @@ flowchart TD
 
 ## 📋 Catálogo de Workflows
 
-### 1. Versionado en Pull Request (Fase 1)
+### 1. Calidad y Versionado en Pull Request (Fase 1)
 | Workflow | Archivo | Disparador | Acción Principal |
 | :--- | :--- | :--- | :--- |
+| **CI (Quality Gate & Tests)** | [`ci.yml`](ci.yml) | Automático: `pull_request` y `push` (`main`, `develop`)<br/>Manual: `workflow_dispatch` | Ejecuta las 84 pruebas unitarias/integración (`pytest -q`), el evaluador del Plan de Calidad (`python eval/evaluar.py`), auditoría de secretos y pruebas Vitest en el frontend. |
 | **SemVer Unificado (PR Bump)** | [`semver.yml`](semver.yml) | Automático: `pull_request` (`app/**` o `frontend/**`)<br/>Manual: `workflow_dispatch` | Calcula la versión SemVer simétrica e incrementa simultáneamente `app/main.py` y `frontend/package.json` en la rama **compare** de forma ligera. |
 
 > [!NOTE]

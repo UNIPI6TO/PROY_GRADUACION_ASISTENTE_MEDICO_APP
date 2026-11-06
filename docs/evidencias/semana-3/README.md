@@ -23,12 +23,13 @@ Integrantes: Wilson Salinas, Rafael Minaya, Luis Caguana
 ## 2. Ejecución del Plan de Calidad (`python eval/evaluar.py`)
 
 ```text
-Loading weights: 100%|##########| 199/199 [00:00<00:00, 3993.66it/s]
-RAG acierto top-3: 87%  ·  Flujo a revisión: 30%  ·  Errores silenciosos: 0
+Loading weights: 100%|##########| 199/199 [00:00<00:00, 5289.56it/s]
+RAG acierto top-3: 87%  ·  Silencio: 100%  ·  Flujo a revisión: 30%  ·  Errores silenciosos: 0
 [EXITO] Todas las metas del Plan de Calidad de la Semana 3 se han cumplido.
 ```
 
 * **RAG acierto top-3:** $87\%$ (Meta: $\ge 85\%$).
+* **Silencio / Abstención correcta:** $100\%$ (Meta: $100\%$, ante consultas fuera de dominio).
 * **Casos derivados a revisión humana:** $30\%$ (Meta: $\le 30\%$).
 * **Errores silenciosos:** $0$ (Meta: estricta $= 0$, crítico en salud pública).
 
@@ -72,17 +73,20 @@ PASSED
 ## 4. Pruebas Generales del Backend (`pytest -q`)
 
 ```text
-...................................                                      [100%]
-35 passed in 5.12s
+........................................................................ [ 85%]
+............                                                             [100%]
+84 passed in 4.14s
 ```
 
 * Cobertura de endpoints de gestión: `/manage/health`, `/manage/info`.
-* Cobertura de herramienta determinista: `/herramientas/signos-alarma` (códigos 200 y 422).
-* Cobertura del bucle del agente y RAG.
+* Cobertura de herramienta determinista: `/herramientas/signos-alarma` (códigos 200 y 422) y sinónimos coloquiales (*"me sangran las encías"*).
+* Cobertura de RAG (`consultar_guia_msp`) con prueba de abstención/silencio ante distancias $> \text{distancia\_max}$.
+* Cobertura del bucle del agente con lista cerrada, tope de iteraciones y confirmación humana.
+* Cobertura de GeoSalud, persistencia multi-turno, rate-limit y fallbacks.
 
 ---
 
-## 4. Guía de Uso de la Colección Bruno
+## 5. Guía de Uso de la Colección Bruno
 
 La colección reside en `bruno/GuiaVital/` e incluye las siguientes peticiones preconfiguradas:
 
