@@ -8,6 +8,7 @@ agente:
 
 retriever:
   top_k: 3
+  distancia_max: 0.155
   solo_vigentes: true
 
 signos_alarma:

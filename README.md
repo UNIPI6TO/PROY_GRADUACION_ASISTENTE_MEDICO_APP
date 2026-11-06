@@ -357,7 +357,7 @@ El agente opera bajo **tres decisiones estrictas en código** (no delegadas al p
 ## Cómo Probar
 
 ### 1. Pruebas Automatizadas del Backend (`pytest`)
-Las pruebas del backend utilizan dobles (*mocks*) del cliente LLM, base de datos SQLite en memoria (`:memory:`) y relojes simulados, por lo que **se ejecutan en ~1.5 segundos sin conexión a internet ni consumo de cuota de API**:
+Las pruebas del backend utilizan dobles (*mocks*) del cliente LLM, base de datos SQLite en memoria (`:memory:`) y relojes simulados, por lo que **se ejecutan las 84 pruebas en ~4 segundos sin conexión a internet ni consumo de cuota de API**:
 
 ```bash
 pytest -q
@@ -387,7 +387,7 @@ Evalúa cuantitativamente el acierto del RAG top-3 y la cinta de automatización
 ```bash
 python eval/evaluar.py
 ```
-* **Salida esperada:** RAG acierto top-3: 87% | Flujo a revisión: 30% | Errores silenciosos: 0.
+* **Salida esperada:** RAG acierto top-3: 87% | Silencio: 100% | Flujo a revisión: 30% | Errores silenciosos: 0.
 
 ### 3. Inspeccionar la Confianza en Consola (`pytest -v -s`)
 Permite visualizar caso por caso la confianza calculada y el comportamiento del umbral:

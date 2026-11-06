@@ -15,9 +15,12 @@ class ConsultarGuiaMspIn(BaseModel):
 def consultar_guia_msp(datos: ConsultarGuiaMspIn, buscador: BuscadorVectorial | None = None) -> dict[str, Any]:
     """Busca en la guía clínica del MSP a través de la base vectorial."""
     b = buscador or BuscadorVectorial()
-    tope = cargar_parametros().get("retriever", {}).get("distancia_max", 0.25)
-    resultados = [r for r in b.buscar(datos.texto, k=3, solo_vigentes=True) if r.distancia <= tope]
-    # resultados = b.buscar(datos.texto, k=3, solo_vigentes=True)
+    params = cargar_parametros().get("retriever", {})
+    tope = float(params.get("distancia_max", 0.155))
+    top_k = int(params.get("top_k", 3))
+    solo_vigentes = bool(params.get("solo_vigentes", True))
+
+    resultados = [r for r in b.buscar(datos.texto, k=top_k, solo_vigentes=solo_vigentes) if r.distancia <= tope]
     if not resultados:
         return {"encontrado": False, "fragmentos": [], "fuentes": [],
                 "mensaje": "La guía del MSP no trata este tema. No respondas con conocimiento propio."}

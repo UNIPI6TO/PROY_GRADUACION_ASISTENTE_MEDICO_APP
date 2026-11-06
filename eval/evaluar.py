@@ -11,6 +11,7 @@ from app.flujo import procesar
 METAS = {
     "rag_acierto_top3": 0.85,
     "rag_con_cita": 0.85,
+    "rag_silencio": 1.00,
     "agente_tareas": 0.01,
     "flujo_max_revision": 0.30,
     "flujo_errores_silenciosos": 0,
@@ -53,12 +54,13 @@ if __name__ == "__main__":
     flujo = evaluar_flujo(casos)
     
     preguntas = leer("eval/preguntas_rag.jsonl")
-    rag = evaluar_rag(preguntas)
+    rag_acierto, rag_silencio = evaluar_rag(preguntas)
 
-    print(f"RAG acierto top-3: {rag:.0%}  ·  Flujo a revisión: {flujo['revision']:.0%}  ·  Errores silenciosos: {flujo['silenciosos']}")
+    print(f"RAG acierto top-3: {rag_acierto:.0%}  ·  Silencio: {rag_silencio:.0%}  ·  Flujo a revisión: {flujo['revision']:.0%}  ·  Errores silenciosos: {flujo['silenciosos']}")
 
     ok = (
-        (rag >= METAS["rag_acierto_top3"])
+        (rag_acierto >= METAS["rag_acierto_top3"])
+        and (rag_silencio >= METAS["rag_silencio"])
         and (flujo["silenciosos"] == METAS["flujo_errores_silenciosos"])
         and (flujo["revision"] <= METAS["flujo_max_revision"])
     )

@@ -32,8 +32,8 @@ La ejecución reproducible mediante `python eval/evaluar.py`, `python -m eval.ru
 
 ### Salida verificada del script de Integración Continua (`python eval/evaluar.py`):
 ```text
-Loading weights: 100%|##########| 199/199 [00:00<00:00, 3993.66it/s]
-RAG acierto top-3: 87%  ·  Flujo a revisión: 30%  ·  Errores silenciosos: 0
+Loading weights: 100%|##########| 199/199 [00:00<00:00, 5289.56it/s]
+RAG acierto top-3: 87%  ·  Silencio: 100%  ·  Flujo a revisión: 30%  ·  Errores silenciosos: 0
 [EXITO] Todas las metas del Plan de Calidad de la Semana 3 se han cumplido.
 ```
 
@@ -48,7 +48,7 @@ Tal como establece la guía metodológica del seminario, el valor de la evaluaci
 | :--- | :--- | :--- | :--- | :--- |
 | **`P04`** (`preguntas.csv`) | *"A mi hijo se le quitó la fiebre al cuarto día pero ahora pasa con mucho sueño y letargo, ¿qué pasa cuando baja la fiebre?"* | El fragmento exacto sobre la **fase crítica (defervescencia)** aparece en `Top-3` / `Top-5`, pero no siempre en `Hit@1` cuando el usuario usa solo términos coloquiales (*"se le quitó la fiebre"*). | **Brecha léxico-semántica en Recuperación:** La guía clínica OPS 2016 utiliza terminología médica (*"defervescencia"*, *"caída de la fiebre entre el día 3 y 7"*). | 1. Se amplió `k=3` en `consultar_guia_msp` para asegurar que el bloque de fase crítica entre siempre al contexto del LLM.<br/>2. Además, como *"mucho sueño y letargo"* es un signo de alarma, la herramienta determinista `evaluar_signos_alarma` captura el caso con **100% de certeza** independientemente del vocabulario. |
 | **`P16`** (`preguntas.csv`) | *"¿Cuál es el código CIE-10 para el dengue sin signos de alarma y para el dengue grave según el MSP?"* | En búsqueda puramente vectorial sin limpieza, los códigos alfanuméricos cortos (`A90`, `A91`) tenían menor peso semántico frente a textos largos. | **Limitación de embeddings densos ante códigos exactos (Recuperación).** | Se inyectó el metadato `"codigo_cie10": "A90, A91"` en `scripts/ingest.py` y se habilitó el filtro híbrido `where_document={"$contains": ...}` en `BuscadorVectorial.buscar()`. |
-| **`P21` y `rag-16..20`** | Consultas fuera de dominio (*tienda de música, fractura de tibia, cotización del dólar, Rust, ceviche*). | ChromaDB devuelve por diseño los $k$ vecinos menos lejanos aunque su distancia coseno sea alta ($\text{dist} > 0.25$). | **Comportamiento esperado del índice HNSW; mitigado en Generación y Guardrails.** | El `system_v4.md` y el bucle del agente evalúan la pertinencia temática y activan `se_abstiene=True`, rechazando cortésmente responder temas ajenos a dengue y arbovirosis. |
+| **`P21` y `rag-16..20`** | Consultas fuera de dominio (*tienda de música, fractura de tibia, cotización del dólar, Rust, ceviche*). | ChromaDB devuelve por diseño los $k$ vecinos menos lejanos aunque la distancia sea alta ($\text{dist} > 0.155$, oscilando entre $0.171$ y $0.219$). | **Comportamiento esperado del índice denso; mitigado por umbral determinista y guardrails.** | 1. Se desacopló y calibró `distancia_max: 0.155` en `config/parametros.yaml`. Al superarse este umbral, `consultar_guia_msp` devuelve `encontrado=False` y fragmentos vacíos (100% de silencio garantizado en código sin alucinar fuentes).<br/>2. A nivel conversacional, el `system_v4.md` y el agente refuerzan la abstención (`se_abstiene=True`). |
 
 ### 3.2 Diagnóstico en la Cinta de Flujo Automatizado (`eval/casos_flujo.jsonl`)
 En la evaluación de los 20 casos clínicos sobre [`app/flujo.py`](../app/flujo.py) con umbral calibrado en `0.85` ([`config/parametros.yaml`](../config/parametros.yaml)):
@@ -85,7 +85,7 @@ python eval/evaluar.py
 # 2. Ejecutar el reporte detallado de ranking vectorial (Hit@1 y Hit@5 por pregunta)
 python -m eval.run_eval
 
-# 3. Ejecutar la suite completa de pruebas unitarias y de integración (35 tests sin gastar cuota de API)
+# 3. Ejecutar la suite completa de pruebas unitarias y de integración (84 tests sin gastar cuota de API)
 pytest -v
 ```
 
