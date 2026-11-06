@@ -1,0 +1,303 @@
+name: Pipeline de Despliegue Continuo a GCP Cloud Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Tag formal de release generado por release.yml'
+        required: false
+        default: ''
+        type: string
+  workflow_run:
+    workflows: ["Release & Tag (Post-Merge)"]
+    types:
+      - completed
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'project-3e1faa58-1e7d-4e8d-933' }}
+  GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+  GAR_REPOSITORY: ${{ vars.GAR_REPOSITORY || 'guiavital-repo' }}
+  BACKEND_SERVICE: guiavital-backend
+  FRONTEND_SERVICE: guiavital
+  BACKEND_SA_EMAIL: ${{ vars.BACKEND_SA_EMAIL || 'guiavital-backend-sa@project-3e1faa58-1e7d-4e8d-933.iam.gserviceaccount.com' }}
+
+jobs:
+  # =========================================================================
+  # FASE 1: Revisión de Secretos (Desacoplado reutilizando secretos.yml)
+  # =========================================================================
+  secret-scan:
+    name: Auditoría de Secretos (Gitleaks)
+    uses: ./.github/workflows/secretos.yml
+    secrets: inherit
+
+  # =========================================================================
+  # FASE 2: Pruebas Unitarias del Backend (pytest)
+  # =========================================================================
+  test-backend:
+    name: Pruebas Unitarias del Backend (Pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código fuente del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar entorno Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Actualizar pip e instalar dependencias del Backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ejecutar pruebas unitarias con Pytest
+        run: pytest -q
+
+  # =========================================================================
+  # FASE 3: Pruebas Unitarias del Frontend (npm test)
+  # =========================================================================
+  test-frontend:
+    name: Pruebas Unitarias del Frontend (npm test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código fuente del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar entorno Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias limpias del Frontend
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Ejecutar pruebas unitarias del Frontend
+        working-directory: ./frontend
+        run: npm test
+
+  # =========================================================================
+  # FASE 4: Despliegue del Backend en Cloud Run (Consolidado Post-Tag)
+  # =========================================================================
+  deploy-backend:
+    name: Construcción y Despliegue del Backend en Cloud Run
+    # Espera obligatoriamente a que terminen y aprueben las pruebas y gitleaks
+    needs: [secret-scan, test-backend, test-frontend]
+    # Solo se ejecuta post-merge: por llamada de release.yml o workflow_run exitoso
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Descargar código fuente del repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Búsqueda y consolidación de versión del Backend
+        id: meta
+        run: |
+          # 1. Priorizar el tag entregado por release.yml
+          INPUT_TAG="${{ inputs.version_tag }}"
+          if [ -n "$INPUT_TAG" ]; then
+            RAW_TAG="$INPUT_TAG"
+          elif git describe --tags --abbrev=0 >/dev/null 2>&1; then
+            RAW_TAG="$(git describe --tags --abbrev=0)"
+          else
+            APP_VER="$(python3 -c "import re, pathlib; m = re.search(r'APP_VERSION\s*=\s*[\"|\']([^\"|\']+)[\"|\']', pathlib.Path('app/main.py').read_text(encoding='utf-8')); print(m.group(1) if m else '0.1.0')")"
+            RAW_TAG="v${APP_VER#v}"
+          fi
+
+          SEMVER_CLEAN="${RAW_TAG#v}"
+          GCP_LABEL_VER="$(echo "${SEMVER_CLEAN}" | tr '[:upper:]' '[:lower:]' | tr '.' '-' | tr '+' '-')"
+          IMAGE_TAG="v${SEMVER_CLEAN}"
+
+          # Determinar puntero ambiental según rama
+          BRANCH="${GITHUB_REF_NAME:-main}"
+          ENV_TAG="latest"
+          if [ "$BRANCH" = "develop" ]; then
+            ENV_TAG="develop"
+          fi
+
+          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "env_tag=${ENV_TAG}" >> "$GITHUB_OUTPUT"
+          echo "app_version=${SEMVER_CLEAN}" >> "$GITHUB_OUTPUT"
+          echo "gcp_label_version=${GCP_LABEL_VER}" >> "$GITHUB_OUTPUT"
+
+      - name: Autenticar en Google Cloud con cuenta de servicio
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_JSON_KEY }}
+
+      - name: Configurar Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configurar autenticación de Docker con Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      # Construcción consolidada: 1 sola imagen canónica + 1 puntero ambiental (sin atestaciones OCI)
+      - name: Construir y publicar imagen consolidada del Backend
+        env:
+          BUILDX_NO_DEFAULT_ATTESTATIONS: 1
+          IMAGE_URI: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.BACKEND_SERVICE }}
+        run: |
+          docker build \
+            --provenance=false \
+            -f app/Dockerfile \
+            --label "version=${{ steps.meta.outputs.app_version }}" \
+            -t "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}" \
+            -t "${IMAGE_URI}:${{ steps.meta.outputs.env_tag }}" \
+            .
+          docker push "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}"
+          docker push "${IMAGE_URI}:${{ steps.meta.outputs.env_tag }}"
+
+      - name: Desplegar servicio Backend en Google Cloud Run vinculando Secret Manager
+        id: deploy_backend
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.BACKEND_SERVICE }}
+          region: ${{ env.GCP_REGION }}
+          image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.BACKEND_SERVICE }}:${{ steps.meta.outputs.image_tag }}
+          flags: >-
+            --service-account=${{ env.BACKEND_SA_EMAIL }}
+            --allow-unauthenticated
+            --port=8080
+            --min-instances=0
+            --max-instances=5
+            --memory=1Gi
+            --update-labels=version=${{ steps.meta.outputs.gcp_label_version }}
+            --set-env-vars=APP_NAME=GuíaVital,APP_VERSION=${{ steps.meta.outputs.app_version }}
+            --set-secrets=LLM_PROVIDER=LLM_PROVIDER:latest,LLM_MODEL=LLM_MODEL:latest,GEMINI_API_KEY=GEMINI_API_KEY:latest,LLM_FALLBACK_PROVIDER=LLM_FALLBACK_PROVIDER:latest,LLM_FALLBACK_MODEL=LLM_FALLBACK_MODEL:latest,GROQ_API_KEY=GROQ_API_KEY:latest,LLM_TIMEOUT_SECONDS=LLM_TIMEOUT_SECONDS:latest,LLM_TEMPERATURE=LLM_TEMPERATURE:latest,LLM_MAX_OUTPUT_TOKENS=LLM_MAX_OUTPUT_TOKENS:latest,MAX_INPUT_CHARS=MAX_INPUT_CHARS:latest,RATE_LIMIT_PER_MINUTE=RATE_LIMIT_PER_MINUTE:latest,HISTORIAL_DB=HISTORIAL_DB:latest,CORS_ORIGINS=CORS_ORIGINS:latest
+
+      - name: Verificar endpoint de salud del Backend
+        run: |
+          curl --fail --silent --show-error "${{ steps.deploy_backend.outputs.url }}/manage/health"
+          curl --fail --silent --show-error "${{ steps.deploy_backend.outputs.url }}/manage/info"
+
+  # =========================================================================
+  # FASE 5: Despliegue del Frontend en Cloud Run (Consolidado Post-Tag)
+  # =========================================================================
+  deploy-frontend:
+    name: Construcción y Despliegue del Frontend en Cloud Run
+    # Espera a las pruebas y a que el backend esté desplegado para obtener su URL
+    needs: [secret-scan, test-backend, test-frontend, deploy-backend]
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Descargar código fuente del repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Búsqueda y consolidación de versión del Frontend
+        id: meta
+        run: |
+          INPUT_TAG="${{ inputs.version_tag }}"
+          if [ -n "$INPUT_TAG" ]; then
+            RAW_TAG="$INPUT_TAG"
+          elif git describe --tags --abbrev=0 >/dev/null 2>&1; then
+            RAW_TAG="$(git describe --tags --abbrev=0)"
+          else
+            FRONT_VER="$(python3 -c "import json, pathlib; data = json.loads(pathlib.Path('frontend/package.json').read_text(encoding='utf-8')); print(data.get('version', '0.1.0'))")"
+            RAW_TAG="v${FRONT_VER#v}"
+          fi
+
+          SEMVER_CLEAN="${RAW_TAG#v}"
+          GCP_LABEL_VER="$(echo "${SEMVER_CLEAN}" | tr '[:upper:]' '[:lower:]' | tr '.' '-' | tr '+' '-')"
+          IMAGE_TAG="v${SEMVER_CLEAN}"
+
+          BRANCH="${GITHUB_REF_NAME:-main}"
+          ENV_TAG="latest"
+          if [ "$BRANCH" = "develop" ]; then
+            ENV_TAG="develop"
+          fi
+
+          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "env_tag=${ENV_TAG}" >> "$GITHUB_OUTPUT"
+          echo "app_version=${SEMVER_CLEAN}" >> "$GITHUB_OUTPUT"
+          echo "gcp_label_version=${GCP_LABEL_VER}" >> "$GITHUB_OUTPUT"
+
+      - name: Autenticar en Google Cloud con cuenta de servicio
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_JSON_KEY }}
+
+      - name: Configurar Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Resolver URL pública del Backend en Cloud Run dinámicamente
+        id: backend_info
+        env:
+          PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
+        run: |
+          BACKEND_URL="$(gcloud run services describe "${{ env.BACKEND_SERVICE }}" --project="${PROJECT_ID}" --region="${{ env.GCP_REGION }}" --format='value(status.url)' 2>/dev/null || echo '')"
+          if [ -z "${BACKEND_URL}" ]; then
+            echo "::warning::No se pudo resolver la URL del backend dinámicamente; usando fallback regional."
+            BACKEND_URL="https://${{ env.BACKEND_SERVICE }}-$(echo ${PROJECT_ID} | cut -c1-10)-${{ env.GCP_REGION }}.a.run.app"
+          fi
+          echo "backend_url=${BACKEND_URL}" >> "$GITHUB_OUTPUT"
+          echo "Backend URL para Frontend: ${BACKEND_URL}"
+
+      - name: Configurar autenticación de Docker con Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      # Construcción consolidada: 1 sola imagen canónica + 1 puntero ambiental (sin atestaciones OCI)
+      - name: Construir y publicar imagen consolidada del Frontend
+        env:
+          BUILDX_NO_DEFAULT_ATTESTATIONS: 1
+          IMAGE_URI: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.FRONTEND_SERVICE }}
+        run: |
+          docker build \
+            --provenance=false \
+            -f frontend/Dockerfile \
+            --build-arg VITE_API_URL="${{ steps.backend_info.outputs.backend_url }}" \
+            --label "version=${{ steps.meta.outputs.app_version }}" \
+            -t "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}" \
+            -t "${IMAGE_URI}:${{ steps.meta.outputs.env_tag }}" \
+            ./frontend
+          docker push "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}"
+          docker push "${IMAGE_URI}:${{ steps.meta.outputs.env_tag }}"
+
+      - name: Desplegar servicio Frontend en Google Cloud Run
+        id: deploy_frontend
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.FRONTEND_SERVICE }}
+          region: ${{ env.GCP_REGION }}
+          image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.FRONTEND_SERVICE }}:${{ steps.meta.outputs.image_tag }}
+          env_vars: |
+            APP_VERSION=${{ steps.meta.outputs.app_version }}
+            VITE_API_URL=${{ steps.backend_info.outputs.backend_url }}
+          flags: >-
+            --allow-unauthenticated
+            --port=8080
+            --min-instances=0
+            --max-instances=5
+            --update-labels=version=${{ steps.meta.outputs.gcp_label_version }}
+
+      - name: Verificar endpoint de salud del Frontend
+        run: |
+          curl --fail --silent --show-error "${{ steps.deploy_frontend.outputs.url }}/manage/health"

@@ -42,7 +42,7 @@ def test_es_determinista():
             texto="Hidratación oral con sales de rehidratación oral.",
             documento="Protocolo_MSP.pdf",
             seccion="Tratamiento grupo A",
-            distancia=0.2,
+            distancia=0.10,
             metadata={"vigente": True},
         )
     ]
@@ -50,3 +50,25 @@ def test_es_determinista():
     res1 = consultar_guia_msp(datos, buscador=mock_buscador)
     res2 = consultar_guia_msp(datos, buscador=mock_buscador)
     assert res1 == res2
+
+
+def test_silencio_cuando_no_hay_fragmento_cercano():
+    """Prueba del silencio: si la distancia supera el umbral distancia_max, debe abstenerse."""
+    mock_buscador = MagicMock()
+    mock_buscador.buscar.return_value = [
+        ResultadoBusqueda(
+            id="fx",
+            texto="Texto no relevante o lejano sobre otro tema.",
+            documento="Guia_General.pdf",
+            seccion="Sección no médica",
+            distancia=0.22,  # Mayor a distancia_max (0.155)
+            metadata={"vigente": True},
+        )
+    ]
+    datos = ConsultarGuiaMspIn(texto="receta de ceviche peruano")
+    res = consultar_guia_msp(datos, buscador=mock_buscador)
+
+    assert res["encontrado"] is False
+    assert len(res["fragmentos"]) == 0
+    assert len(res["fuentes"]) == 0
+    assert "no trata este tema" in res["mensaje"].lower()

@@ -12,7 +12,7 @@
 El protocolo de pruebas de **GuíaVital** se diseña bajo un enfoque de **Defensa en Profundidad** para aplicaciones médicas basadas en IA generativa, cubriendo tres niveles:
 1. **Pruebas Funcionales End-to-End (16 casos `PF-01` a `PF-16`):** Verifican los casos mínimos exigidos por el estándar del seminario, los escenarios críticos del dominio de dengue (signos de alarma, grupos vulnerables, prohibición de AINEs) y los criterios de aceptación de las historias de usuario definidas en [`docs/02-requisitos.md`](02-requisitos.md).
 2. **Pruebas de Seguridad Adversaria (OWASP LLM Top 10 2025):** Verifican la resistencia ante inyección directa e indirecta de prompts (`LLM01`), no divulgación de errores internos mediante formato RFC 9457 (`LLM02`), control de agencia con lista blanca y confirmación humana (`LLM06`), y límite de tasa por sesión (`LLM10`).
-3. **Pruebas Automatizadas Deterministas (`pytest`):** 35 pruebas unitarias y de integración en backend más pruebas de interfaz en frontend (`vitest`), ejecutables sin red y sin consumir cuota de API mediante inyección de dobles (`Mocks`).
+3. **Pruebas Automatizadas Deterministas (`pytest`):** 84 pruebas unitarias y de integración en backend más pruebas de interfaz en frontend (`vitest`), ejecutables sin red y sin consumir cuota de API mediante inyección de dobles (`Mocks`).
 
 ---
 

@@ -112,17 +112,12 @@ jobs:
             git push origin HEAD:$BRANCH || echo "Advertencia: no se pudo hacer push del changelog"
           fi
 
-      - name: Trigger Parallel Deployments (Backend & Frontend)
+      - name: Disparar Pipeline de Despliegue Consolidado (deploy.yml)
         if: always()
         env:
           GH_TOKEN: ${{ secrets.BUMP_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.meta.outputs.tag }}"
           BRANCH="${{ steps.branch_info.outputs.target_branch }}"
-          echo "Disparando despliegues en paralelo para la rama $BRANCH con tag $TAG..."
-          
-          # 1. Disparar despliegue de backend a Cloud Run
-          gh workflow run deploy-backend.yml --ref "$BRANCH" -f version_tag="$TAG" || echo "Advertencia: no se pudo disparar deploy-backend"
-          
-          # 2. Disparar despliegue de frontend a Cloud Run
-          gh workflow run deploy-frontend.yml --ref "$BRANCH" -f version_tag="$TAG" || echo "Advertencia: no se pudo disparar deploy-frontend"
+          echo "Disparando deploy.yml para la rama $BRANCH con el tag formal $TAG..."
+          gh workflow run deploy.yml --ref "$BRANCH" -f version_tag="$TAG" || echo "Advertencia: no se pudo disparar deploy.yml"
