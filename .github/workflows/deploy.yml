@@ -19,6 +19,8 @@ env:
   GAR_REPOSITORY: ${{ vars.GAR_REPOSITORY || 'guiavital-repo' }}
   BACKEND_SERVICE: guiavital-backend
   FRONTEND_SERVICE: guiavital
+  CANONICAL_BACKEND_URL: https://guiavital-backend-448060764458.us-central1.run.app
+  CANONICAL_FRONTEND_URL: https://guiavital-448060764458.us-central1.run.app
   BACKEND_SA_EMAIL: ${{ vars.BACKEND_SA_EMAIL || 'guiavital-backend-sa@project-3e1faa58-1e7d-4e8d-933.iam.gserviceaccount.com' }}
 
 jobs:
@@ -115,7 +117,7 @@ jobs:
             --max-instances=5
             --memory=1Gi
             --update-labels=version=${{ steps.meta.outputs.gcp_label_version }}
-            --set-env-vars=APP_NAME=GuíaVital,APP_VERSION=${{ steps.meta.outputs.app_version }}
+            --set-env-vars=APP_NAME=GuíaVital,APP_VERSION=${{ steps.meta.outputs.app_version }},FRONTEND_URL=${{ env.CANONICAL_FRONTEND_URL }}
             --set-secrets=LLM_PROVIDER=LLM_PROVIDER:latest,LLM_MODEL=LLM_MODEL:latest,GEMINI_API_KEY=GEMINI_API_KEY:latest,LLM_FALLBACK_PROVIDER=LLM_FALLBACK_PROVIDER:latest,LLM_FALLBACK_MODEL=LLM_FALLBACK_MODEL:latest,GROQ_API_KEY=GROQ_API_KEY:latest,LLM_TIMEOUT_SECONDS=LLM_TIMEOUT_SECONDS:latest,LLM_TEMPERATURE=LLM_TEMPERATURE:latest,LLM_MAX_OUTPUT_TOKENS=LLM_MAX_OUTPUT_TOKENS:latest,MAX_INPUT_CHARS=MAX_INPUT_CHARS:latest,RATE_LIMIT_PER_MINUTE=RATE_LIMIT_PER_MINUTE:latest,HISTORIAL_DB=HISTORIAL_DB:latest,CORS_ORIGINS=CORS_ORIGINS:latest
 
       - name: Verificar endpoint de salud del Backend
@@ -123,9 +125,9 @@ jobs:
           curl --fail --silent --show-error "${{ steps.deploy_backend.outputs.url }}/manage/health"
           curl --fail --silent --show-error "${{ steps.deploy_backend.outputs.url }}/manage/info"
 
-      - name: Ejecutar pruebas funcionales de humo contra Backend desplegado (Smoke Tests)
+      - name: Ejecutar pruebas funcionales de humo contra Backend canónico (Smoke Tests)
         run: |
-          python3 tests/smoke.py "${{ steps.deploy_backend.outputs.url }}"
+          python3 tests/smoke.py "${{ env.CANONICAL_BACKEND_URL }}"
 
   # =========================================================================
   # FASE 2: Despliegue del Frontend en Cloud Run (Consolidado Post-Tag)
@@ -185,18 +187,11 @@ jobs:
       - name: Configurar Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Resolver URL pública del Backend en Cloud Run dinámicamente
+      - name: Resolver URL pública del Backend en Cloud Run
         id: backend_info
-        env:
-          PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
         run: |
-          BACKEND_URL="$(gcloud run services describe "${{ env.BACKEND_SERVICE }}" --project="${PROJECT_ID}" --region="${{ env.GCP_REGION }}" --format='value(status.url)' 2>/dev/null || echo '')"
-          if [ -z "${BACKEND_URL}" ]; then
-            echo "::warning::No se pudo resolver la URL del backend dinámicamente; usando fallback regional."
-            BACKEND_URL="https://${{ env.BACKEND_SERVICE }}-$(echo ${PROJECT_ID} | cut -c1-10)-${{ env.GCP_REGION }}.a.run.app"
-          fi
-          echo "backend_url=${BACKEND_URL}" >> "$GITHUB_OUTPUT"
-          echo "Backend URL para Frontend: ${BACKEND_URL}"
+          echo "backend_url=${{ env.CANONICAL_BACKEND_URL }}" >> "$GITHUB_OUTPUT"
+          echo "Backend URL canónica para Frontend: ${{ env.CANONICAL_BACKEND_URL }}"
 
       - name: Configurar autenticación de Docker con Artifact Registry
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
@@ -210,7 +205,7 @@ jobs:
           docker build \
             --provenance=false \
             -f frontend/Dockerfile \
-            --build-arg VITE_API_URL="${{ steps.backend_info.outputs.backend_url }}" \
+            --build-arg VITE_API_URL="${{ env.CANONICAL_BACKEND_URL }}" \
             --label "version=${{ steps.meta.outputs.app_version }}" \
             -t "${IMAGE_URI}:${{ steps.meta.outputs.image_tag }}" \
             -t "${IMAGE_URI}:${{ steps.meta.outputs.env_tag }}" \
@@ -227,7 +222,7 @@ jobs:
           image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.FRONTEND_SERVICE }}:${{ steps.meta.outputs.image_tag }}
           env_vars: |
             APP_VERSION=${{ steps.meta.outputs.app_version }}
-            VITE_API_URL=${{ steps.backend_info.outputs.backend_url }}
+            VITE_API_URL=${{ env.CANONICAL_BACKEND_URL }}
           flags: >-
             --allow-unauthenticated
             --port=8080

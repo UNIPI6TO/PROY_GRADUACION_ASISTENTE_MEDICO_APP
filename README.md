@@ -4,7 +4,7 @@
 > **Versión Actual:** `0.2.3-SNAPSHOT-RC2` (SemVer)  
 > **Caso:** 05 - Grupo 5 · Seminario de Titulación UNIANDES  
 > **Repositorio Oficial en GitHub:** `https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP`  
-> **Despliegue Público Frontend (Cloud Run):** `https://guiavital-533967484439.us-central1.run.app`  
+> **Despliegue Público Frontend (Cloud Run):** `https://guiavital-448060764458.us-central1.run.app`  
 > **API Backend Pública Oficial (Swagger UI):** `https://guiavital-backend-448060764458.us-central1.run.app/docs`
 
 ---
@@ -343,7 +343,7 @@ El sistema cuenta con un pipeline de Integración y Despliegue Continuo (CI/CD) 
 ```
 
 ### URLs Públicas de Producción:
-- **Frontend Web de Orientación:** `https://guiavital-533967484439.us-central1.run.app`
+- **Frontend Web de Orientación:** `https://guiavital-448060764458.us-central1.run.app`
 - **Backend API & Swagger Docs:** `https://guiavital-backend-448060764458.us-central1.run.app/docs`
 - **Sonda de Liveness & Readiness:** `https://guiavital-backend-448060764458.us-central1.run.app/manage/health`
 - **Metadatos de Versión SemVer:** `https://guiavital-backend-448060764458.us-central1.run.app/manage/info`
