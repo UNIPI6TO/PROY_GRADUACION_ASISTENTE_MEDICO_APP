@@ -36,3 +36,27 @@ def test_get_info_semver_format_and_app_name():
     assert payload["name"] == APP_NAME
     assert "version" in payload
     assert re.match(SEMVER_REGEX, payload["version"]) is not None
+
+
+def test_endpoint_flujo_automatico():
+    """Verifica que el endpoint /api/v1/flujo procese reportes con síntomas claros de forma automática."""
+    from app.main import endpoint_flujo
+    from app.schemas import SolicitudFlujo
+
+    solicitud = SolicitudFlujo(id="caso-auto-01", entrada="Presento 4 dias de fiebre alta, dolor abdominal intenso y continuo")
+    res = endpoint_flujo(solicitud)
+    assert res.id == "caso-auto-01"
+    assert res.destino == "automatico"
+    assert "911" in res.resultado or "establecimientos" in res.resultado
+
+
+def test_endpoint_flujo_revision_humana():
+    """Verifica que el endpoint /api/v1/flujo derive a revisión humana casos de baja confianza o vagos."""
+    from app.main import endpoint_flujo
+    from app.schemas import SolicitudFlujo
+
+    solicitud = SolicitudFlujo(id="caso-rev-01", entrada="Tengo malestar general")
+    res = endpoint_flujo(solicitud)
+    assert res.id == "caso-rev-01"
+    assert res.destino == "revision"
+    assert res.motivo is not None

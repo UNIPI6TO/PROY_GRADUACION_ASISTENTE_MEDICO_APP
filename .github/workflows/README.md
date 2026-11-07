@@ -1,110 +1,77 @@
 # Pipelines de CI/CD · GuíaVital
 
-Este directorio contiene los flujos de trabajo (*workflows*) automatizados de **GitHub Actions** para el asistente médico **GuíaVital**. La arquitectura sigue las mejores prácticas de **Site Reliability Engineering (SRE)** y principios **SOLID (Responsabilidad Única)**, desacoplando el Backend y el Frontend en ciclos de vida independientes.
+Este directorio contiene los flujos de trabajo (*workflows*) automatizados de **GitHub Actions** para el asistente médico **GuíaVital**. La arquitectura sigue las mejores prácticas de **Site Reliability Engineering (SRE)** y principios **SOLID (Responsabilidad Única)**.
 
 ---
 
-## 🗺️ Mapa de Flujos de Trabajo
+## 🗺️ Mapa del Ciclo de Vida Automatizado
 
 ```mermaid
 flowchart TD
-    subgraph FASE1["1. Fase de Pull Request (Bump Simétrico Unificado)"]
-        PR["Apertura / Sincronización de PR a develop o main"] --> WF_PR["semver.yml<br/>(Quality Gates + Bump Simétrico)"]
-        WF_PR --> TEST_BE["Quality Gate Backend (pytest)"]
-        WF_PR --> TEST_FE["Quality Gate Frontend (Vitest + Secrets)"]
-        TEST_BE --> BUMP_SYNC["Bump Simétrico:<br/>app/main.py & frontend/package.json"]
-        TEST_FE --> BUMP_SYNC
+    subgraph FASE1["1. Fase de Pull Request (Validación Pura - Cero Commits)"]
+        PR["Apertura / Sincronización de PR a develop o main"] --> CI["ci.yml<br/>(Quality Gates Consolidados)"]
+        CI --> GITLEAKS["Auditoría de Secretos (Gitleaks)"]
+        CI --> TEST_BE["Backend: Pytest 89 tests + eval/evaluar.py"]
+        CI --> TEST_FE["Frontend: Vitest 26 tests + verify:secrets"]
     end
 
-    subgraph FASE2["2. Fase Post-Merge (Tageo & Changelog Unificado)"]
-        MERGE["Merge de Pull Request a develop o main"] --> WF_REL["release.yml<br/>(Tageo Simétrico & Changelogs)"]
-        WF_REL --> TAG_BE["Tag: vX.Y.Z[-RC#]<br/>Update app/CHANGELOG.md & frontend/CHANGELOG.md"]
+    subgraph FASE2["2. Fase Post-Merge (Versionado y Release)"]
+        MERGE["Merge del PR a develop o main"] --> RELEASE["release.yml<br/>(Bump SemVer + Changelogs + Git Tag)"]
+        RELEASE --> BUMP["Bump SemVer (compara commits vs último tag)<br/>Actualiza app/main.py, package.json y README.md"]
+        BUMP --> CHLOG["Actualiza app/CHANGELOG.md y frontend/CHANGELOG.md"]
+        CHLOG --> COMMIT["Commit consolidado de versión [skip ci]"]
+        COMMIT --> TAG["Publica Git Tag formal (vX.Y.Z o vX.Y.Z-SNAPSHOT-RC#)"]
     end
 
-    subgraph FASE3["3. Fase de Despliegue (Cloud Run en Paralelo)"]
-        TAG_BE -.->|gh workflow run (API) / workflow_run| WF_DEP_BE["deploy-backend.yml<br/>(Deploy Backend)"]
-        TAG_BE -.->|gh workflow run (API) / workflow_run| WF_DEP_FE["deploy-frontend.yml<br/>(Deploy Frontend)"]
-        MANUAL["workflow_dispatch (Manual)"] --> WF_DEP_BE
-        MANUAL --> WF_DEP_FE
-        WF_DEP_BE --> DEPLOY_BE["Build Docker CPU (~450 MB)<br/>Deploy guiavital-backend"]
-        WF_DEP_FE --> DEPLOY_FE["Build Docker Nginx<br/>Deploy guiavital"]
+    subgraph FASE3["3. Fase de Despliegue Continuo (Post-Release)"]
+        TAG -.->|workflow_run completado con éxito| DEPLOY["deploy.yml<br/>(Despliegue Continuo a Cloud Run)"]
+        DEPLOY --> BE_DEPLOY["Build & Deploy Backend a Cloud Run"]
+        BE_DEPLOY --> SMOKE["Ejecuta tests/smoke.py (6/6 casos en vivo)"]
+        SMOKE --> FE_DEPLOY["Build & Deploy Frontend a Cloud Run (con URL del backend)"]
     end
 
-    FASE1 --> FASE2
+    FASE1 -->|Merge aprobado| FASE2
     FASE2 --> FASE3
 ```
 
 ---
 
-## 📋 Catálogo de Workflows
+## 📋 Catálogo Consolidado de Workflows
 
-### 1. Calidad y Versionado en Pull Request (Fase 1)
-| Workflow | Archivo | Disparador | Acción Principal |
-| :--- | :--- | :--- | :--- |
-| **CI (Quality Gate & Tests)** | [`ci.yml`](ci.yml) | Automático: `pull_request` y `push` (`main`, `develop`)<br/>Manual: `workflow_dispatch` | Ejecuta las 84 pruebas unitarias/integración (`pytest -q`), el evaluador del Plan de Calidad (`python eval/evaluar.py`), auditoría de secretos y pruebas Vitest en el frontend. |
-| **SemVer Unificado (PR Bump)** | [`semver.yml`](semver.yml) | Automático: `pull_request` (`app/**` o `frontend/**`)<br/>Manual: `workflow_dispatch` | Calcula la versión SemVer simétrica e incrementa simultáneamente `app/main.py` y `frontend/package.json` en la rama **compare** de forma ligera. |
-
-> [!NOTE]
-> - **Actualización exclusiva de la rama compare:** El commit de bump se empuja únicamente a la rama del PR (`HEAD:${{ github.head_ref }}`), **nunca** a la rama base (`develop`/`main`), autenticado con `BUMP_TOKEN`.
-> - **Exclusión de Changelogs:** Modificar `app/CHANGELOG.md`, `frontend/CHANGELOG.md` o `CHANGELOG.md` **no** activa los pipelines de SemVer, evitando ejecuciones redundantes.
+### 1. Calidad en Pull Request (`ci.yml`)
+* **Disparador:** `pull_request` y `push` (`main`, `develop`) o ejecución manual (`workflow_dispatch`).
+* **Misión:** Validar estrictamente la integridad del código sin realizar modificaciones ni commits.
+* **Compuertas:**
+  1. **Auditoría de Secretos (`secret-scan`):** Ejecuta Gitleaks en todo el repositorio (`secretos.yml`).
+  2. **Calidad de Backend (`backend-quality-gate`):** Ejecuta las 89 pruebas unitarias (`pytest -q`) y el evaluador del Plan de Calidad (`python eval/evaluar.py`).
+  3. **Calidad de Frontend (`frontend-quality-gate`):** Ejecuta las 26 pruebas de Vitest (`npm test`) y la verificación de claves en el bundle web (`npm run verify:secrets`).
 
 ---
 
-### 2. Publicación de Tags y Changelog Post-Merge (Fase 2)
-| Workflow | Archivo | Disparador | Acción Principal |
-| :--- | :--- | :--- | :--- |
-| **Release & Tag Unificado** | [`release.yml`](release.yml) | Automático: `pull_request: closed` (merged)<br/>Manual: `workflow_dispatch` | Genera el tag simétrico (`v...`), actualiza bitácoras con tolerancia a fallos (`continue-on-error: true`) y dispara los despliegues en paralelo. |
-
-#### Regla de Ramas:
-* **Rama `develop`:** Genera versiones **Snapshot** de pre-producción simétricas (`v0.2.0-SNAPSHOT-RC1`, `v0.2.0-SNAPSHOT-RC2`).
-* **Rama `main`:** Genera versiones oficiales definitivas **Release** simétricas (`v0.2.0`).
-
----
-
-### 3. Instalación y Despliegue en GCP Cloud Run (Fase 3)
-| Workflow | Archivo | Disparador | Acción Principal |
-| :--- | :--- | :--- | :--- |
-| **Deploy Backend to Cloud Run** | [`deploy-backend.yml`](deploy-backend.yml) | `workflow_run` (post-release) o Manual (`workflow_dispatch`) | Ejecuta el Quality Gate de pruebas (`pytest`), compila la imagen Docker optimizada con PyTorch CPU (`app/Dockerfile`, ~450 MB), la publica en Artifact Registry y despliega `guiavital-backend`. |
-| **Deploy Frontend to Cloud Run** | [`deploy-frontend.yml`](deploy-frontend.yml) | `workflow_run` (post-release) o Manual (`workflow_dispatch`) | Ejecuta el Quality Gate de pruebas (`Vitest` y `secrets`), resuelve dinámicamente la URL del backend, compila `frontend/Dockerfile` con Nginx y despliega el servicio `guiavital`. |
-
-> [!TIP]
-> Ambos despliegues se ejecutan **en paralelo**. Si un cambio solo afecta al Frontend, el Backend no se re-despliega, optimizando tiempos de build y cuotas de cómputo en GCP.
+### 2. Versionado y Release Post-Merge (`release.yml`)
+* **Disparador:** Automático al fusionar un PR (`pull_request: closed` con `merged == true`) hacia `main` o `develop`, o manual (`workflow_dispatch`).
+* **Misión:** Centralizar el cálculo de SemVer, actualización de bitácoras y generación del tag.
+* **Pasos:**
+  1. **Bump SemVer:** Ejecuta `scripts/semver_bumper.py`:
+     - **En `main`:** Compara contra el último tag formal de **Release** (`vX.Y.Z`).
+     - **En `develop`:** Compara contra el último tag de **Snapshot** (`vX.Y.Z-SNAPSHOT-RC#`).
+     - Actualiza simétricamente `app/main.py`, `frontend/package.json` y `README.md`.
+  2. **Changelogs:** Actualiza las bitácoras mediante `scripts/actualizar_changelog.py`.
+  3. **Commit Consolidado:** Realiza un único commit con la metadata del release.
+  4. **Tageo:** Crea y empuja el Git Tag correspondiente.
 
 ---
 
-### 4. Infraestructura Base
-| Workflow | Archivo | Disparador | Acción Principal |
-| :--- | :--- | :--- | :--- |
-| **Provision GCP Infrastructure (SRE)** | [`infra-gcp.yml`](infra-gcp.yml) | `workflow_dispatch` | Crea y valida de forma idempotente las Service Accounts de mínimo privilegio, el repositorio en Artifact Registry y los contenedores de Secret Manager. |
+### 3. Despliegue Continuo a Cloud Run (`deploy.yml`)
+* **Disparador:** Automático vía `workflow_run` al completarse con éxito `release.yml` (o manual vía `workflow_dispatch`).
+* **Misión:** Construcción de imágenes Docker, despliegue serverless y validación funcional en vivo.
+* **Pasos:**
+  1. **Backend:** Construye la imagen Docker (`app/Dockerfile`) y despliega `guiavital-backend` en Google Cloud Run.
+  2. **Pruebas de Humo:** Ejecuta `python3 tests/smoke.py` evaluando en vivo los 6 casos de salud, triaje y seguridad contra la URL del backend.
+  3. **Frontend:** Resuelve dinámicamente la URL del backend, compila `frontend/Dockerfile` y despliega `guiavital` en Cloud Run.
 
 ---
 
-## 🔐 Secretos y Variables Requeridas
-
-Para el correcto funcionamiento de los workflows en GitHub Actions, deben configurarse los siguientes secretos en el repositorio (`Settings` -> `Secrets and variables` -> `Actions`):
-
-| Nombre del Secreto / Variable | Tipo | Requerido por | Descripción |
-| :--- | :--- | :--- | :--- |
-| **`BUMP_TOKEN`** | Secret | `semver*.yml`, `tag*.yml` | Personal Access Token (PAT) con permisos de `repo` para autorizar commits y tags en ramas con reglas de protección. *(Si no se define, se usa `GITHUB_TOKEN`)*. |
-| **`GCP_JSON_KEY`** | Secret | `deploy*.yml`, `infra*.yml` | Credencial JSON de la Service Account desplegadora con permisos en Cloud Run y Artifact Registry. |
-| **`GCP_PROJECT_ID`** | Variable | `deploy*.yml`, `infra*.yml` | ID del proyecto en Google Cloud Platform (ej. `project-3e1faa58-1e7d-4e8d-933`). |
-| **`GCP_REGION`** | Variable | `deploy*.yml` | Región geográfica de despliegue en GCP (predeterminado: `us-central1`). |
-| **`GAR_REPOSITORY`** | Variable | `deploy*.yml` | Nombre del repositorio de imágenes en Artifact Registry (ej. `guiavital-repo`). |
-
----
-
-## 🚀 Guía de Operación Rápida
-
-### ¿Cómo entregar una nueva funcionalidad?
-1. Crea una rama desde `develop`: `git checkout -b feature/nueva-herramienta develop`.
-2. Realiza tus cambios siguiendo *Conventional Commits* (ej. `feat: agregar búsqueda de síntomas`).
-3. Abre un **Pull Request** hacia `develop`.
-4. El workflow de PR correspondiente (`semver.yml` o `semver-frontend.yml`) ejecutará las pruebas y subirá automáticamente un commit bump con `[skip ci]`.
-5. Una vez aprobado el PR, haz **Merge**:
-   * Se dispara el workflow de tageo (`tag-backend.yml` o `tag-frontend.yml`), generando el tag `SNAPSHOT-RC#` y actualizando `CHANGELOG.md`.
-   * Automáticamente se activa el despliegue paralelo a Google Cloud Run (`deploy-backend.yml` / `deploy-frontend.yml`).
-
-### ¿Cómo forzar un despliegue manual a producción?
-1. Ve a la pestaña **Actions** en GitHub.
-2. Selecciona **Deploy Backend to Cloud Run** o **Deploy Frontend to Cloud Run**.
-3. Haz clic en **Run workflow**, selecciona la rama deseada (`main` o `develop`) y confirma.
+### 4. Flujos de Soporte
+* **`secretos.yml`:** Flujo reusable (`workflow_call`) para el análisis con Gitleaks invocado por `ci.yml`.
+* **`infra-gcp.yml`:** Flujo manual (`workflow_dispatch`) para aprovisionamiento inicial de infraestructura en Google Cloud Platform.

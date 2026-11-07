@@ -132,3 +132,20 @@ class SolicitudConfirmacion(BaseModel):
     tool_call_id: str
     aprobado: bool
 
+
+# ======================================================================
+# CINTA DE FLUJO AUTOMATIZADO / TRIAGE DETERMINISTA
+# ======================================================================
+class SolicitudFlujo(BaseModel):
+    id: str = Field(default="doc-001", description="Identificador del documento o caso")
+    entrada: str = Field(min_length=1, max_length=2000, description="Texto libre del ciudadano o reporte clínico")
+
+
+class RespuestaFlujo(BaseModel):
+    id: str
+    destino: Literal["automatico", "revision"]
+    resultado: str
+    motivo: str | None = None
+    nivel: str | None = None
+    signos_presentes: int | None = None
+

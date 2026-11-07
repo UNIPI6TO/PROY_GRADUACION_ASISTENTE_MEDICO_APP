@@ -74,3 +74,30 @@ def test_chat_v2_pausa_y_confirmacion():
 
     assert res2.estado == EstadoAgente.COMPLETADO
     assert "notificado a su familiar" in res2.respuesta
+
+
+def test_chat_v2_respuesta_con_citas_validadas():
+    """Verifica que el endpoint /api/v2/chat retorne las fuentes validadas en el esquema HTTP."""
+    from app.schemas import Fuente
+
+    repo = RepositorioHistorial(":memory:")
+    limitador = LimitadorTasa(maximo=10, ventana_s=60)
+
+    tc_rag = NS(
+        id="call_rag_99",
+        function=NS(
+            name="consultar_guia_msp",
+            arguments='{"texto": "fase febril del dengue"}'
+        ),
+    )
+    msg_rag = NS(content="", tool_calls=[tc_rag])
+    msg_final = NS(content="La fase febril suele durar entre 2 y 7 días.", tool_calls=[])
+
+    llm = LLMAgenteFalso([msg_rag, msg_final])
+    solicitud = Solicitud(idSesion="sesion-cita-v2", texto="¿Cuánto dura la fiebre?")
+    res = chat_v2(solicitud, llm=llm, repo=repo, limitador=limitador)
+
+    assert res.estado == EstadoAgente.COMPLETADO
+    assert len(res.fuentes) > 0
+    assert all(isinstance(f, Fuente) for f in res.fuentes)
+    assert res.fuentes[0].documento != ""
