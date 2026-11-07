@@ -1,175 +1,263 @@
-# Arquitectura · GuíaVital
+# Arquitectura · GuíaVital (Versión Definitiva · Producción)
 
-**Caso 05:** Asistente de Orientación en Salud Pública sobre Dengue y Arbovirosis
-**Tipo de producto:** Asistente conversacional con RAG y salvaguardas
-**Repositorio:** https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP
-**Etapa:** Semana 2 · Construcción del MVP e integración con IA generativa
+**Caso 05:** Asistente de Orientación en Salud Pública sobre Dengue y Arbovirosis  
+**Tipo de producto:** Asistente conversacional y Agente de Alcance Controlado con RAG, herramientas deterministas y salvaguardas (*Human-in-the-Loop*)  
+**Repositorio:** https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP  
+**Frontend Desplegado (Google Cloud Run):** https://guiavital-448060764458.us-central1.run.app  
+**Backend API Desplegado (Google Cloud Run):** https://guiavital-backend-448060764458.us-central1.run.app/docs  
+**Estado:** Arquitectura Definitiva en Producción (Semana 4 completada)
 
-## Problema
+---
 
-La aplicación resuelve el problema de las complicaciones graves por dengue asociadas a la consulta médica tardía y la falta de comprensión ciudadana sobre las guías de salud oficiales. Mediante un asistente de orientación preventivo, busca evitar la saturación del sistema sanitario y promover la búsqueda oportuna de atención cuando aparecen signos de alarma.
+## 1. Problema y Propósito
 
-## Equipo
+La aplicación resuelve el problema de las complicaciones graves por dengue asociadas a la consulta médica tardía, la automedicación peligrosa con antiinflamatorios no esteroideos (AINEs como ibuprofeno, aspirina, diclofenaco o naproxeno) y la falta de comprensión ciudadana sobre las guías oficiales de salud. Mediante un asistente y agente preventivo respaldado en lineamientos del Ministerio de Salud Pública (MSP) y la OPS/OMS, evita la saturación hospitalaria, realiza triaje determinista de signos de alarma y promueve la derivación inmediata cuando existe riesgo vital.
 
-| Integrante | Rol |
-|---|---|
-| Luis Cahuana | Tech Lead |
-| Wilson Salinas | Builder |
-| Rafael Minaya | QA / Seguridad |
+## 2. Equipo
 
-## Diagrama de contexto (C4 nivel 1)
+| Integrante | Rol | Responsabilidades Principales |
+|---|---|---|
+| **Luis Cahuana** | Tech Lead | Arquitectura general, pipeline RAG (`intfloat/multilingual-e5-small` + ChromaDB), herramientas deterministas MSP, evolución de prompts y evaluación de calidad (`eval/evaluar.py`). |
+| **Wilson Salinas** | Builder | Desarrollo Frontend (`React 19 + TypeScript + Vite`), máquina de 7 estados, integración de endpoints v1/v2 y confirmación *HITL*, contenedorización Docker y CI/CD en Google Cloud Run. |
+| **Rafael Minaya** | QA / Seguridad | Estrategia de pruebas automatizadas (`pytest` 92 tests, `Vitest` 27 tests, `smoke.py` 6 casos en vivo), seguridad OWASP LLM, límite de tasa (`LimitadorTasa`) y auditoría de secretos. |
+
+---
+
+## 3. Diagrama de Contexto (C4 · Nivel 1)
+
+Todos los sistemas e integraciones se encuentran **activos en producción** (sin componentes pendientes):
 
 ```mermaid
 flowchart LR
-  U0(["Ciudadano"])
-  U1(["Familiar del Enfermo"])
-  SYS["<b>GuíaVital</b><br/>Sistema de software"]
-  P1["Google Gemini (AI Studio)<br/>gemini-2.0-flash"]
-  P2["Groq<br/>llama-3.1-8b-instant"]
-  E0["Registro de establecimientos MSP<br/>semana 3"]
-  U0 -- usa --> SYS
-  U1 -- usa --> SYS
-  SYS -- "genera texto" --> P1
-  SYS -. "respaldo" .-> P2
-  SYS -. "semana 3" .-> E0
-  classDef ext fill:#eceff1,stroke:#607d8b
-  classDef sys fill:#dcebf3,stroke:#145c80
-  classDef fut fill:#f6e9d8,stroke:#a8641a,stroke-dasharray:5 5
+  U0(["Ciudadano / Paciente"])
+  U1(["Familiar / Cuidador"])
+  SYS["<b>GuíaVital</b><br/>Sistema de Orientación y Triaje Preventivo<br/>(Google Cloud Run)"]
+  P1["Google Gemini (AI Studio)<br/>gemini-3.8-flash / gemini-2.0-flash"]
+  P2["Groq (Proveedor de Respaldo)<br/>openai/gpt-oss-20b / llama-3.1-8b-instant"]
+  E0["Catálogo GeoSalud MSP<br/>Establecimientos RPIS"]
+  WA["WhatsApp Web / App (wa.me)<br/>Notificación autorizada a contacto"]
+
+  U0 -- "Consulta síntomas / prevención (HTTPS)" --> SYS
+  U1 -- "Evalúa signos de alarma / confirma alerta" --> SYS
+  SYS -- "Generación estructurada y Function Calling" --> P1
+  SYS -. "Conmutación automática (Fallback)" .-> P2
+  SYS -- "Consulta centros por cantón/GPS" --> E0
+  SYS -- "Abre alerta prellenada tras autorización" --> WA
+
+  classDef ext fill:#eceff1,stroke:#607d8b,color:#0f172a
+  classDef sys fill:#dcebf3,stroke:#145c80,color:#0f172a,stroke-width:2px
   class SYS sys
-  class P1,P2 ext
-  class E0 fut
+  class P1,P2,E0,WA ext
 ```
 
-## Diagrama de contenedores (C4 nivel 2)
+---
+
+## 4. Diagrama de Contenedores (C4 · Nivel 2)
 
 ```mermaid
 flowchart LR
   U0(["Ciudadano"])
   U1(["Familiar del Enfermo"])
-  subgraph SYS["GuíaVital"]
-    FE["Frontend<br/>React + Vite"]
-    BE["Backend API<br/>FastAPI (Python)<br/>POST /api/v1/chat<br/>GET /manage/health<br/>GET /manage/info"]
-    SEC["Seguridad · seguridad.py<br/>Rate Limit (429) y delimitación"]
-    LLM["Servicio IA · llm.py<br/>tiempo límite, reintentos, respaldo"]
-    RET["Retriever · retriever.py<br/>BuscadorVectorial (E5-small)"]
-    REPO["Repositorio · historial.py<br/>memoria por idSesion"]
-    PR[("app/prompts/")]
-    DB[("SQLite<br/>data/historial.db")]
-    OB["Registro: Logs estructurados sin datos personales"]
-    VEC[("ChromaDB<br/>chroma_db/ (161 fragmentos)")]
-    AG["Agente y herramientas<br/>semana 3"]
+
+  subgraph GCP["Google Cloud Platform (us-central1 · Cloud Run)"]
+    FE["<b>Frontend Web (guiavital)</b><br/>React 19 + TypeScript + Vite (Nginx)<br/>Máquina de 7 estados · Pop-up s4g · Checklist MSP"]
+
+    subgraph BE_BOX["<b>Backend API (guiavital-backend · FastAPI Python 3.12)</b>"]
+      BE["Controlador HTTP y Rutas<br/>POST /api/v1/chat · POST /api/v2/chat<br/>POST /api/v2/chat/confirmar<br/>POST /herramientas/signos-alarma<br/>POST /api/v1/flujo<br/>GET /manage/health · GET /manage/info"]
+      SEC["Seguridad · seguridad.py<br/>CORS + Rate Limit (429) + Delimitación XML"]
+      AG["Agente Controlado · agent.py<br/>PERMITIDAS · MAX_ITER=6 · REQUIEREN_OK"]
+      FL["Cinta Automatizada · flujo.py<br/>7 estaciones · Umbral confianza >= 0.85"]
+      TOOLS["Herramientas Deterministas · app/tools/<br/>1. consultar_guia_msp<br/>2. evaluar_signos_alarma<br/>3. buscar_centro_salud<br/>4. notificar_contacto_emergencia"]
+      LLM["Cliente IA Resiliente · llm.py<br/>Timeout, Backoff + Jitter, Fallback"]
+      RET["Retriever · retriever.py<br/>BuscadorVectorial (E5-small)"]
+      REPO["Repositorio · historial.py<br/>Memoria aislada por idSesion"]
+      PR[("Prompts · app/prompts/<br/>system_v1..v4 + system_agente")]
+      DB[("SQLite Efímero<br/>data/historial.db")]
+      VEC[("ChromaDB Persistente<br/>chroma_db/ (HNSW Coseno)")]
+      OB["Observabilidad Zero-PII<br/>logs/llm.jsonl"]
+    end
   end
-  P1["Google Gemini (AI Studio)<br/>gemini-2.0-flash"]
-  P2["Groq<br/>llama-3.1-8b-instant"]
-  E0["Registro de establecimientos MSP"]
+
+  P1["Google Gemini API"]
+  P2["Groq API (Fallback)"]
+
   U0 --> FE
   U1 --> FE
-  FE -- "HTTPS / JSON" --> BE
+  FE -- "HTTPS / JSON + SSE + RFC 9457" --> BE
   BE --> SEC
-  BE --> RET
+  BE --> AG
+  BE --> FL
+  AG --> TOOLS
+  FL --> TOOLS
+  TOOLS --> RET
   RET --> VEC
+  AG --> LLM
+  FL --> LLM
   BE --> LLM
   BE --> REPO
   REPO --> DB
-  LLM -- API --> P1
-  LLM -. respaldo .-> P2
+  LLM -- "Principal" --> P1
+  LLM -. "Respaldo" .-> P2
   BE --> PR
-  BE --> OB
-  BE -.-> AG
-  BE -.-> E0
-  classDef fut fill:#f6e9d8,stroke:#a8641a,stroke-dasharray:5 5
-  classDef ext fill:#eceff1,stroke:#607d8b
-  class AG fut
+  LLM --> OB
+
+  classDef ext fill:#eceff1,stroke:#607d8b,color:#0f172a
+  classDef cloud fill:#f8fafc,stroke:#0f4c81,stroke-width:1.5px
   class P1,P2 ext
-  class E0 fut
+  class GCP cloud
 ```
 
-## Tecnologías
+---
 
-| Contenedor | Tecnología |
+## 5. Diagrama de Despliegue y Pipeline CI/CD (Google Cloud Run)
+
+El despliegue se realiza de forma 100% automatizada mediante **GitHub Actions** hacia **Google Cloud Run (`us-central1`)**, protegiendo las credenciales en **Google Secret Manager** y aplicando compuertas de calidad bloqueantes tanto en Pull Request como antes del despliegue:
+
+```mermaid
+flowchart TD
+  subgraph GH["GitHub Actions (CI/CD y Compuertas de Calidad)"]
+    CI["<b>1. Pull Request (ci.yml)</b><br/>Gitleaks + Pytest (92) + Evaluador RAG + Vitest (27) + verify:secrets"]
+    REL["<b>2. Post-Merge (release.yml)</b><br/>Bump SemVer simétrico + Changelogs + Git Tag (vX.Y.Z)"]
+    DEP["<b>3. Pre-Deploy Gate (deploy.yml)</b><br/>Bloqueante: Gitleaks + Pytest (92) + Vitest (27) + verify:secrets"]
+  end
+
+  subgraph GCP_PROD["Google Cloud Platform · Producción (project-3e1faa58-1e7d-4e8d-933)"]
+    GAR[("Artifact Registry<br/>us-central1-docker.pkg.dev/guiavital-repo")]
+    SM["Secret Manager<br/>GEMINI_API_KEY · GROQ_API_KEY · Config"]
+    CR_BE["Cloud Run: <b>guiavital-backend</b><br/>Python 3.12-slim · UID 10001 · 1 GiB RAM · min=0 max=5"]
+    CR_FE["Cloud Run: <b>guiavital</b><br/>Nginx Alpine · Bundle React 19 · min=0 max=5"]
+    SMOKE["Sondas SRE (/manage/health, /manage/info)<br/>+ Smoke Tests en vivo (tests/smoke.py 6/6)"]
+  end
+
+  CI -->|Merge aprobado| REL
+  REL -->|workflow_run exitoso| DEP
+  DEP -->|Pasa todas las pruebas| GAR
+  GAR --> CR_BE
+  SM -. "Inyección segura (--set-secrets)" .-> CR_BE
+  CR_BE --> SMOKE
+  SMOKE -->|6/6 OK| CR_FE
+```
+
+---
+
+## 6. Matriz Definitiva de Tecnologías
+
+| Contenedor / Componente | Tecnología en Producción |
 |---|---|
-| Frontend | React + Vite |
-| Backend | FastAPI (Python) |
-| Datos | SQLite (`data/historial.db`) |
-| Base Vectorial (RAG) | ChromaDB persistente (`chroma_db/`, espacio `cosine`) |
-| Modelo de Embeddings | `intfloat/multilingual-e5-small` (384 dimensiones, asimétrico) |
-| Modelo principal | Google Gemini (AI Studio) · gemini-3.5-flash-lite |
-| Modelo de respaldo | Groq · openai/gpt-oss-20b |
-| Patrón de integración | Enrutamiento por tipo de consulta con recuperación RAG |
-| Registro | Logs estructurados sin datos personales |
-| Despliegue previsto | Hugging Face Spaces |
+| **Frontend Web** | React 19 + TypeScript + Vite (servido con Nginx en contenedor Alpine) |
+| **Backend API** | FastAPI (Python 3.12-slim, usuario sin privilegios `appuser` UID 10001) + Pydantic v2 |
+| **Persistencia de Sesión** | SQLite (`data/historial.db`) aislado por `idSesion` anónimo (política *Zero-PII*) |
+| **Base Vectorial (RAG)** | ChromaDB local persistente (`chroma_db/`, índice HNSW con distancia `cosine`) |
+| **Modelo de Embeddings** | `intfloat/multilingual-e5-small` (384 dimensiones, asimétrico con `query:` y `passage:`) |
+| **Proveedor LLM Principal** | Google Gemini (`gemini-3.8-flash` / `gemini-2.0-flash`) |
+| **Proveedor LLM de Respaldo** | Groq (`openai/gpt-oss-20b` / `llama-3.1-8b-instant`) |
+| **Patrones de Integración** | 1. Asistente RAG estructurado (`/api/v1/chat`)<br/>2. Agente de Alcance Controlado con *Function Calling* y *HITL* (`/api/v2/chat`)<br/>3. Cinta Automatizada de 7 estaciones con umbral `0.85` (`/api/v1/flujo`) |
+| **Observabilidad** | Logs estructurados en JSON Lines (`logs/llm.jsonl`) sin datos personales ni texto del usuario |
+| **Infraestructura y Despliegue** | **Google Cloud Run** (`us-central1`) + **Google Artifact Registry** + **Google Secret Manager** + **GitHub Actions** |
 
-## Endpoints
+---
+
+## 7. Catálogo Completo de Endpoints en Producción
 
 | Método | Ruta | Propósito |
 |---|---|---|
-| POST | `/api/v1/chat` | Orientación con salvaguardas, memoria por `idSesion`, límite de tasa y errores RFC 9457 |
-| GET | `/manage/health` | Estado del servicio (Liveness y Readiness) |
-| GET | `/manage/info` | Información y versión SemVer del servicio |
+| `POST` | `/api/v1/chat` | Asistente conversacional RAG con contrato JSON validado (`RespuestaChat`), memoria por `idSesion`, límite de tasa (`429`) y errores RFC 9457. |
+| `POST` | `/api/v2/chat` | Agente de alcance controlado con bucle de razonamiento (`MAX_ITER = 6`), lista cerrada de 4 herramientas, citas validadas y pausa *HITL*. |
+| `POST` | `/api/v2/chat/confirmar` | Confirmación o rechazo del usuario (*Human-in-the-Loop*) para ejecutar o cancelar acciones sensibles pausadas (`notificar_contacto_emergencia`). |
+| `POST` | `/herramientas/signos-alarma` | Evaluación clínica determinista de signos de alarma de dengue (días de fiebre, edad y signos críticos) bajo protocolo oficial del MSP. |
+| `POST` | `/api/v1/flujo` | Cinta de automatización de 7 estaciones con compuerta de confianza (`>= 0.85` automático vs `< 0.85` desvío a revisión). |
+| `GET` | `/manage/health` | Diagnóstico operativo *Liveness* y *Readiness* (`200 UP` / `503 DOWN`) sin consumir cuota del modelo generativo. |
+| `GET` | `/manage/info` | Metadatos del servicio y versión validada contra expresión regular oficial **SemVer 2.0**. |
 
-## Capas del Backend (Principio de Responsabilidad Única)
+---
+
+## 8. Herramientas del Agente Implementadas (`app/tools/`)
+
+Todas las herramientas están implementadas en producción bajo lista cerrada (`PERMITIDAS` en `app/services/agent.py`) y validadas con esquemas Pydantic:
+
+| Herramienta | Archivo | Tipo | Descripción |
+|---|---|---|---|
+| `consultar_guia_msp` | `app/tools/consultar_guia_msp.py` | Libre (Determinista / RAG) | Consulta fragmentos vigentes en ChromaDB (SIVE-Alerta MSP y Guía OPS 2016) aplicando umbral de distancia máxima (`0.155`) y devolviendo citas verificables. |
+| `evaluar_signos_alarma` | `app/tools/evaluar_signos_alarma.py` | Libre (Reglas en código) | Evalúa síntomas y sinónimos coloquiales contra el catálogo clínico oficial de signos de alarma del MSP sin delegar el triaje al LLM. |
+| `buscar_centro_salud` | `app/tools/buscar_centro_salud.py` | Libre (Georreferenciada) | Busca establecimientos del MSP por ciudad/cantón o coordenadas GPS ordenando por distancia Haversine y disponibilidad de Emergencia 24h. |
+| `notificar_contacto_emergencia` | `app/tools/notificar_contacto_emergencia.py` | **Con Confirmación (`REQUIEREN_OK`)** | Pausa el agente y solicita autorización explícita en la interfaz antes de preparar y abrir el aviso de auxilio hacia el contacto de emergencia (con normalización telefónica E.164 para WhatsApp). |
+
+---
+
+## 9. Capas del Sistema (Principio de Responsabilidad Única · SOLID)
 
 | Capa / Módulo | Archivo | Responsabilidad |
 |---|---|---|
-| Controlador HTTP y Contrato | `app/main.py`, `app/schemas.py` | Rutas FastAPI, inyección con `Depends()`, validación Pydantic (`Solicitud`, `RespuestaChat`) y errores `ProblemaRFC9457` (`422`, `429`, `503`, `500`) sin exponer *stack traces* |
-| Seguridad OWASP LLM 2025 | `app/services/seguridad.py` | `LimitadorTasa` por `idSesion` (ventana deslizante con respuesta `429` y cabecera `Retry-After`) y `delimitar_consulta` con etiquetas `<consulta_usuario>` contra inyección de prompts |
-| Recuperación Vectorial (RAG) | `app/services/retriever.py` | `BuscadorVectorial` con carga perezosa de `intfloat/multilingual-e5-small`, asimetría semántica con prefijo `query: `, filtrado por metadatos (`vigente: True`), búsqueda híbrida exacta y conversión a Pydantic `Fuente` |
-| Cliente de IA Resiliente | `app/services/llm.py` | Encapsula Gemini y Groq, valida salida JSON contra esquema estricto, aplica reintentos con espera exponencial + *jitter*, soporta historial multi-turno y registra métricas sin PII en `logs/llm.jsonl` |
-| Persistencia de Memoria | `app/repositorio/historial.py` | Almacena y consulta los últimos turnos por `idSesion` en SQLite (`data/historial.db`) mediante consultas parametrizadas aisladas por sesión |
-| Ingesta y Segmentación | `scripts/ingest.py` | Extracción con PyMuPDF, descarte de bibliografía y marcas de agua, chunking jerárquico con inyección de encabezado, prefijos `passage: `, indexación en ChromaDB y exportación a `data/processed/` |
+| **Controlador HTTP y Contratos** | `app/main.py`, `app/schemas.py` | Rutas FastAPI, CORS, inyección con `Depends()`, validación estricta Pydantic (`extra="forbid"`) y errores estándar `ProblemaRFC9457` (`422`, `429`, `503`, `500`) sin exponer *stack traces*. |
+| **Orquestador del Agente** | `app/services/agent.py` | Ejecuta el bucle de razonamiento con lista cerrada (`PERMITIDAS`), tope de iteraciones (`MAX_ITER = 6`), pausa para confirmación (`REQUIEREN_OK`) y reanudación (`reanudar_agente`). |
+| **Cinta de Automatización** | `app/flujo.py` | Pipeline determinista de 7 estaciones con cálculo de confianza y desvío seguro a revisión cuando la confianza es `< 0.85` o ante intentos de inyección. |
+| **Seguridad OWASP LLM** | `app/services/seguridad.py` | `LimitadorTasa` por `idSesion` (ventana deslizante con `429` y `Retry-After`) y `delimitar_consulta` con etiquetas `<consulta_usuario>` contra *Prompt Injection*. |
+| **Recuperación Vectorial (RAG)** | `app/services/retriever.py` | `BuscadorVectorial` con `intfloat/multilingual-e5-small`, prefijos `query: `, filtro de vigencia (`vigente: True`), búsqueda híbrida por código exacto (`CIE-10`) y conversión a `Fuente`. |
+| **Cliente de IA Resiliente** | `app/services/llm.py` | Encapsula Gemini y Groq (SDK OpenAI), valida JSON estricto con 1 intento de autocorrección, aplica *backoff* exponencial + *jitter*, soporta *Function Calling* y registra métricas sin PII en `logs/llm.jsonl`. |
+| **Persistencia de Memoria** | `app/repositorio/historial.py` | Almacena y consulta los últimos turnos por `idSesion` en SQLite (`data/historial.db`) mediante consultas parametrizadas aisladas por sesión. |
+| **Ingesta Reproducible** | `scripts/ingest.py` | Extracción con PyMuPDF, limpieza de marcas de agua y bibliografía, *chunking* jerárquico con encabezado contextual, prefijos `passage: ` e indexación en ChromaDB. |
+| **Interfaz Web React** | `frontend/src/` | Máquina de 7 estados (`estados.ts`), mensajes cortos por etapa, tarjeta de autorización *HITL* con integración a WhatsApp (`MensajeChat.tsx`), checklist clínico (`ChecklistSignosAlarma.tsx`) y pop-up de aviso de IA (`Cabecera.tsx`). |
 
-## Prompts versionados
+---
 
-Comparativa detallada con 10 entradas de prueba en [`docs/05-prompts.md`](05-prompts.md):
+## 10. Prompts Versionados (`app/prompts/`)
 
-| Archivo | Qué cambia en esta versión |
+Comparativa detallada en [`docs/05-prompts.md`](05-prompts.md):
+
+| Archivo | Propósito y Evolución |
 |---|---|
-| `app/prompts/system_v1.md` | Base *zero-shot*: no diagnosticar, no recetar, derivar ante signos de alarma |
-| `app/prompts/system_v2.md` | *Few-shot* con 3 ejemplos completos y formato de lectura móvil con viñetas |
-| `app/prompts/system_v3.md` | *Guardrails* numerados (1–7), grupos vulnerables, 6 señales de alarma y reglas anti-engaño |
-| `app/prompts/system_v4.md` | Criterios explícitos para cada campo JSON (`derivar_a: null` en prevención, `se_abstiene: true` fuera de dominio y lectura de `<consulta_usuario>`) |
+| `app/prompts/system_v1.md` | Base *zero-shot*: no diagnosticar, no recetar, derivar ante signos de alarma. |
+| `app/prompts/system_v2.md` | *Few-shot* con 3 ejemplos completos y formato estructurado con viñetas. |
+| `app/prompts/system_v3.md` | *Guardrails* numerados (1–7), grupos vulnerables, 6 señales de alarma y reglas anti-engaño. |
+| `app/prompts/system_v4.md` | Prompt vigente para `/api/v1/chat`: criterios explícitos para cada campo JSON (`derivar_a: null` en prevención, `se_abstiene: true` fuera de dominio y lectura de `<consulta_usuario>`). |
+| `app/prompts/system_agente.md` | Prompt vigente para el Agente v2 (`/api/v2/chat`): instrucciones de uso de las 4 herramientas, prohibición de inventar datos fuera del RAG y formato claro para el ciudadano. |
 
-## Pruebas Automatizadas con Dobles (Mocks) del Modelo
+---
 
-La arquitectura desacopla las dependencias con `Depends()` en FastAPI y clientes inyectables en `ClienteLLM`, permitiendo que **`pytest -q` valide todo el backend en ~1.5 s sin conexión a internet y sin gastar cuota de API**:
+## 11. Estrategia de Pruebas Automatizadas (125 Pruebas: 92 Backend + 27 Frontend + 6 Humo)
+
+La arquitectura desacopla las dependencias con `Depends()` en FastAPI y mocks deterministas en Vitest/MSW, permitiendo validar el 100% del sistema en cada Pull Request y antes de cada despliegue:
 
 ```mermaid
 flowchart LR
-  PT["pytest"] --> TC["TestClient(app)<br/>tests/test_dengue.py"]
-  PT --> UT["Pruebas unitarias<br/>tests/test_llm.py · test_main.py"]
-  TC -- "dependency_overrides" --> LF["LLMFalso (Mock)<br/>sin red ni cuota API"]
-  TC -- "dependency_overrides" --> RM["RepositorioHistorial(':memory:')<br/>SQLite efímero"]
-  TC -- "dependency_overrides" --> RL["LimitadorTasa + Reloj simulado"]
-  UT --> DB["Doble OpenAI<br/>simula 200, 429, 503, timeouts"]
+  PT["Suite de Pruebas<br/>(125 tests totales)"] --> BE_T["Backend: pytest (92 tests)<br/>14 archivos en tests/"]
+  PT --> FE_T["Frontend: Vitest + MSW (27 tests)<br/>4 archivos en frontend/tests/"]
+  PT --> SM_T["Producción: tests/smoke.py (6 tests)<br/>Contra Cloud Run en vivo"]
+  BE_T --> M1["Dobles LLMFalso y CarteroDeterminista<br/>SQLite :memory: · Cero red / Cero costo"]
+  FE_T --> M2["MSW Server + Testing Library<br/>DOMPurify XSS · Máquina de estados · UI"]
 ```
 
-| Suite de Pruebas | Archivo | Doble / Mock Utilizado | Qué Verifica |
-|---|---|---|---|
-| Endpoint `/api/v1/chat`, Memoria y Seguridad | `tests/test_dengue.py` | `LLMFalso`, `RepositorioHistorial(":memory:")` y `Reloj` inyectados con `app.dependency_overrides` | Contrato `200`, persistencia y memoria multi-turno en SQLite, aislamiento entre sesiones, *rate limit* `429` + `Retry-After`, delimitación anti-inyección `<consulta_usuario>`, validaciones `422` (`texto` e `idSesion`), errores `503`/`500` en formato RFC 9457 sin *stack trace* y abstención ante salida inválida |
-| Recuperación Vectorial y Chunking | `tests/test_retriever.py` | `CarteroDeterminista` (doble determinista de embeddings) y `chromadb.EphemeralClient` | Extracción de páginas 95 a 100 de SIVE-Alerta, exclusión de referencias de OPS 2016, asimetría de prefijos E5 (`query:` vs `passage:`), ranking por distancia coseno, búsqueda por código exacto y filtro de vigencia |
-| Servicio de IA (`ClienteLLM`) | `tests/test_llm.py` | `Doble` del cliente OpenAI y función `dormir` simulada | Validación de esquema JSON estricto, autocorrección en 1 intento, reintentos ante `429`/`503`/respuesta vacía, respeto de `Retry-After`, espera exponencial y conmutación al proveedor de respaldo |
-| Operación y Versionado | `tests/test_main.py`, `tests/test_semver_bumper.py` | Sondas de salud simuladas (*lambdas*) | Diagnóstico `/manage/health` (`200` UP / `503` DOWN), cumplimiento SemVer en `/manage/info` e incremento automático de versión |
+| Suite de Pruebas | Archivos | Pruebas | Qué Verifica |
+|---|---|---:|---|
+| **Agente v2, Cinta y Herramientas** | `test_agent.py`, `test_api_v2.py`, `test_flujo.py`, `test_endpoint_signos_alarma.py`, `test_evaluar_signos_alarma.py`, `test_buscar_centro_salud.py`, `test_consultar_guia_msp.py` | 35 | Bucle del agente, lista cerrada, `MAX_ITER = 6`, pausa y confirmación *HITL*, citas validadas, cinta de 7 estaciones con umbral `0.85`, triaje clínico y geolocalización Haversine. |
+| **Chat v1, Memoria y Seguridad** | `test_dengue.py` | 20 | Contrato `200`, persistencia multi-turno en SQLite, aislamiento entre sesiones, *rate limit* `429` + `Retry-After`, delimitación anti-inyección `<consulta_usuario>`, validaciones `422` y errores RFC 9457. |
+| **RAG, Cliente LLM y Operación** | `test_retriever.py`, `test_llm.py`, `test_main.py`, `test_semver_bumper*.py`, `test_actualizar_changelog.py` | 37 | Extracción de PDFs oficiales, prefijos E5 (`query:` / `passage:`), filtro de vigencia, reintentos con *backoff*, conmutación a respaldo (Groq), `/manage/health`, `/manage/info` y automatización SemVer. |
+| **Frontend, Seguridad UI y Contratos** | `cliente.test.ts`, `estados.test.ts`, `manage.test.ts`, `seguridad-y-ui.test.tsx` | 27 | Máquina de 7 estados, parser SSE de trozos partidos, errores RFC 9457, neutralización XSS (`OWASP LLM05`), sesión anónima, pop-up `s4g`, tarjeta de autorización y normalización de WhatsApp. |
+| **Pruebas de Humo en Nube** | `tests/smoke.py` | 6 | Salud en vivo (`GET /manage/health`), orientación v1 y v2, rechazo de automedicación, defensa ante *Prompt Injection* y validación `422` en Google Cloud Run. |
 
-## Requisitos no funcionales de IA
+---
 
-| Requisito | Presupuesto |
+## 12. Requisitos No Funcionales y Presupuestos Operativos
+
+| Parámetro / Requisito | Valor Configurado en Producción |
 |---|---|
-| Tiempo de respuesta | ≤ 3 s |
-| Tokens máximos de salida | 600 |
-| Temperatura | 0.2 |
-| Caracteres máximos de entrada | 2000 |
-| Solicitudes por minuto por usuario | 10 |
-| Si el proveedor falla | Reintentar con espera creciente; si sigue fallando, usar el proveedor de respaldo y avisar al usuario |
+| **Tiempo límite del cliente LLM (`LLM_TIMEOUT_SECONDS`)** | `30 s` por intento (con hasta 3 reintentos y *backoff* exponencial + *jitter*) |
+| **Tokens máximos de salida (`LLM_MAX_OUTPUT_TOKENS`)** | `2048` tokens |
+| **Temperatura (`LLM_TEMPERATURE`)** | `0.2` (determinismo clínico y baja creatividad) |
+| **Caracteres permitidos de entrada (`Solicitud.texto`)** | Mínimo `5` y máximo `2000` caracteres |
+| **Límite de tasa (`RATE_LIMIT_PER_MINUTE`)** | `10` solicitudes por minuto por `idSesion` (`429 Too Many Requests` + `Retry-After`) |
+| **Tope de iteraciones del Agente (`MAX_ITER`)** | `6` vueltas máximas por consulta |
+| **Umbral de distancia coseno RAG (`distancia_max`)** | `0.155` (abstención automática si ningún fragmento supera la similitud mínima) |
+| **Umbral de confianza en Cinta (`umbral_confianza`)** | `0.85` (desvío automático a revisión humana por debajo del umbral) |
+| **Tolerancia a fallos de proveedor** | Reintento automático ante `429`/`503`/timeout y conmutación transparente al proveedor de respaldo (Groq) |
 
-## Semana 3: herramientas del agente (previstas)
+---
 
-- `evaluar_signos_alarma(respuestas)`
-- `ubicar_establecimiento(ciudad)`
+## 13. Decisiones de Arquitectura (ADRs)
 
-## Decisiones de arquitectura
-
-Ver `docs/09-decisiones.md`: ADR-001 Proveedor y modelo generativo (Aceptado); ADR-002 Patrón de integración: workflow o agente (Aceptado); ADR-003 Manejo de claves y datos personales (Aceptado); ADR-004 Signos de alarma por reglas, no por el modelo (Aceptado).
-
-## Uso de la plantilla
-
-Partieron de la propuesta de la plantilla en: Prompts, Requisitos no funcionales. El grupo la revisó y ajustó.
+Documentadas en detalle en [`docs/09-decisiones.md`](09-decisiones.md) y [`docs/10-automatizacion.md`](10-automatizacion.md):
+- **ADR-001:** Selección de Google Gemini como proveedor principal y Groq como proveedor de respaldo bajo interfaz unificada compatible con OpenAI.
+- **ADR-002:** Evolución de flujo estructurado JSON (`v1`) a Agente de Alcance Controlado con *Function Calling* y confirmación explícita (`v2`).
+- **ADR-003:** Arquitectura *Zero-PII* (identificador de sesión efímero, secretos en Google Secret Manager / variables de entorno y logs sin texto del usuario).
+- **ADR-004:** Evaluación de signos de alarma mediante reglas deterministas en código Python (`evaluar_signos_alarma.py`), nunca delegada al criterio libre del LLM.
+- **ADR-005:** Cinta de automatización de 7 estaciones con compuerta de confianza `0.85` para garantizar cero errores silenciosos.
