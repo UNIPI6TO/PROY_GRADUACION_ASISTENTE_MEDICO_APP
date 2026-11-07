@@ -19,7 +19,7 @@ flowchart TD
         MERGE["Merge del PR a develop o main"] --> RELEASE["release.yml<br/>release-and-tag: Versionado SemVer, Bitácoras y Publicación de Git Tag"]
         RELEASE --> BUMP["Bump SemVer simétrico (app/main.py, package.json, README.md)"]
         BUMP --> CHLOG["Actualiza app/CHANGELOG.md y frontend/CHANGELOG.md"]
-        CHLOG --> TAG["Commit [skip ci] + Publica Git Tag ($TAG)"]
+        CHLOG --> TAG["Commit consolidado de versión + Publica Git Tag ($TAG)"]
         TAG --> DISPATCH["Dispara deploy.yml (--ref $BRANCH -f version_tag=$TAG)"]
     end
 
@@ -56,7 +56,7 @@ flowchart TD
 * **Job:** **`release-and-tag` (`Versionado SemVer, Bitácoras y Publicación de Git Tag`)**
 * **Pasos:**
   1. **Bump SemVer:** Ejecuta `scripts/semver_bumper.py` sobre la rama destino (`main` $\rightarrow$ `vX.Y.Z`, `develop` $\rightarrow$ `vX.Y.Z-SNAPSHOT-RC#`) actualizando simétricamente `app/main.py`, `frontend/package.json` y `README.md`.
-  2. **Changelogs y Commit Consolidado:** Actualiza `app/CHANGELOG.md` y `frontend/CHANGELOG.md` (`scripts/actualizar_changelog.py`) y empuja el commit `[skip ci]`.
+  2. **Changelogs y Commit Consolidado:** Actualiza `app/CHANGELOG.md` y `frontend/CHANGELOG.md` (`scripts/actualizar_changelog.py`) y empuja el commit de versión consolidado.
   3. **Publicación del Git Tag:** Crea y publica el tag formal (`$TAG`).
   4. **Disparo de Despliegue con Tag:** Invoca `gh workflow run deploy.yml --ref "$BRANCH" -f version_tag="$TAG"`, enviando la rama donde se realizó el merge y el tag exacto.
 

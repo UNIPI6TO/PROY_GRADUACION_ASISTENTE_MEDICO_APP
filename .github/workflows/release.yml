@@ -76,7 +76,7 @@ jobs:
           # Commit consolidado de versión y documentación
           if ! git diff --quiet; then
             git add app/main.py frontend/package.json frontend/package-lock.json README.md app/CHANGELOG.md frontend/CHANGELOG.md || true
-            git commit -m "chore(release): bump symmetric version to $TAG [skip ci]" || true
+            git commit -m "chore(release): bump symmetric version to $TAG" || true
             git push origin HEAD:$BRANCH || echo "Advertencia: no se pudo hacer push de la versión en $BRANCH"
           fi
 
@@ -96,7 +96,7 @@ jobs:
               if [ "$BRANCH" = "develop" ]; then
                 TIPO="snapshot"
               fi
-              git tag -a "$TAG" -m "Automated $TIPO tag: $TAG [skip ci]"
+              git tag -a "$TAG" -m "Automated $TIPO tag: $TAG"
               git push origin "$TAG" || echo "Advertencia: no se pudo empujar el tag $TAG"
               echo "Tag $TAG publicado con éxito."
             else
