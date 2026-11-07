@@ -55,7 +55,7 @@ app = FastAPI(
     version=APP_VERSION,
 )
 
-# CORS: permitir orígenes locales de desarrollo y los declarados en CORS_ORIGINS
+# CORS: permitir orígenes locales de desarrollo, producción canónica y variables de entorno
 ORIGENES_LOCALES = [
     "http://localhost:5173",
     "http://localhost:5174",
@@ -63,15 +63,25 @@ ORIGENES_LOCALES = [
     "http://127.0.0.1:5174",
     "http://localhost:8501",
 ]
-origenes_env = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
-origenes_permitidos = list(dict.fromkeys(ORIGENES_LOCALES + origenes_env))
+ORIGENES_PRODUCCION = [
+    "https://guiavital-448060764458.us-central1.run.app",
+]
+
+origenes_env = []
+for var in ["CORS_ORIGINS", "FRONTEND_URL"]:
+    val = os.getenv(var, "").strip()
+    if val:
+        origenes_env.extend([o.strip() for o in val.split(",") if o.strip()])
+
+origenes_permitidos = list(dict.fromkeys(ORIGENES_LOCALES + ORIGENES_PRODUCCION + origenes_env))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origenes_permitidos,
+    allow_origin_regex=r"^https://guiavital(-[a-z0-9-]+)?-(448060764458\.[a-z0-9-]+|[a-z0-9]+-uc)\.a?\.?run\.app$",
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type", "Accept"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Accept", "Authorization", "Origin"],
     expose_headers=["Retry-After"],
 )
 
