@@ -104,27 +104,36 @@ def calculate_next_snapshot(
     base_version: str,
     existing_tags: List[str],
     increment: Optional[str] = None,
+    base_release_version: Optional[str] = None,
 ) -> str:
     """
     Calcula la versión Snapshot para la rama 'develop' con nomenclatura X.Y.Z-SNAPSHOT-RC#.
     Busca los tags existentes y la versión actual para incrementar el correlativo RC# iniciando en RC1.
+    Si se proporciona base_release_version e increment, calcula el core objetivo (MAJOR, MINOR, PATCH).
     """
-    major, minor, patch = parse_semver_core(base_version)
-
-    # Si la versión base no tiene sufijo snapshot o el incremento es MAJOR, se actualiza el core
-    if increment and not "-SNAPSHOT" in base_version:
+    if base_release_version and increment:
+        rel_major, rel_minor, rel_patch = parse_semver_core(base_release_version)
         inc = increment.upper()
         if inc == "MAJOR":
-            major += 1
-            minor = 0
-            patch = 0
+            base_core = f"{rel_major + 1}.0.0"
         elif inc == "MINOR":
-            minor += 1
-            patch = 0
-        elif inc == "PATCH":
-            patch += 1
-
-    base_core = f"{major}.{minor}.{patch}"
+            base_core = f"{rel_major}.{rel_minor + 1}.0"
+        else:
+            base_core = f"{rel_major}.{rel_minor}.{rel_patch + 1}"
+    else:
+        major, minor, patch = parse_semver_core(base_version)
+        if increment and "-SNAPSHOT" not in base_version:
+            inc = increment.upper()
+            if inc == "MAJOR":
+                major += 1
+                minor = 0
+                patch = 0
+            elif inc == "MINOR":
+                minor += 1
+                patch = 0
+            elif inc == "PATCH":
+                patch += 1
+        base_core = f"{major}.{minor}.{patch}"
 
     tag_pattern = re.compile(rf"^v?{re.escape(base_core)}-SNAPSHOT-RC([1-9]\d*)$")
     highest_rc = 0
@@ -188,6 +197,40 @@ def update_app_version_in_file(file_path: Path, new_version: str) -> None:
     file_path.write_text(updated_content, encoding="utf-8")
 
 
+def get_last_git_tag(is_release: bool = False, tags_list: Optional[List[str]] = None) -> Optional[str]:
+    """
+    Obtiene el tag de Git más reciente según el tipo de rama y su ordenación semántica SemVer:
+    - is_release=True (main): último tag formal X.Y.Z (sin snapshot).
+    - is_release=False (develop): último tag snapshot X.Y.Z-SNAPSHOT-RC#.
+    """
+    tags = tags_list if tags_list is not None else get_git_tags()
+    release_pattern = re.compile(r"^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
+    snapshot_pattern = re.compile(r"^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)-SNAPSHOT-RC([1-9]\d*)$")
+
+    if is_release:
+        matching_releases = []
+        for tag in tags:
+            m = release_pattern.match(tag.strip())
+            if m:
+                core = (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+                matching_releases.append((core, tag.strip()))
+        if matching_releases:
+            matching_releases.sort(key=lambda x: x[0], reverse=True)
+            return matching_releases[0][1]
+        return None
+    else:
+        matching_snapshots = []
+        for tag in tags:
+            m = snapshot_pattern.match(tag.strip())
+            if m:
+                core_rc = (int(m.group(1)), int(m.group(2)), int(m.group(3)), int(m.group(4)))
+                matching_snapshots.append((core_rc, tag.strip()))
+        if matching_snapshots:
+            matching_snapshots.sort(key=lambda x: x[0], reverse=True)
+            return matching_snapshots[0][1]
+        return None
+
+
 def get_git_tags() -> List[str]:
     """Obtiene la lista de tags existentes en Git."""
     import subprocess
@@ -206,8 +249,8 @@ def get_git_tags() -> List[str]:
 
 def get_git_commit_messages(base_ref: Optional[str] = None) -> List[str]:
     """
-    Obtiene los mensajes de commit de la rama compare respecto a la base.
-    Soporta entornos de GitHub Actions (origin/{base}..HEAD) y locales ({base}..HEAD).
+    Obtiene los mensajes de commit de la rama compare respecto a la base o último tag.
+    Soporta tags específicos ({tag}..HEAD), ramas de GitHub Actions (origin/{base}..HEAD) y locales.
     """
     import subprocess
 
@@ -221,8 +264,8 @@ def get_git_commit_messages(base_ref: Optional[str] = None) -> List[str]:
 
     clean_base = base_ref.replace("refs/heads/", "").strip()
     candidates = [
-        f"origin/{clean_base}..HEAD",
         f"{clean_base}..HEAD",
+        f"origin/{clean_base}..HEAD",
         "HEAD~1..HEAD",
         "-n 20",
     ]
@@ -256,6 +299,22 @@ def get_git_diff_app() -> str:
         return res.stdout
     except Exception:
         return ""
+
+
+def update_readme_version(new_version: str, readme_path: Path = Path("README.md")) -> None:
+    """Actualiza simétricamente la línea de Versión Actual en README.md."""
+    if not validate_semver(new_version) or not readme_path.exists():
+        return
+
+    try:
+        content = readme_path.read_text(encoding="utf-8")
+        pattern = re.compile(r'(>\s*\*\*Versión Actual:\*\*\s*`)[^`]+(`\s*\(SemVer\))')
+        if pattern.search(content):
+            updated = pattern.sub(rf'\g<1>{new_version}\g<2>', content)
+            readme_path.write_text(updated, encoding="utf-8")
+            print(f"Archivo {readme_path} actualizado con Versión Actual = \"{new_version}\"")
+    except Exception as e:
+        print(f"Advertencia al actualizar versión en README: {e}", file=sys.stderr)
 
 
 def update_frontend_versions(new_version: str, pkg_path: Path = Path("frontend/package.json"), lock_path: Path = Path("frontend/package-lock.json")) -> None:
@@ -313,15 +372,49 @@ def main() -> int:
     current_version = current_match.group(1) if current_match else "0.1.0"
 
     branch_name = args.branch.lower().replace("refs/heads/", "")
-    commits = get_git_commit_messages(base_ref=args.branch)
-    increment = determine_increment(commits)
-    print(f"Commits detectados en compare branch vs '{args.branch}': {len(commits)} (Incremento: {increment})")
+    is_main = "main" in branch_name
 
-    if "main" in branch_name:
-        new_version = calculate_next_release(current_version, increment)
+    # Buscar el último tag según la rama (release formal en main, snapshot en develop)
+    last_tag = get_last_git_tag(is_release=is_main)
+
+    if is_main:
+        # En la rama main se compara contra el último tag release formal (sin snapshot)
+        if last_tag:
+            base_version = last_tag.lstrip("v")
+            print(f"[main] Comparando branch main contra último tag Release: {last_tag}..HEAD (Versión base: {base_version})")
+            commits = get_git_commit_messages(base_ref=last_tag)
+        else:
+            base_version = current_version
+            print(f"[main] No se detectó tag Release previo; usando versión base {base_version} y comparando contra {args.branch}")
+            commits = get_git_commit_messages(base_ref=args.branch)
+
+        increment = determine_increment(commits)
+        print(f"[main] Commits evaluados: {len(commits)} (Incremento sugerido: {increment})")
+        new_version = calculate_next_release(base_version, increment)
     else:
+        # En la rama develop se compara contra el último tag snapshot
+        last_rel = get_last_git_tag(is_release=True)
+        base_release = last_rel.lstrip("v") if last_rel else "0.1.0"
+
+        if last_tag:
+            base_version = last_tag.lstrip("v")
+            print(f"[develop] Comparando branch develop contra último tag Snapshot: {last_tag}..HEAD (Versión base snapshot: {base_version})")
+            commits = get_git_commit_messages(base_ref=last_tag)
+        else:
+            base_version = current_version
+            ref = last_rel if last_rel else args.branch
+            print(f"[develop] No se detectó tag Snapshot previo; comparando contra {ref}")
+            commits = get_git_commit_messages(base_ref=ref)
+
+        increment = determine_increment(commits)
+        print(f"[develop] Commits evaluados: {len(commits)} (Incremento sugerido: {increment})")
         tags = get_git_tags()
-        new_version = calculate_next_snapshot(current_version, tags, increment=increment)
+        new_version = calculate_next_snapshot(
+            base_version,
+            tags,
+            increment=increment,
+            base_release_version=base_release,
+        )
 
     print(f"Nueva versión calculada: {new_version}")
 
@@ -336,6 +429,7 @@ def main() -> int:
         update_app_version_in_file(target_file, new_version)
         print(f"Archivo {target_file} actualizado con APP_VERSION = \"{new_version}\"")
         update_frontend_versions(new_version)
+        update_readme_version(new_version)
 
     return 0
 

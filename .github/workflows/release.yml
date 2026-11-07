@@ -1,4 +1,4 @@
-name: Release & Tag (Post-Merge)
+name: Publicación y Tageo de Versiones (Post-Merge)
 
 on:
   pull_request:
@@ -19,57 +19,76 @@ on:
           - main
 
 jobs:
-  tag-and-changelog:
-    name: Tag Release and Update Changelogs on Merge
+  release-and-tag:
+    name: Versionado SemVer, Bitácoras y Publicación de Git Tag
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      actions: write
 
     steps:
-      - name: Resolve Target Branch
+      - name: Resolver rama de destino
         id: branch_info
         run: |
           RESOLVED_BRANCH="${{ inputs.target_branch || github.base_ref || github.ref_name }}"
           echo "target_branch=${RESOLVED_BRANCH}" >> "$GITHUB_OUTPUT"
           echo "Rama objetivo para release: ${RESOLVED_BRANCH}"
 
-      - name: Checkout Target Branch (Base Branch Post-Merge)
+      - name: Descargar código fuente de la rama de destino
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.branch_info.outputs.target_branch }}
           fetch-depth: 0
           token: ${{ secrets.BUMP_TOKEN }}
 
-      - name: Set up Python 3.12
+      - name: Configurar entorno Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Extract Versions (Backend and Frontend)
-        id: meta
+      # 1. Bump SemVer simétrico (Backend, Frontend y README.md)
+      - name: Calcular e incrementar versión simétrica (SemVer)
+        id: bumper
         run: |
-          BE_VER="$(python -c "import re, pathlib; m = re.search(r'APP_VERSION\s*=\s*[\"|\']([^\"|\']+)[\"|\']', pathlib.Path('app/main.py').read_text(encoding='utf-8')); print(m.group(1) if m else '')")"
-          FE_VER="$(python -c "import json, pathlib; data = json.loads(pathlib.Path('frontend/package.json').read_text(encoding='utf-8')); print(data.get('version', ''))")"
-          
-          # Como las versiones son simétricas, se unifica el tag
-          VER="${BE_VER:-$FE_VER}"
-          echo "version=${VER}" >> "$GITHUB_OUTPUT"
-          echo "backend_version=${BE_VER}" >> "$GITHUB_OUTPUT"
-          echo "frontend_version=${FE_VER}" >> "$GITHUB_OUTPUT"
-          echo "tag=v${VER}" >> "$GITHUB_OUTPUT"
+          TARGET_BRANCH="${{ steps.branch_info.outputs.target_branch }}"
+          python scripts/semver_bumper.py --branch "$TARGET_BRANCH"
 
-      - name: Create Git Tag (Tolerante a fallos)
-        continue-on-error: true
+      # 2. Actualizar Changelogs y commit atómico de release
+      - name: Actualizar bitácoras de cambios y registrar versión en Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.BUMP_TOKEN }}@github.com/${{ github.repository }}.git
-          
-          TAG="${{ steps.meta.outputs.tag }}"
+
           BRANCH="${{ steps.branch_info.outputs.target_branch }}"
-          
+          VER="${{ steps.bumper.outputs.version }}"
+          TAG="${{ steps.bumper.outputs.tag }}"
+
+          # Actualizar changelogs
+          if [ -n "$VER" ] && [ -f "app/CHANGELOG.md" ]; then
+            python scripts/actualizar_changelog.py --version "$VER" --file app/CHANGELOG.md || true
+          fi
+          if [ -n "$VER" ] && [ -f "frontend/CHANGELOG.md" ]; then
+            python scripts/actualizar_changelog.py --version "$VER" --file frontend/CHANGELOG.md || true
+          fi
+
+          # Commit consolidado de versión y documentación
+          if ! git diff --quiet; then
+            git add app/main.py frontend/package.json frontend/package-lock.json README.md app/CHANGELOG.md frontend/CHANGELOG.md || true
+            git commit -m "chore(release): bump symmetric version to $TAG [skip ci]" || true
+            git push origin HEAD:$BRANCH || echo "Advertencia: no se pudo hacer push de la versión en $BRANCH"
+          fi
+
+      # 3. Publicar Git Tag formal apuntando al commit de release
+      - name: Crear y publicar Git Tag formal
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.BUMP_TOKEN }}@github.com/${{ github.repository }}.git
+
+          TAG="${{ steps.bumper.outputs.tag }}"
+          BRANCH="${{ steps.branch_info.outputs.target_branch }}"
+
           if [ -n "$TAG" ] && [ "$TAG" != "v" ]; then
             if ! git rev-parse "$TAG" >/dev/null 2>&1; then
               TIPO="release"
@@ -83,41 +102,3 @@ jobs:
               echo "El tag $TAG ya existe en Git."
             fi
           fi
-
-      - name: Update Application Changelogs (Tolerante a fallos)
-        continue-on-error: true
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.BUMP_TOKEN }}@github.com/${{ github.repository }}.git
-          
-          BRANCH="${{ steps.branch_info.outputs.target_branch }}"
-          BE_VER="${{ steps.meta.outputs.backend_version }}"
-          FE_VER="${{ steps.meta.outputs.frontend_version }}"
-          
-          # 1. Actualizar app/CHANGELOG.md
-          if [ -n "$BE_VER" ] && [ -f "app/CHANGELOG.md" ]; then
-            python scripts/actualizar_changelog.py --version "$BE_VER" --file app/CHANGELOG.md || true
-          fi
-          
-          # 2. Actualizar frontend/CHANGELOG.md
-          if [ -n "$FE_VER" ] && [ -f "frontend/CHANGELOG.md" ]; then
-            python scripts/actualizar_changelog.py --version "$FE_VER" --file frontend/CHANGELOG.md || true
-          fi
-          
-          # 3. Commit y push si hubo cambios en los changelogs
-          if ! git diff --quiet app/CHANGELOG.md frontend/CHANGELOG.md; then
-            git add app/CHANGELOG.md frontend/CHANGELOG.md
-            git commit -m "docs(changelog): registrar versiones post-merge en $BRANCH [skip ci]" || true
-            git push origin HEAD:$BRANCH || echo "Advertencia: no se pudo hacer push del changelog"
-          fi
-
-      - name: Disparar Pipeline de Despliegue Consolidado (deploy.yml)
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.BUMP_TOKEN || secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ steps.meta.outputs.tag }}"
-          BRANCH="${{ steps.branch_info.outputs.target_branch }}"
-          echo "Disparando deploy.yml para la rama $BRANCH con el tag formal $TAG..."
-          gh workflow run deploy.yml --ref "$BRANCH" -f version_tag="$TAG" || echo "Advertencia: no se pudo disparar deploy.yml"

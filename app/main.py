@@ -19,6 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.repositorio.historial import RepositorioHistorial
+from app.flujo import procesar
 from app.schemas import (
     AccionPendiente,
     EstadoAgente,
@@ -26,8 +27,10 @@ from app.schemas import (
     RespuestaAsistente,
     RespuestaChat,
     RespuestaChatV2,
+    RespuestaFlujo,
     Solicitud,
     SolicitudConfirmacion,
+    SolicitudFlujo,
 )
 from app.services.agent import ejecutar_bucle_agente, reanudar_agente
 from app.services.llm import ClienteLLM, ProveedorNoDisponible, SalidaInvalida, cargar_prompt
@@ -39,7 +42,7 @@ from app.tools.evaluar_signos_alarma import (
 )
 
 APP_NAME = "GuíaVital"
-APP_VERSION = "0.2.3-SNAPSHOT-RC2"
+APP_VERSION = "0.3.0-SNAPSHOT-RC1"
 SEMVER_REGEX = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
 
 PROMPT = "system_v4"
@@ -307,6 +310,25 @@ def confirmar_accion_v2(confirmacion: SolicitudConfirmacion,
 def endpoint_signos_alarma(datos: EvaluarSignosAlarmaHttpIn) -> EvaluarSignosAlarmaHttpOut:
     """Endpoint oficial Semana 3: Evaluación determinista de signos de alarma con parámetros del MSP."""
     return evaluar_signos_alarma_clinica(datos)
+
+
+@app.post(
+    "/api/v1/flujo",
+    response_model=RespuestaFlujo,
+    tags=["Flujo Automatizado"],
+    status_code=200,
+)
+def endpoint_flujo(solicitud: SolicitudFlujo) -> RespuestaFlujo:
+    """Cinta de 7 estaciones de GuíaVital: triage y clasificación determinista según directrices del MSP."""
+    res = procesar({"id": solicitud.id, "entrada": solicitud.entrada})
+    return RespuestaFlujo(
+        id=res.get("id", solicitud.id),
+        destino=res.get("destino", "revision"),
+        resultado=res.get("resultado", ""),
+        motivo=res.get("motivo"),
+        nivel=res.get("nivel"),
+        signos_presentes=res.get("signos_presentes"),
+    )
 
 
 def check_health(readiness_probes: Optional[List[Callable[[], bool]]] = None) -> Tuple[Dict[str, Any], int]:
