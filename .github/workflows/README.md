@@ -76,5 +76,5 @@ flowchart TD
 ---
 
 ### 4. Flujos de Soporte
-* **`secretos.yml` (`Auditoría y Detección de Secretos`):** Flujo reusable (`workflow_call` / `workflow_dispatch`) con el job **`gitleaks` (`Escaneo de secretos con Gitleaks`)** invocado por `ci.yml` y `deploy.yml`.
+* **`secretos.yml` (`Auditoría y Detección de Secretos`):** Se ejecuta automáticamente en cada `push` a cualquier rama de trabajo (excepto `main` y `develop` vía `branches-ignore: [main, develop]`), y además actúa como flujo reusable (`workflow_call` / `workflow_dispatch`) con el job **`gitleaks` (`Escaneo de secretos con Gitleaks`)** invocado por `ci.yml` y `deploy.yml`.
 * **`infra-gcp.yml`:** Flujo manual (`workflow_dispatch`) para aprovisionamiento inicial de infraestructura en Google Cloud Platform.
