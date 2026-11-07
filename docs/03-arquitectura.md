@@ -116,9 +116,9 @@ El despliegue se realiza de forma 100% automatizada mediante **GitHub Actions** 
 ```mermaid
 flowchart TD
   subgraph GH["GitHub Actions (CI/CD y Compuertas de Calidad)"]
-    CI["<b>1. Pull Request (ci.yml)</b><br/>Gitleaks + Pytest (92) + Evaluador RAG + Vitest (27) + verify:secrets"]
-    REL["<b>2. Post-Merge (release.yml)</b><br/>Bump SemVer simétrico + Changelogs + Git Tag (vX.Y.Z)"]
-    DEP["<b>3. Pre-Deploy Gate (deploy.yml)</b><br/>Bloqueante: Gitleaks + Pytest (92) + Vitest (27) + verify:secrets"]
+    CI["<b>1. Pull Request (ci.yml)</b><br/>Auditoría de Secretos (Gitleaks)<br/>Test Calidad del Backend (Pytest 92 + Evaluador RAG/Flujo)<br/>Test Calidad del Frontend (Vitest 27)"]
+    REL["<b>2. Post-Merge (release.yml)</b><br/>Versionado SemVer, Bitácoras y Publicación de Git Tag<br/>Dispara deploy.yml (--ref $BRANCH -f version_tag=$TAG)"]
+    DEP["<b>3. Pre-Deploy Gate sobre el Tag (deploy.yml)</b><br/>Test de Secretos (Gitleaks) sobre version_tag<br/>Pruebas del Backend (Pytest 92 + Evaluador RAG/Flujo)<br/>Pruebas del Frontend (Vitest 27)"]
   end
 
   subgraph GCP_PROD["Google Cloud Platform · Producción (project-3e1faa58-1e7d-4e8d-933)"]
@@ -126,12 +126,12 @@ flowchart TD
     SM["Secret Manager<br/>GEMINI_API_KEY · GROQ_API_KEY · Config"]
     CR_BE["Cloud Run: <b>guiavital-backend</b><br/>Python 3.12-slim · UID 10001 · 1 GiB RAM · min=0 max=5"]
     CR_FE["Cloud Run: <b>guiavital</b><br/>Nginx Alpine · Bundle React 19 · min=0 max=5"]
-    SMOKE["Sondas SRE (/manage/health, /manage/info)<br/>+ Smoke Tests en vivo (tests/smoke.py 6/6)"]
+    SMOKE["Sondas SRE (/manage/info, /manage/health)<br/>+ Smoke Tests en vivo (tests/smoke.py 6/6)"]
   end
 
   CI -->|Merge aprobado| REL
-  REL -->|workflow_run exitoso| DEP
-  DEP -->|Pasa todas las pruebas| GAR
+  REL -->|Envía version_tag y rama| DEP
+  DEP -->|Pasa las 3 compuertas| GAR
   GAR --> CR_BE
   SM -. "Inyección segura (--set-secrets)" .-> CR_BE
   CR_BE --> SMOKE

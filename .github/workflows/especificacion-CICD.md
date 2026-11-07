@@ -8,7 +8,7 @@
 ## 1. Reglas y Convenciones de Versionado SemVer
 
 ### 1.1. Convención de Commits y Reglas de Incremento
-Los pipelines de GitHub Actions analizan los mensajes de commit (*Conventional Commits*) para determinar el incremento SemVer:
+Los pipelines de GitHub Actions analizan los mensajes de commit (*Conventional Commits*) mediante `scripts/semver_bumper.py` para determinar el incremento SemVer:
 - **`feat:`** Nuevas funcionalidades o endpoints $\rightarrow$ Incremento **MINOR** (ej. `0.1.0` $\rightarrow$ `0.2.0`).
 - **`fix:`** Corrección de errores o bugs $\rightarrow$ Incremento **PATCH** (ej. `0.1.0` $\rightarrow$ `0.1.1`).
 - **`refactor:`** Reestructuración de código sin alterar funcionalidad externa $\rightarrow$ Incremento **PATCH**.
@@ -18,7 +18,7 @@ Los pipelines de GitHub Actions analizan los mensajes de commit (*Conventional C
 - **`BREAKING CHANGE:` o sufijo `!` (ej. `feat!:`, `fix!:`):** Cambios incompatibles con versiones previas $\rightarrow$ Incremento **MAJOR** (ej. `0.1.0` $\rightarrow$ `1.0.0`).
 
 ### 1.2. Estrategia por Ramas (Releases vs Snapshots con Simetría Backend/Frontend)
-- **Simetría de Versiones y Tags:** Backend y Frontend comparten exactamente la misma versión SemVer y el mismo formato de tag Git (`vX.Y.Z` o `vX.Y.Z-SNAPSHOT-RC#`), garantizando paridad de entrega.
+- **Simetría de Versiones y Tags:** Backend (`app/main.py`), Frontend (`frontend/package.json` y `package-lock.json`) y `README.md` comparten exactamente la misma versión SemVer y el mismo formato de tag Git (`vX.Y.Z` o `vX.Y.Z-SNAPSHOT-RC#`), garantizando paridad de entrega.
 - **Rama `main` (Releases de Producción):**
   - Genera versiones oficiales definitivas con formato SemVer estricto: `X.Y.Z` (sin sufijos pre-release).
   - Tags Git simétricos: `vX.Y.Z`.
@@ -38,85 +38,65 @@ Si el desarrollador ya modificó manualmente `APP_VERSION` en `app/main.py` o `v
 
 ---
 
-## 2. Arquitectura de Ciclo de Vida en Dos Fases
+## 2. Arquitectura del Ciclo de Vida en Tres Etapas (`ci.yml` $\rightarrow$ `release.yml` $\rightarrow$ `deploy.yml`)
 
-Para evitar tags huérfanos o modificaciones prematuras en `CHANGELOG.md` por Pull Requests cancelados o rechazados, el versionado opera en dos fases desacopladas:
+Para evitar ejecuciones redundantes o tags huérfanos por Pull Requests cancelados, el ciclo de vida opera en tres etapas encadenadas donde `release.yml` envía explícitamente el `version_tag` y la rama destino a `deploy.yml`:
 
 ```mermaid
 flowchart TD
-    subgraph FASE_1["FASE 1: Pull Request (Rama Entrante)"]
-        A["PR abierto / actualizado"] --> B{"Ruta modificada"}
-        B -->|app/**| C[".github/workflows/semver.yml"]
-        B -->|frontend/**| D[".github/workflows/semver-frontend.yml"]
-        C --> E["Quality Gate (pytest) + Bump app/main.py"]
-        D --> F["Quality Gate (npm test) + Bump package.json"]
-        E --> G["Commit y Push a la rama del PR [skip ci]"]
-        F --> G
+    subgraph FASE_1["FASE 1: Pull Request (ci.yml · Solo en PR)"]
+        A["Se crea o actualiza PR<br/>(opened, synchronize, reopened)<br/>hacia develop o main"] --> B["secret-scan:<br/>Auditoría de Secretos (Gitleaks)"]
+        A --> C["backend-quality-gate:<br/>Test Calidad del Backend (Pytest y Evaluador RAG/Flujo)"]
+        A --> D["frontend-quality-gate:<br/>Test Calidad del Frontend (Vitest)"]
     end
 
-    subgraph FASE_2["FASE 2: Post-Merge (develop / main)"]
-        H["PR aprobado y fusionado (Merge)"] --> I{"Rama destino"}
-        I -->|Push app/**| J[".github/workflows/tag-backend.yml"]
-        I -->|Push frontend/**| K[".github/workflows/tag-frontend.yml"]
-        J --> L["develop: SNAPSHOT-RC# | main: Release X.Y.Z"]
-        K --> L
-        L --> M["Crea y publica Git Tag (v... / frontend-v...)"]
-        M --> N["Actualiza CHANGELOG.md (actualizar_changelog.py)"]
-        N --> O["Commit y Push directo a la rama base [skip ci]"]
+    subgraph FASE_2["FASE 2: Post-Merge (release.yml · Al completar Merge)"]
+        E["PR Fusionado (merged == true)<br/>en develop o main"] --> F["release-and-tag:<br/>Versionado SemVer, Bitácoras y Publicación de Git Tag"]
+        F --> G["Commit consolidado [skip ci] + Push Git Tag ($TAG)"]
+        G --> H["gh workflow run deploy.yml<br/>--ref $BRANCH -f version_tag=$TAG"]
     end
 
-    subgraph FASE_3["FASE 3: Despliegue Paralelo a Cloud Run"]
-        O -.->|Automático por workflow_run| P[".github/workflows/deploy-backend.yml"]
-        O -.->|Automático por workflow_run| Q[".github/workflows/deploy-frontend.yml"]
-        R["Disparo Manual (workflow_dispatch)"] --> P
-        R --> Q
-        P --> S["Build Docker CPU (450 MB) + Cloud Run Backend"]
-        Q --> T["Build Docker Nginx + Cloud Run Frontend"]
-        S --> U["Sondas SRE /manage/health y /manage/info"]
-        T --> V["Sonda SRE /healthz"]
+    subgraph FASE_3["FASE 3: Despliegue desde el Tag (deploy.yml)"]
+        H ==> I["secret-scan:<br/>Test de Secretos (Gitleaks) sobre version_tag"]
+        H ==> J["quality-gate-backend:<br/>Pruebas del Backend (Pytest + Evaluador RAG/Flujo)"]
+        H ==> K["quality-gate-frontend:<br/>Pruebas del Frontend (Vitest)"]
+        I & J & K ==>|100% aprobados (needs)| L["deploy-backend:<br/>Construcción y Despliegue del Backend en Cloud Run<br/>+ Sondas SRE + tests/smoke.py (6/6)"]
+        L ==>|Backend y Smoke OK (needs)| M["deploy-frontend:<br/>Construcción y Despliegue del Frontend en Cloud Run<br/>+ Sonda /manage/health"]
     end
 
-    FASE_1 --> FASE_2
-    FASE_2 --> FASE_3
+    FASE_1 -->|PR Aprobado y Merged| FASE_2
 ```
 
 ---
 
-## 3. Matriz de Workflows de GitHub Actions
+## 3. Matriz Definitiva de Workflows y Jobs de GitHub Actions
 
-| Archivo de Workflow | Disparador (Trigger) | Evento / Alcance | Responsabilidad (SOLID) |
+| Archivo de Workflow | Disparador (Trigger) | Jobs Configurados (`id`: `name`) | Responsabilidad (SOLID) |
 | :--- | :--- | :--- | :--- |
-| **`semver.yml`** | Automático: `pull_request` (`app/**` o `frontend/**`)<br/>Manual: `workflow_dispatch` | En rama compare | **Fase 1 SemVer Unificado**: Bump simétrico simultáneo en `app/main.py` y `frontend/package.json` en la rama compare (ligero, sin ejecución de pruebas). |
-| **`release.yml`** | Automático: `pull_request` (`closed` & `merged`)<br/>Manual: `workflow_dispatch` | Post-Merge | **Fase 2 Release & Tag**: Tag Git simétrico (`v...`) + Actualización de `app/CHANGELOG.md` y `frontend/CHANGELOG.md` con tolerancia a fallos (`continue-on-error`) + Disparo automático de despliegues. |
-| **`deploy-backend.yml`** | Automático: Post-release (vía `gh workflow run` / `workflow_run`)<br/>Manual: `workflow_dispatch` | Despliegue Paralelo | **Instalación Backend**: Quality Gate previo (`pytest`) + Build Docker CPU + Despliegue `guiavital-backend` a Cloud Run. |
-| **`deploy-frontend.yml`** | Automático: Post-release (vía `gh workflow run` / `workflow_run`)<br/>Manual: `workflow_dispatch` | Despliegue Paralelo | **Instalación Frontend**: Quality Gate previo (`Vitest` & `secrets`) + Inyección URL API + Despliegue `guiavital` a Cloud Run. |
+| **`ci.yml`**<br/>*Integración Continua (Compuertas de Calidad y Pruebas)* | Automático: `pull_request` (`opened`, `synchronize`, `reopened`) hacia `main` y `develop`<br/>Manual: `workflow_dispatch` | - `secret-scan`: **Auditoría de Secretos (Gitleaks)**<br/>- `backend-quality-gate`: **Test Calidad del Backend (Pytest y Evaluador RAG/Flujo)**<br/>- `frontend-quality-gate`: **Test Calidad del Frontend (Vitest)** | **Fase 1 · Compuertas de PR**: Valida secretos (`secretos.yml`), 92 pruebas de backend (`pytest -q`), `eval/evaluar.py`, `verify:secrets` y 27 pruebas de frontend (`npm test`). |
+| **`release.yml`**<br/>*Publicación y Tageo de Versiones (Post-Merge)* | Automático: `pull_request` (`closed` con `merged == true`) hacia `main` y `develop`<br/>Manual: `workflow_dispatch` | - `release-and-tag`: **Versionado SemVer, Bitácoras y Publicación de Git Tag** | **Fase 2 · Versionado, Tag y Disparo**: Ejecuta `scripts/semver_bumper.py`, actualiza bitácoras (`scripts/actualizar_changelog.py`), publica el Git Tag (`$TAG`) y dispara `deploy.yml` enviando `--ref "$BRANCH" -f version_tag="$TAG"`. |
+| **`deploy.yml`**<br/>*Pipeline de Despliegue Continuo a GCP Cloud Run* | Automático desde `release.yml` o manual: `workflow_dispatch` (`inputs.version_tag`) | - `secret-scan`: **Test de Secretos (Gitleaks) sobre `${{ inputs.version_tag }}`**<br/>- `quality-gate-backend`: **Pruebas del Backend (Pytest + Evaluador RAG/Flujo)**<br/>- `quality-gate-frontend`: **Pruebas del Frontend (Vitest)**<br/>- `deploy-backend`: **Construcción y Despliegue del Backend en Cloud Run**<br/>- `deploy-frontend`: **Construcción y Despliegue del Frontend en Cloud Run** | **Fase 3 · Compuertas sobre el Tag + Docker + Cloud Run**: Descarga el código desde `inputs.version_tag`, ejecuta los 3 jobs bloqueantes de secretos y pruebas, y solo si aprueban construye las imágenes Docker, despliega en Cloud Run y ejecuta `tests/smoke.py` (6/6). |
+| **`secretos.yml`**<br/>*Auditoría y Detección de Secretos* | Automático: `push` (`branches-ignore: [main, develop]`)<br/>Reusable: `workflow_call`<br/>Manual: `workflow_dispatch` | - `gitleaks`: **Escaneo de secretos con Gitleaks** | Valida en cada `push` a ramas de trabajo (`feature/*`, `fix/*`, etc., excluyendo `main` y `develop`) y como flujo reusable en PR (`ci.yml`) y Despliegue (`deploy.yml`) mediante `gitleaks/gitleaks-action@v3`. |
+| **`infra-gcp.yml`** | Manual: `workflow_dispatch` | Aprovisionamiento GCP | Creación idempotente de Artifact Registry, cuentas de servicio IAM y secretos en Secret Manager. |
 
 ---
 
-## 4. Historias de Usuario SRE
+## 4. Historias de Usuario SRE Cumplidas
 
-### HU-CICD-01: Versionado SemVer y Bump en Pull Request (Fase 1)
-- **Historia:** Como SRE, quiero que al abrir o sincronizar un Pull Request hacia `develop` o `main`, el pipeline calcule e incremente la versión exclusivamente en la rama compare (`github.head_ref`), ignorando modificaciones en los archivos CHANGELOG, para asegurar trazabilidad antes de la integración sin alterar la rama base ni ciclar ejecuciones.
+### HU-CICD-01: Validación Exclusiva en Pull Request (`ci.yml`)
 - **Criterios de Aceptación:**
-  1. Si el PR modifica código en `app/**` o `frontend/**`, calcula la versión SemVer simétrica e incrementa los archivos correspondientes.
-  2. **Exclusión de Changelogs:** La modificación de `app/CHANGELOG.md`, `frontend/CHANGELOG.md` o `CHANGELOG.md` **no** activa el pipeline de SemVer (`paths` con `!**CHANGELOG.md`).
-  3. **Actualización de Compare Branch:** El commit con la versión incrementada se empuja exclusivamente a la rama compare (`HEAD:${{ github.head_ref }}`), **nunca** a la rama base (`base_ref`).
-  4. **No** crea tags Git ni modifica archivos changelog en esta fase.
+  1. `ci.yml` se activa **únicamente** cuando se crea o actualiza un Pull Request (`opened`, `synchronize`, `reopened`) hacia `develop` o `main`, evitando ejecuciones duplicadas en eventos `push`.
+  2. Ejecuta en paralelo los tres jobs: `Auditoría de Secretos (Gitleaks)`, `Test Calidad del Backend (Pytest y Evaluador RAG/Flujo)` y `Test Calidad del Frontend (Vitest)`.
 
-### HU-CICD-02: Publicación de Tag Simétrico y Actualización de Changelogs Post-Merge (Fase 2)
-- **Historia:** Como SRE, quiero que cuando un PR se fusione en `develop` o `main`, se genere el tag formal simétrico de Git (`v...`) y se actualice automáticamente la bitácora específica de cada aplicación (`app/CHANGELOG.md` para backend y `frontend/CHANGELOG.md` para frontend, registrando 'No hubo cambios' si no hubo commits), para garantizar paridad y trazabilidad limpia.
+### HU-CICD-02: Versionado Simétrico, Tageo y Disparo de Despliegue (`release.yml`)
 - **Criterios de Aceptación:**
-  1. En `develop`, genera tags simétricos con formato `vX.Y.Z-SNAPSHOT-RC#`.
-  2. En `main`, genera tags simétricos de release oficial `vX.Y.Z`.
-  3. Ejecuta `scripts/actualizar_changelog.py --version "$VERSION" --file <ruta>`, promocionando la sección `[Unreleased]`. Si no hay notas o commits en la carpeta, registra `- No hubo cambios.` sin fallar.
-  4. Realiza commit y push directo a la rama base con `[skip ci]`.
+  1. Se activa automáticamente cuando el PR hacia `develop` o `main` se cierra con `merged == true`.
+  2. Incrementa simétricamente la versión en `app/main.py`, `frontend/package.json`, `frontend/package-lock.json` y `README.md` (`X.Y.Z-SNAPSHOT-RC#` en `develop` y `X.Y.Z` en `main`).
+  3. Promociona las bitácoras `app/CHANGELOG.md` y `frontend/CHANGELOG.md`, publica el Git Tag formal y dispara `deploy.yml` enviándole la rama donde se realizó el merge (`--ref "$BRANCH"`) y el tag (`-f version_tag="$TAG"`).
 
-### HU-CICD-03: Despliegue Continuo en Paralelo y Manual a GCP Cloud Run (Fase 3)
-- **Historia:** Como SRE, quiero contar con workflows de instalación y despliegue desacoplados que ejecuten su Quality Gate de pruebas automatizadas antes del build y puedan ejecutarse automáticamente tras el merge en paralelo o dispararse manualmente por demanda, para minimizar el tiempo de entrega y garantizar que ningún artefacto defectuoso llegue a producción.
+### HU-CICD-03: Despliegue Continuo desde el Tag Bloqueado por Pruebas y Secretos (`deploy.yml`)
 - **Criterios de Aceptación:**
-  1. `deploy-backend.yml` y `deploy-frontend.yml` ejecutan sus pruebas unitarias respectivas (`pytest` y `npm test`) como paso bloqueante antes de la compilación de contenedores y despliegue a Cloud Run.
-  2. `deploy-backend.yml` y `deploy-frontend.yml` pueden ejecutarse manualmente en cualquier momento mediante `workflow_dispatch`.
-  3. Al completarse el post-merge (`release.yml`), los workflows de despliegue correspondientes se activan automáticamente vía `workflow_run`.
-  4. Si ambos servicios se fusionan simultáneamente, ambos despliegues se ejecutan **en paralelo** sin bloquearse entre sí.
-  5. `deploy-backend.yml` utiliza la imagen optimizada con PyTorch CPU (`~450 MB`), asigna memoria de `1Gi` (1024 MiB), inyecta secretos desde GCP Secret Manager y aplica el label `version`.
-  6. `deploy-frontend.yml` resuelve dinámicamente la URL del backend mediante `gcloud run services describe`, compila los estáticos con Nginx, aplica el label `version` y verifica los endpoints SRE `/manage/health` y `/manage/info` del frontend y la salud del backend.
+  1. Recibe `inputs.version_tag` de `release.yml` sobre la rama fusionada (`develop` o `main`) sin requerir modificaciones en `secretos.yml`.
+  2. Antes de construir cualquier imagen Docker, ejecuta desde ese tag los 3 jobs bloqueantes (`Test de Secretos (Gitleaks) sobre ${{ inputs.version_tag }}`, `Pruebas del Backend (Pytest + Evaluador RAG/Flujo)` y `Pruebas del Frontend (Vitest)`). Si cualquiera falla, el pipeline se detiene y no toca Cloud Run.
+  3. Si las 3 compuertas aprueban, construye y publica la imagen Docker del backend etiquetada con `inputs.version_tag` en Artifact Registry, la despliega en Cloud Run vinculando Secret Manager y ejecuta las sondas `/manage/info`, `/manage/health` y `tests/smoke.py` (6/6 casos en vivo).
+  4. Solo tras aprobar los smoke tests del backend, construye la imagen Docker del frontend desde `inputs.version_tag`, la despliega en Cloud Run y verifica su endpoint `/manage/health`.
