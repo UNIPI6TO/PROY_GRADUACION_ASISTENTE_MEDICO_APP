@@ -10,6 +10,8 @@ import {
   Check,
   X,
   Cpu,
+  Phone,
+  MessageSquare,
 } from "lucide-react";
 import type { MensajeHistorialUI } from "../types/estados";
 
@@ -310,6 +312,160 @@ export function renderizarTextoEstructurado(texto: string): React.ReactNode {
  * - Espacio para fuentes del RAG (MSP / OPS)
  * - Evaluación básica con pulgares arriba / abajo
  */
+function formatearNombreHerramienta(nombre: string): string {
+  const mapeo: Record<string, string> = {
+    notificar_contacto_emergencia: "Notificación a contacto de emergencia",
+    buscar_centro_salud: "Búsqueda de centro de salud",
+    evaluar_signos_alarma: "Evaluación de signos de alarma",
+    consultar_guia_msp: "Consulta de guía MSP",
+  };
+  return mapeo[nombre] || nombre.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+}
+
+/**
+ * Normaliza cualquier variación de número telefónico (especialmente móviles de Ecuador)
+ * al estándar internacional E.164 sin '+' requerido por https://wa.me/
+ */
+export function normalizarTelefonoWhatsApp(entrada: string): string | null {
+  const limpio = entrada.trim();
+  if (!limpio || limpio.includes("@")) return null;
+
+  // Convertir prefijo internacional '00' al inicio en '+'
+  const sinDobleCero = limpio.replace(/^00/, "+");
+  const tieneMasInicial = sinDobleCero.startsWith("+");
+
+  // Extraer únicamente los dígitos
+  const digitos = sinDobleCero.replace(/\D/g, "");
+  if (digitos.length < 9 || digitos.length > 15) return null;
+
+  // 1. Si ya empieza con el código de Ecuador (593)
+  if (digitos.startsWith("593")) {
+    const resto = digitos.slice(3);
+    // Ej: +593 0991234567 (13 dígitos con el 0 local incluido) -> quitar el 0
+    if (resto.startsWith("0") && (resto.length === 10 || resto.length === 9)) {
+      return `593${resto.slice(1)}`;
+    }
+    // Ej: +593 991234567 (9 dígitos móviles) o +593 22345678 (8 dígitos fijo)
+    if (resto.length === 9 || resto.length === 8) {
+      return digitos;
+    }
+  }
+
+  // 2. Si el usuario puso '+' con otro código de país internacional (ej. +57, +1, +34)
+  if (tieneMasInicial && !digitos.startsWith("593")) {
+    return digitos.length >= 10 ? digitos : null;
+  }
+
+  // 3. Celular de Ecuador en formato nacional de 10 dígitos: 09XXXXXXXX
+  if (digitos.length === 10 && digitos.startsWith("09")) {
+    return `593${digitos.slice(1)}`;
+  }
+
+  // 4. Celular de Ecuador de 9 dígitos sin el 0 inicial: 9XXXXXXXX
+  if (digitos.length === 9 && digitos.startsWith("9")) {
+    return `593${digitos}`;
+  }
+
+  // 5. Fijo de Ecuador de 9 dígitos con 0 inicial: 02XXXXXXX - 07XXXXXXX
+  if (digitos.length === 9 && /^0[2-7]/.test(digitos)) {
+    return `593${digitos.slice(1)}`;
+  }
+
+  // 6. Fallback para números internacionales sin '+' (11 a 15 dígitos)
+  if (digitos.length >= 11 && digitos.length <= 15) {
+    return digitos;
+  }
+
+  return null;
+}
+
+/**
+ * Construye la URL segura de WhatsApp (https://wa.me/<telefono>?text=<mensaje>)
+ */
+export function construirEnlaceWhatsApp(
+  argumentos: Record<string, unknown>
+): string | null {
+  const crudo = String(argumentos.destinatario || argumentos.telefono || "");
+  const mensaje = String(argumentos.mensaje || argumentos.texto || "").trim();
+
+  const telefonoNormalizado = normalizarTelefonoWhatsApp(crudo);
+  if (!telefonoNormalizado) return null;
+
+  const query = mensaje ? `?text=${encodeURIComponent(mensaje)}` : "";
+  return `https://wa.me/${telefonoNormalizado}${query}`;
+}
+
+function formatearEtiquetaParametro(clave: string): string {
+  const mapeo: Record<string, string> = {
+    destinatario: "Contacto de emergencia",
+    mensaje: "Mensaje a transmitir",
+    canton: "Cantón",
+    parroquia: "Parroquia",
+    tipo: "Tipo de centro",
+    dias_fiebre: "Días con fiebre",
+    edad: "Edad del paciente",
+  };
+  return mapeo[clave] || clave.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+}
+
+function renderizarArgumentosAccion(
+  nombreHerramienta: string,
+  argumentos: Record<string, unknown>
+): React.ReactNode {
+  if (nombreHerramienta === "notificar_contacto_emergencia") {
+    const destinatarioCrudo = String(
+      argumentos.destinatario || argumentos.telefono || "No especificado"
+    );
+    const telefonoNormalizado = normalizarTelefonoWhatsApp(destinatarioCrudo);
+    const destinatarioMostrar = telefonoNormalizado
+      ? `+${telefonoNormalizado}`
+      : destinatarioCrudo;
+    const mensajeTexto = String(argumentos.mensaje || argumentos.texto || "");
+
+    return (
+      <div className="hitl-tarjeta-notificacion">
+        <div className="hitl-campo">
+          <span className="hitl-campo-etiqueta">
+            <Phone size={14} aria-hidden="true" />
+            <span>Contacto destinatario:</span>
+          </span>
+          <span className="hitl-campo-valor hitl-destinatario">{destinatarioMostrar}</span>
+        </div>
+
+        <div className="hitl-campo hitl-campo-mensaje">
+          <span className="hitl-campo-etiqueta">
+            <MessageSquare size={14} aria-hidden="true" />
+            <span>Mensaje preparado para enviar:</span>
+          </span>
+          <blockquote className="hitl-mensaje-cita">
+            {mensajeTexto ? `«${mensajeTexto}»` : "(Mensaje vacío)"}
+          </blockquote>
+        </div>
+      </div>
+    );
+  }
+
+  const entradas = Object.entries(argumentos);
+  if (entradas.length === 0) {
+    return <p className="hitl-sin-parametros">Sin parámetros adicionales requeridos.</p>;
+  }
+
+  return (
+    <div className="hitl-tabla-parametros">
+      {entradas.map(([clave, valor]) => (
+        <div key={clave} className="hitl-fila-parametro">
+          <span className="hitl-param-clave">{formatearEtiquetaParametro(clave)}:</span>
+          <span className="hitl-param-valor">
+            {typeof valor === "object" && valor !== null
+              ? JSON.stringify(valor)
+              : String(valor)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export const MensajeChat: React.FC<MensajeChatProps> = ({
   mensaje,
   onValorar,
@@ -356,27 +512,30 @@ export const MensajeChat: React.FC<MensajeChatProps> = ({
       {/* Renderizado estructurado y seguro (OWASP LLM05): convierte negritas, cursivas y viñetas */}
       {mensaje.texto && renderizarTextoEstructurado(mensaje.texto)}
 
-      {/* Tarjeta de autorización humana (Semana 3 · Human-in-the-Loop / Agente v2) */}
+      {/* Tarjeta de autorización (Semana 3 · Agente v2) */}
       {tieneAccionPendiente && mensaje.accionPendiente && (
         <div className="bloque-confirmacion-agente" role="alert">
           <div className="encabezado-confirmacion">
-            <ShieldCheck size={20} className="icono-confirmacion" />
-            <div>
-              <strong>Autorización Humana Requerida (Semana 3 · HITL)</strong>
-              <p className="advertencia-hitl">
-                {mensaje.accionPendiente.advertencia ||
-                  "El agente solicita permiso para ejecutar la siguiente acción clínica:"}
-              </p>
+            <ShieldCheck size={22} className="icono-confirmacion" aria-hidden="true" />
+            <div className="info-confirmacion-texto">
+              <strong className="titulo-confirmacion">Autorización Requerida</strong>
             </div>
           </div>
 
           <div className="detalle-herramienta-agente">
-            <span className="nombre-herramienta">
-              Herramienta: <code>{mensaje.accionPendiente.nombre_herramienta}</code>
-            </span>
-            <pre className="argumentos-herramienta">
-              {JSON.stringify(mensaje.accionPendiente.argumentos, null, 2)}
-            </pre>
+            {renderizarArgumentosAccion(
+              mensaje.accionPendiente.nombre_herramienta,
+              (mensaje.accionPendiente.argumentos as Record<string, unknown>) || {}
+            )}
+            <div className="pie-herramienta-agente">
+              <span className="etiqueta-accion-nombre">
+                Acción solicitada:{" "}
+                <strong>
+                  {formatearNombreHerramienta(mensaje.accionPendiente.nombre_herramienta)}
+                </strong>
+                <span className="sr-only">{mensaje.accionPendiente.nombre_herramienta}</span>
+              </span>
+            </div>
           </div>
 
           {onConfirmarAccion && (
@@ -384,9 +543,18 @@ export const MensajeChat: React.FC<MensajeChatProps> = ({
               <button
                 type="button"
                 className="btn-aprobar-accion"
-                onClick={() =>
-                  onConfirmarAccion(mensaje.accionPendiente!.tool_call_id, true)
-                }
+                onClick={() => {
+                  const accion = mensaje.accionPendiente!;
+                  if (accion.nombre_herramienta === "notificar_contacto_emergencia") {
+                    const urlWa = construirEnlaceWhatsApp(
+                      (accion.argumentos as Record<string, unknown>) || {}
+                    );
+                    if (urlWa && typeof window !== "undefined" && typeof window.open === "function") {
+                      window.open(urlWa, "_blank", "noopener,noreferrer");
+                    }
+                  }
+                  onConfirmarAccion(accion.tool_call_id, true);
+                }}
               >
                 <Check size={16} />
                 <span>Aprobar acción</span>

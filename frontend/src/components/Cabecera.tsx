@@ -21,10 +21,25 @@ export const Cabecera: React.FC<CabeceraProps> = ({
   onAbrirChecklist,
 }) => {
   const [menuMovilAbierto, setMenuMovilAbierto] = useState<boolean>(false);
-  const [modalAvisoAbierto, setModalAvisoAbierto] = useState<boolean>(false);
+  const [modalAvisoAbierto, setModalAvisoAbierto] = useState<boolean>(() => {
+    try {
+      return window.sessionStorage.getItem("aviso_ia_aceptado") !== "1";
+    } catch {
+      return true;
+    }
+  });
 
   const alternarMenu = () => setMenuMovilAbierto((prev) => !prev);
   const cerrarMenu = () => setMenuMovilAbierto(false);
+
+  const aceptarAviso = () => {
+    try {
+      window.sessionStorage.setItem("aviso_ia_aceptado", "1");
+    } catch {
+      // Ignorar errores de sessionStorage en entornos restringidos
+    }
+    setModalAvisoAbierto(false);
+  };
 
   return (
     <>
@@ -91,16 +106,17 @@ export const Cabecera: React.FC<CabeceraProps> = ({
           </div>
         </div>
 
-        {/* Aviso permanente solo visible en pantallas grandes o sintetizado */}
+        {/* Aviso permanente visible en la primera pantalla (s4g) */}
         <div className="aviso-permanente desktop-only" role="note">
-          <strong>Aviso ético (Zero-PII):</strong> Asistente preventivo basado en guías del MSP.{" "}
-          <strong>Nunca diagnostica ni receta</strong> (no automedicarse con ibuprofeno ni aspirina). No ingrese datos personales.
+          <strong>Aviso de IA y Datos:</strong> Hablas con una IA que puede equivocarse y{" "}
+          <strong>no reemplaza al médico</strong>. No guarda datos personales; solo conserva un ID
+          anónimo de sesión y el historial temporal durante tu sesión activa.
           <button
             type="button"
             className="enlace-aviso-detalle"
             onClick={() => setModalAvisoAbierto(true)}
           >
-            Ver aviso completo
+            Ver condiciones
           </button>
         </div>
       </header>
@@ -177,7 +193,7 @@ export const Cabecera: React.FC<CabeceraProps> = ({
         </>
       )}
 
-      {/* Modal accesible para el Aviso Ético y de Privacidad (Zero-PII) */}
+      {/* Pop-up de Aviso al Usuario y Condiciones de Uso (s4g) */}
       {modalAvisoAbierto && (
         <div
           className="modal-backdrop"
@@ -185,17 +201,17 @@ export const Cabecera: React.FC<CabeceraProps> = ({
           aria-modal="true"
           aria-labelledby="titulo-aviso-privacidad"
         >
-          <div className="modal-contenedor">
+          <div className="modal-contenedor modal-aviso-corto">
             <div className="modal-cabecera">
               <h2 id="titulo-aviso-privacidad">
                 <Info size={22} aria-hidden="true" />
-                <span>Aviso Ético y de Privacidad (Zero-PII)</span>
+                <span>Aviso de IA y Tratamiento de Datos</span>
               </h2>
               <button
                 type="button"
                 className="btn-cerrar"
-                onClick={() => setModalAvisoAbierto(false)}
-                aria-label="Cerrar aviso ético"
+                onClick={aceptarAviso}
+                aria-label="Cerrar aviso"
               >
                 <X size={20} />
               </button>
@@ -203,31 +219,25 @@ export const Cabecera: React.FC<CabeceraProps> = ({
 
             <div className="contenido-aviso-modal">
               <div className="caja-alerta-medica">
-                <strong>Importante para su salud:</strong> Esta herramienta utiliza modelos de
-                Inteligencia Artificial únicamente para orientación preventiva basada en las guías
-                del Ministerio de Salud Pública del Ecuador (MSP) y la OPS.
+                Antes de usar <strong>GuíaVital</strong>, ten en cuenta estas condiciones:
               </div>
 
               <ul>
                 <li>
-                  <strong>Cero Diagnóstico y Cero Prescripción:</strong> GuíaVital nunca reemplaza
-                  la consulta médica profesional ni emite recetas médicas.
+                  <strong>Hablas con una IA:</strong> Este asistente usa Inteligencia Artificial
+                  basada en guías del MSP y la OPS. <strong>Puede equivocarse</strong>.
                 </li>
                 <li>
-                  <strong>Alerta de Automedicación:</strong> Evite automedicarse. El uso de
-                  antiinflamatorios como <em>ibuprofeno</em>, <em>aspirina</em>, <em>diclofenaco</em> o
-                  <em>naproxeno</em> está contraindicado ante sospecha de dengue por riesgo grave de
-                  hemorragias.
+                  <strong>No reemplaza al profesional de salud:</strong> Es solo orientativo; no
+                  diagnostica ni receta (evita automedicarte con ibuprofeno o aspirina). Ante
+                  síntomas críticos, acude a un centro médico o llama al 911.
                 </li>
                 <li>
-                  <strong>Privacidad Zero-PII:</strong> No ingrese nombres propios, números de cédula,
-                  direcciones ni información de contacto. El sistema opera de forma anónima mediante
-                  un identificador aleatorio de sesión.
-                </li>
-                <li>
-                  <strong>Signos de Alarma:</strong> Si presenta dolor abdominal intenso, vómitos
-                  persistentes, sangrado de mucosas o decaimiento severo, acuda de inmediato al
-                  Centro de Salud u Hospital más cercano o llame al 911.
+                  <strong>Qué datos guarda y por cuánto tiempo:</strong> No solicita ni almacena
+                  datos personales (Zero-PII). Solo guarda un código de sesión anónimo en tu
+                  navegador (<code>sessionStorage</code>, se borra al cerrar la pestaña) y los
+                  mensajes de la conversación temporalmente durante la vigencia de la sesión e
+                  instancia activa.
                 </li>
               </ul>
 
@@ -235,9 +245,9 @@ export const Cabecera: React.FC<CabeceraProps> = ({
                 <button
                   type="button"
                   className="btn-primario-modal"
-                  onClick={() => setModalAvisoAbierto(false)}
+                  onClick={aceptarAviso}
                 >
-                  Entendido
+                  Acepto las condiciones
                 </button>
               </div>
             </div>

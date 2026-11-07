@@ -1,7 +1,7 @@
 # GuíaVital · Asistente de Orientación en Salud Pública sobre Dengue y Arbovirosis
 
 > **Nombre Oficial / Nombre Corto (`APP_NAME`):** `GuíaVital`  
-> **Versión Actual:** `0.3.2` (SemVer)  
+> **Versión Actual:** `0.4.0-SNAPSHOT-RC1` (SemVer)  
 > **Caso:** 05 - Grupo 5 · Seminario de Titulación UNIANDES  
 > **Repositorio Oficial en GitHub:** `https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP`  
 > **Despliegue Público Frontend (Cloud Run):** `https://guiavital-448060764458.us-central1.run.app`  
@@ -9,13 +9,34 @@
 
 ---
 
-## Integrantes y Responsabilidades
+## ⚠️ Aviso al Usuario · Uso de IA y Tratamiento de Datos (`s4g`)
 
-| Integrante | Rol | Responsabilidades Específicas |
+> **Condiciones de uso informadas en la primera pantalla de la aplicación:**
+> - **Hablas con una IA:** GuíaVital utiliza modelos de Inteligencia Artificial generativa apoyados en guías oficiales del MSP y la OPS. **Puede equivocarse o presentar imprecisiones.**
+> - **No reemplaza al profesional de salud:** Las respuestas son estrictamente de orientación preventiva; **nunca diagnostican ni recetan medicamentos** (evita automedicarte con ibuprofeno, aspirina o diclofenaco). Ante signos de alarma, acude de inmediato a un centro de salud o llama al **ECU-911**.
+> - **Qué datos guarda y por cuánto tiempo:** Opera bajo una política **Zero-PII** (no solicita ni guarda nombres, cédulas ni datos personales). Únicamente conserva:
+>   1. Un identificador anónimo de sesión (`idSesion`) en el navegador (`sessionStorage`), que **se elimina automáticamente al cerrar la pestaña** o al pulsar *"Nueva consulta"*.
+>   2. Los turnos de conversación asociados a ese ID anónimo en una base temporal (`data/historial.db`) **solo durante la sesión activa / vida efímera del contenedor** en Cloud Run, y métricas técnicas sin texto del usuario en `logs/llm.jsonl`.
+
+---
+
+## 🎓 Declaración del Grupo · Uso de IA y Tabla de Aportes (`s4i`)
+
+### 1. Herramientas de IA Utilizadas, Propósito y Verificación
+
+| Herramienta de IA | Para qué se utilizó | Cómo verificamos e inspeccionamos lo generado |
 |---|---|---|
-| **Luis Cahuana** | Tech Lead | Arquitectura general del sistema, diseño y calibración del pipeline RAG (`intfloat/multilingual-e5-small` + ChromaDB), diseño de herramientas deterministas clínicas MSP, versionado de prompts del sistema y supervisión de calidad técnica. |
-| **Wilson Salinas** | Builder | Desarrollo de la interfaz web en React 19 + TypeScript, máquina de estados finitos, integración de endpoints v1 y v2 (Agente de alcance controlado con *Function Calling*), orquestación de CI/CD en GitHub Actions y despliegue continuo en Google Cloud Run. |
-| **Rafael Minaya** | QA / Seguridad | Estrategia y diseño de pruebas automatizadas unitarias e integrales (`pytest`, `Vitest`), auditoría de seguridad y formulación de la matriz de riesgos OWASP LLM (`docs/riesgos.md`), límite de tasa (`LimitadorTasa`), delimitación anti-inyección y prevención de fuga de secretos. |
+| **Google Gemini (`gemini-2.0-flash` / `gemini-3.8-flash`) y Groq (`llama-3.1-8b-instant`)** | Motor conversacional en tiempo de ejecución para síntesis de guías MSP/OPS y orquestación de llamadas a herramientas (*Function Calling*). | Validación en frontera con **Pydantic v2 (`extra="forbid"`)**, evaluación automatizada contra el conjunto de referencia (`eval/evaluar.py` con 87% acierto top-3 y 100% citas) y pruebas de humo en vivo (`tests/smoke.py`). |
+| **Modelo de Embeddings (`intfloat/multilingual-e5-small`)** | Vectorización semántica local de las guías clínicas del MSP y OPS en ChromaDB. | Pruebas unitarias deterministas en `tests/test_retriever.py` verificando distancias coseno, prefijos asimétricos (`query:` / `passage:`) y recuperación exacta de secciones normativas. |
+| **Asistentes de Código IA (GitHub Copilot / Gemini Code Assist)** | Apoyo en autocompletado de boilerplate en FastAPI/React, redacción de casos de prueba y estructuración de estilos CSS accesibles. | Revisión manual línea por línea por los 3 integrantes, ejecución obligatoria de **92 pruebas en `pytest`** y **27 pruebas en `Vitest`**, escaneo de secretos (`gitleaks` / `npm run verify:secrets`) y comprensión total de cada módulo para su defensa ante el tribunal. |
+
+### 2. Tabla de Aportes por Integrante
+
+| Integrante | Rol | Aportes y Componentes Desarrollados / Verificados |
+|---|---|---|
+| **Luis Cahuana** | Tech Lead | Arquitectura general del sistema, ingesta y calibración del pipeline RAG (`scripts/ingest.py`, `app/services/retriever.py` con ChromaDB + E5), herramientas clínicas deterministas (`app/tools/`), evolución de prompts (`system_v1.md` a `system_v4.md`, `system_agente.md`) y evaluación de calidad (`eval/evaluar.py`). |
+| **Wilson Salinas** | Builder | Desarrollo del Frontend en React 19 + TypeScript (`frontend/src/`), máquina de 7 estados (`estados.ts`), integración de endpoints v1/v2 y confirmación de acciones (*HITL*), contenedorización (`Dockerfile`) y despliegue continuo en Google Cloud Run (`deploy.yml`, `release.yml`). |
+| **Rafael Minaya** | QA / Seguridad | Diseño y ejecución de suites de pruebas automatizadas (`tests/` en `pytest`, `frontend/tests/` en `Vitest` + `MSW`, `tests/smoke.py`), controles de seguridad OWASP LLM (`app/services/seguridad.py`, `LimitadorTasa`, sanitización `DOMPurify`, errores RFC 9457) y matriz de riesgos (`docs/riesgos.md`). |
 
 ---
 
@@ -457,6 +478,15 @@ El agente opera bajo **tres decisiones estrictas en código** (no delegadas al p
 
 ## Cómo Correr las Pruebas y la Evaluación (Con Resultados Reales)
 
+> **Resumen consolidado de ejecución de pruebas:**
+> - **Backend (`pytest`):** **92 ejecutadas / 92 pasadas** (14 archivos de prueba, 100% éxito).
+> - **Frontend (`Vitest`):** **27 ejecutadas / 27 pasadas** (4 archivos de prueba, 100% éxito).
+> - **Humo en Producción (`tests/smoke.py`):** **6 ejecutadas / 6 pasadas** (100% éxito).
+> - **Auditoría de Secretos (`Gitleaks` + `verify:secrets`):** **0 secretos expuestos** (100% éxito).
+> - **Total de pruebas automatizadas del sistema:** **125 ejecutadas / 125 pasadas (100%)**.
+>
+> *Compuertas en CI/CD:* Tanto en cada Pull Request (`ci.yml`) como antes de cada despliegue a producción en Cloud Run (`deploy.yml`), se ejecutan de forma bloqueante el escaneo de secretos (`secret-scan` / Gitleaks + `verify:secrets`), las 92 pruebas del backend (`pytest -q`), el evaluador del plan de calidad (`eval/evaluar.py`) y las 27 pruebas del frontend (`npm test`). Si cualquiera falla, el despliegue se detiene inmediatamente.
+
 ### 1. Pruebas Automatizadas del Backend (`pytest`)
 Las pruebas del backend utilizan dobles (*mocks*) del cliente LLM, base de datos SQLite en memoria (`:memory:`) y relojes simulados, ejecutándose sin conexión a internet ni consumo de saldo de API.
 
@@ -464,28 +494,29 @@ Las pruebas del backend utilizan dobles (*mocks*) del cliente LLM, base de datos
 ```bash
 pytest -q
 ```
-**Resultado real obtenido en consola:**
+**Resultado real obtenido en consola (92 ejecutadas, 92 pasadas):**
 ```text
-......................................................................................... [100%]
-89 passed in 4.25s
+........................................................................ [ 78%]
+....................                                                     [100%]
+92 passed in 57.69s
 ```
 
-| Archivo de Prueba | Qué Valida |
-|---|---|
-| `tests/test_flujo.py` | Cinta de 7 estaciones (`app/flujo.py`): cálculo de confianza, compuerta por umbral 0.85, casos automáticos vs revisión y calibración sin errores silenciosos. |
-| `tests/test_endpoint_signos_alarma.py` | Endpoint HTTP determinista (`POST /herramientas/signos-alarma`): respuestas 200 (alarma, vigilancia, sin alarma) y validación Pydantic 422. |
-| `tests/test_api_v2.py` | Endpoints v2 (`/api/v2/chat` y `/api/v2/chat/confirmar`): flujo conversacional del agente, respuesta directa, pausa para confirmación humana y serialización de respuestas con citas validadas en código. |
-| `tests/test_agent.py` | Bucle del agente (`app/services/agent.py`): camino feliz, lista cerrada (rechazo de `diagnosticar`), corte por `MAX_ITER = 6`, confirmación humana y acumulación de citas `Fuente(documento, seccion)`. |
-| `tests/test_consultar_guia_msp.py` | Herramienta RAG: validación de longitud con Pydantic, conexión con `BuscadorVectorial`, determinismo de resultados y abstención ante distancias mayores al umbral. |
-| `tests/test_evaluar_signos_alarma.py` | Herramienta determinista: normalización de texto, sinónimos coloquiales (*"me sangran las encías"*) y cruce contra los signos de alarma oficiales de `config/parametros.yaml`. |
-| `tests/test_buscar_centro_salud.py` | Herramienta GeoSalud: filtro por ciudad, cálculo de distancias en km con Haversine y disponibilidad de Emergencia 24h. |
-| `tests/test_dengue.py` | Contrato `200` de `/api/v1/chat`, persistencia y memoria multi-turno en SQLite, aislamiento entre sesiones, *rate limit* `429` + cabecera `Retry-After`, delimitación `<consulta_usuario>`, validaciones `422`, errores `503`/`500` en formato RFC 9457 sin *stack trace*, abstención ante salida inválida y vigencia de `system_v4`. |
-| `tests/test_retriever.py` | Extracción de páginas 95 a 100 de SIVE-Alerta, exclusión de referencias bibliográficas de OPS 2016, asimetría de prefijos E5 (`query: ` / `passage: `), orden por distancia coseno, búsqueda híbrida por código exacto (`CIE-10 A 91`) y filtro por vigencia (`vigente: True`). |
-| `tests/test_llm.py` | Validación de esquema JSON estricto, autocorrección en 1 intento, reintentos ante `429`/`503`/respuesta vacía, respeto de `Retry-After`, espera exponencial con *jitter* y conmutación al proveedor de respaldo. |
-| `tests/test_main.py` | Diagnóstico `/manage/health` (`200` UP / `503` DOWN), cumplimiento de expresión regular SemVer en `/manage/info` y contrato de triage determinista en `/api/v1/flujo` (flujo automático vs desvío a revisión manual). |
-| `tests/test_semver_bumper.py` | Reglas de incremento SemVer (*MAJOR*, *MINOR*, *PATCH*), comparación contra último tag release en `main` y snapshot en `develop`, sincronización simétrica frontend y actualización de `README.md`. |
-| `tests/test_semver_bumper_frontend.py` | Versionado SemVer y sincronización de `package.json` y `package-lock.json` del frontend. |
-| `tests/test_actualizar_changelog.py` | Automatización y formato estándar de `CHANGELOG.md` para backend y frontend. |
+| Archivo de Prueba | Pruebas | Qué Valida |
+|---|---:|---|
+| `tests/test_flujo.py` | 8 | Cinta de 7 estaciones (`app/flujo.py`): cálculo de confianza, compuerta por umbral 0.85, casos automáticos vs revisión y calibración sin errores silenciosos. |
+| `tests/test_endpoint_signos_alarma.py` | 7 | Endpoint HTTP determinista (`POST /herramientas/signos-alarma`): respuestas 200 (alarma, vigilancia, sin alarma) y validación Pydantic 422. |
+| `tests/test_api_v2.py` | 3 | Endpoints v2 (`/api/v2/chat` y `/api/v2/chat/confirmar`): flujo conversacional del agente, respuesta directa, pausa para confirmación y serialización de respuestas con citas validadas en código. |
+| `tests/test_agent.py` | 5 | Bucle del agente (`app/services/agent.py`): camino feliz, lista cerrada (rechazo de `diagnosticar`), corte por `MAX_ITER = 6`, confirmación y acumulación de citas `Fuente(documento, seccion)`. |
+| `tests/test_consultar_guia_msp.py` | 4 | Herramienta RAG: validación de longitud con Pydantic, conexión con `BuscadorVectorial`, determinismo de resultados y abstención ante distancias mayores al umbral. |
+| `tests/test_evaluar_signos_alarma.py` | 5 | Herramienta determinista: normalización de texto, sinónimos coloquiales (*"me sangran las encías"*) y cruce contra los signos de alarma oficiales de `config/parametros.yaml`. |
+| `tests/test_buscar_centro_salud.py` | 3 | Herramienta GeoSalud: filtro por ciudad, cálculo de distancias en km con Haversine y disponibilidad de Emergencia 24h. |
+| `tests/test_dengue.py` | 20 | Contrato `200` de `/api/v1/chat`, persistencia y memoria multi-turno en SQLite, aislamiento entre sesiones, *rate limit* `429` + cabecera `Retry-After`, delimitación `<consulta_usuario>`, validaciones `422`, errores `503`/`500` en formato RFC 9457 sin *stack trace*, abstención ante salida inválida y vigencia de `system_v4`. |
+| `tests/test_retriever.py` | 5 | Extracción de páginas 95 a 100 de SIVE-Alerta, exclusión de referencias bibliográficas de OPS 2016, asimetría de prefijos E5 (`query: ` / `passage: `), orden por distancia coseno, búsqueda híbrida por código exacto (`CIE-10 A 91`) y filtro por vigencia (`vigente: True`). |
+| `tests/test_llm.py` | 11 | Validación de esquema JSON estricto, autocorrección en 1 intento, reintentos ante `429`/`503`/respuesta vacía, respeto de `Retry-After`, espera exponencial con *jitter* y conmutación al proveedor de respaldo. |
+| `tests/test_main.py` | 6 | Diagnóstico `/manage/health` (`200` UP / `503` DOWN), cumplimiento de expresión regular SemVer en `/manage/info`, CORS y contrato de triage determinista en `/api/v1/flujo` (flujo automático vs desvío a revisión manual). |
+| `tests/test_semver_bumper.py` | 7 | Reglas de incremento SemVer (*MAJOR*, *MINOR*, *PATCH*), comparación contra último tag release en `main` y snapshot en `develop`, sincronización simétrica frontend y actualización de `README.md`. |
+| `tests/test_semver_bumper_frontend.py` | 3 | Versionado SemVer y sincronización de `package.json` y `package-lock.json` del frontend. |
+| `tests/test_actualizar_changelog.py` | 5 | Automatización y formato estándar de `CHANGELOG.md` para backend y frontend. |
 
 ---
 
@@ -504,20 +535,21 @@ RAG acierto top-3: 87%  ·  Con cita: 100%  ·  Silencio: 100%  ·  Flujo a revi
 
 ---
 
-### 3. Pruebas Automatizadas del Frontend (`Vitest` + `MSW`)
+### 3. Pruebas Automatizadas del Frontend (`Vitest` + `MSW`) y Auditoría de Secretos
 Dentro del directorio `frontend/`:
 ```bash
 cd frontend
 npm test
 ```
-**Resultado real:**
+**Resultado real (27 ejecutadas, 27 pasadas en 4 archivos):**
 ```text
-✓ tests/cliente.test.ts (7 tests)
-✓ tests/estados.test.ts (6 tests)
-✓ tests/manage.test.ts (4 tests)
-✓ tests/seguridad-y-ui.test.tsx (9 tests)
-Test Files  4 passed (4)
-Tests  26 passed (26)
+ ✓ tests/manage.test.ts (6 tests)
+ ✓ tests/estados.test.ts (6 tests)
+ ✓ tests/cliente.test.ts (6 tests)
+ ✓ tests/seguridad-y-ui.test.tsx (9 tests)
+
+ Test Files  4 passed (4)
+      Tests  27 passed (27)
 ```
 
 Auditoría automática contra exposición inadvertida de claves en el bundle web:
@@ -526,7 +558,7 @@ npm run verify:secrets
 ```
 **Resultado real:**
 ```text
-[OK] Auditoría de frontend finalizada: Cero claves privadas encontradas en el bundle de distribución.
+OK (OWASP LLM02): Cero claves privadas encontradas en el bundle del cliente.
 ```
 
 ---

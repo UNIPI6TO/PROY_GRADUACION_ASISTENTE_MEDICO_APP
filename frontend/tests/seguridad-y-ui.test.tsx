@@ -5,7 +5,11 @@ import {
   esEnlaceSeguro,
   obtenerIdSesion,
 } from "../src/api/cliente";
-import { MensajeChat } from "../src/components/MensajeChat";
+import {
+  MensajeChat,
+  normalizarTelefonoWhatsApp,
+  construirEnlaceWhatsApp,
+} from "../src/components/MensajeChat";
 import { ChecklistSignosAlarma } from "../src/components/ChecklistSignosAlarma";
 import { AlertaEstado } from "../src/components/AlertaEstado";
 import { Cabecera } from "../src/components/Cabecera";
@@ -135,12 +139,32 @@ describe("Reto 6, 7 y 8 · Seguridad OWASP LLM05, Sesión Anónima y Accesibilid
       />
     );
 
-    expect(screen.getByText(/Autorización Humana Requerida/i)).toBeInTheDocument();
+    expect(screen.getByText(/Autorización Requerida/i)).toBeInTheDocument();
     expect(screen.getByText(/buscar_centro_salud/i)).toBeInTheDocument();
 
     const btnAprobar = screen.getByRole("button", { name: /Aprobar acción/i });
     fireEvent.click(btnAprobar);
     expect(fnConfirmar).toHaveBeenCalledWith("call_123", true);
+  });
+
+  it("Normalización de teléfonos para WhatsApp y pop-up de Aviso de IA en primera pantalla (s4g)", () => {
+    expect(normalizarTelefonoWhatsApp("0991234567")).toBe("593991234567");
+    expect(normalizarTelefonoWhatsApp("+593 099 123-4567")).toBe("593991234567");
+    expect(normalizarTelefonoWhatsApp("(099) 123.4567")).toBe("593991234567");
+    expect(normalizarTelefonoWhatsApp("991234567")).toBe("593991234567");
+    expect(normalizarTelefonoWhatsApp("00593 99 123 4567")).toBe("593991234567");
+    expect(
+      construirEnlaceWhatsApp({ destinatario: "099 123 4567", mensaje: "Alerta dengue" })
+    ).toBe("https://wa.me/593991234567?text=Alerta%20dengue");
+
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
+    render(<App />);
+
+    // Debe mostrar el pop-up de condiciones en la primera pantalla al iniciar sesión limpia
+    expect(screen.getByText(/Aviso de IA y Tratamiento de Datos/i)).toBeInTheDocument();
+    const btnAceptar = screen.getByRole("button", { name: /Acepto las condiciones/i });
+    fireEvent.click(btnAceptar);
+    expect(window.sessionStorage.getItem("aviso_ia_aceptado")).toBe("1");
   });
 it("Alternancia del botón Agente: inicia activo con 'Agente' e ícono, y al desactivar mantiene ícono y texto cambiando a inactivo", () => {
     // scrollIntoView mock for jsdom if needed

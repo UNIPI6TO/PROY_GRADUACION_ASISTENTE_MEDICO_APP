@@ -25,11 +25,85 @@ env:
 
 jobs:
   # =========================================================================
+  # FASE 0: Compuertas de Calidad Previas al Despliegue (Bloqueantes)
+  # =========================================================================
+  secret-scan:
+    name: Auditoría de Secretos (Gitleaks)
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    uses: ./.github/workflows/secretos.yml
+    secrets: inherit
+
+  quality-gate-backend:
+    name: Compuerta de Pruebas del Backend (Pytest + Evaluador RAG/Flujo)
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Descargar código fuente del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar entorno Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias del Backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ejecutar pruebas unitarias del Backend (Pytest)
+        run: pytest -q
+
+      - name: Ejecutar evaluador del Plan de Calidad (eval/evaluar.py)
+        run: python eval/evaluar.py
+
+  quality-gate-frontend:
+    name: Compuerta de Pruebas del Frontend (Vitest + Auditoría de Secretos)
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Descargar código fuente del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar entorno Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias del Frontend
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Verificar ausencia de secretos en el bundle web
+        working-directory: ./frontend
+        run: npm run verify:secrets
+
+      - name: Ejecutar pruebas unitarias del Frontend (Vitest)
+        working-directory: ./frontend
+        run: npm test
+
+  # =========================================================================
   # FASE 1: Despliegue del Backend en Cloud Run (Consolidado Post-Tag)
   # =========================================================================
   deploy-backend:
     name: Construcción y Despliegue del Backend en Cloud Run
-    # Solo se ejecuta post-merge: por workflow_run exitoso de release.yml o manual
+    # Solo se ejecuta si el escaneo de secretos y ambas compuertas de pruebas pasaron exitosamente
+    needs: [secret-scan, quality-gate-backend, quality-gate-frontend]
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
