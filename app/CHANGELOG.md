@@ -9,6 +9,11 @@ y el backend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.3.2-SNAPSHOT-RC1] - 2026-11-07
+
+- fix: (cors) habilitar frontend de producción
+- feat: (flujo) agregar endpoint de triaje
+
 ## [0.3.0-SNAPSHOT-RC1] - 2026-11-07
 
 - feat: (flujo) agregar endpoint de triaje
