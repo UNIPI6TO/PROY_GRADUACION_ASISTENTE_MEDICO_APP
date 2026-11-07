@@ -7,6 +7,7 @@ Cada caso llama a la app como lo haría un usuario y compara el estado HTTP
 y un texto esperado en la respuesta.
 """
 import json
+import os
 import re
 import sys
 import time
@@ -17,8 +18,12 @@ import urllib.request
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-# Normalizar URL base (limpia /manage si se pasa como argumento)
-raw_arg = sys.argv[1] if len(sys.argv) > 1 else "https://guiavital-backend-448060764458.us-central1.run.app"
+# URLs canónicas por defecto (Backend oficial y Frontend autorizado en CORS)
+DEFAULT_BACKEND = "https://guiavital-backend-448060764458.us-central1.run.app"
+FRONTEND_ORIGIN = os.getenv("FRONTEND_URL", "https://guiavital-448060764458.us-central1.run.app")
+
+# Normalizar URL base (soporta argumento CLI o variable de entorno BACKEND_URL)
+raw_arg = sys.argv[1] if len(sys.argv) > 1 else os.getenv("BACKEND_URL", DEFAULT_BACKEND)
 BASE = re.sub(r"/manage/?$", "", raw_arg.strip()).rstrip("/")
 
 CASOS = [
@@ -101,11 +106,16 @@ def llamar(caso):
         ruta = "/api/v1/chat"
         
     url = BASE + ruta
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "smoke-seminario-uniandes",
+        "Origin": FRONTEND_ORIGIN,
+    }
     req = urllib.request.Request(
         url,
         data=datos,
         method=caso["metodo"],
-        headers={"Content-Type": "application/json", "User-Agent": "smoke-seminario-uniandes"},
+        headers=headers,
     )
     inicio = time.time()
     try:
@@ -157,16 +167,16 @@ def main():
         tiempos.append(seg)
         ok = evaluar_caso(caso, estado, cuerpo)
         pasan += ok
-        print(f"{'PASA ' if ok else 'FALLA'} {i:>2}. [{caso['tipo']}] {caso['metodo']} {caso['ruta']} -> {estado} en {seg:.1f} s")
+        print(f"{'PASA ' if ok else 'FALLA'} {i:>2}. [{caso['tipo']}] {caso['metodo']} {caso['ruta']} -> {estado} en {seg:.1f} s", flush=True)
         if not ok:
             esp_cont = caso.get("contiene")
             if isinstance(esp_cont, list):
                 esp_cont = " / ".join(esp_cont)
             esperado = f"{caso['estado']}" + (f" con «{esp_cont}»" if esp_cont else "")
-            print(f"         esperado {esperado}; recibido: {cuerpo[:200]!r}")
+            print(f"         esperado {esperado}; recibido: {cuerpo[:200]!r}", flush=True)
     orden = sorted(tiempos)
     p95 = orden[max(0, round(0.95 * len(orden)) - 1)]
-    print(f"RESULTADO: {pasan}/{len(CASOS)} pasan · p95 {p95:.1f} s · más lento {orden[-1]:.1f} s")
+    print(f"RESULTADO: {pasan}/{len(CASOS)} pasan · p95 {p95:.1f} s · más lento {orden[-1]:.1f} s", flush=True)
     sys.exit(0 if pasan == len(CASOS) else 1)
 
 

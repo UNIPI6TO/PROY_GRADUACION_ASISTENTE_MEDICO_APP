@@ -9,6 +9,7 @@ y el frontend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.3.2-SNAPSHOT-RC1] - 2026-11-07
 ## [0.3.1] - 2026-11-07
 
 - No hubo cambios.

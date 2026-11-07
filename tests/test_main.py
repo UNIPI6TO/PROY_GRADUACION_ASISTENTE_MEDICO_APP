@@ -60,3 +60,13 @@ def test_endpoint_flujo_revision_humana():
     assert res.id == "caso-rev-01"
     assert res.destino == "revision"
     assert res.motivo is not None
+
+
+def test_cors_origenes_permitidos_contiene_frontend_oficial():
+    """Verifica que los orígenes permitidos en CORS incluyan el Frontend oficial y orígenes locales."""
+    from app.main import origenes_permitidos
+
+    frontend_canonico = "https://guiavital-448060764458.us-central1.run.app"
+    assert frontend_canonico in origenes_permitidos
+    assert "http://localhost:5173" in origenes_permitidos
+    assert "http://127.0.0.1:5173" in origenes_permitidos
