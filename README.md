@@ -485,7 +485,10 @@ El agente opera bajo **tres decisiones estrictas en código** (no delegadas al p
 > - **Auditoría de Secretos (`Gitleaks` + `verify:secrets`):** **0 secretos expuestos** (100% éxito).
 > - **Total de pruebas automatizadas del sistema:** **125 ejecutadas / 125 pasadas (100%)**.
 >
-> *Compuertas en CI/CD:* Tanto en cada Pull Request (`ci.yml`) como antes de cada despliegue a producción en Cloud Run (`deploy.yml`), se ejecutan de forma bloqueante el escaneo de secretos (`secret-scan` / Gitleaks + `verify:secrets`), las 92 pruebas del backend (`pytest -q`), el evaluador del plan de calidad (`eval/evaluar.py`) y las 27 pruebas del frontend (`npm test`). Si cualquiera falla, el despliegue se detiene inmediatamente.
+> *Compuertas en CI/CD:*
+> - **En Pull Request (`ci.yml`):** Ejecuta `Auditoría de Secretos (Gitleaks)`, `Test Calidad del Backend (Pytest y Evaluador RAG/Flujo)` (92 pruebas) y `Test Calidad del Frontend (Vitest)` (27 pruebas + `verify:secrets`).
+> - **Post-Merge (`release.yml`):** Incrementa la versión SemVer simétrica, actualiza changelogs, publica el Git Tag (`$TAG`) y dispara `deploy.yml` enviándole la rama destino (`develop` o `main`) y el `version_tag`.
+> - **En Despliegue (`deploy.yml`):** Descarga el código desde `version_tag` y ejecuta de forma bloqueante `Test de Secretos (Gitleaks) sobre ${{ inputs.version_tag }}` (reutilizando `secretos.yml`), `Pruebas del Backend (Pytest + Evaluador RAG/Flujo)` y `Pruebas del Frontend (Vitest)`. Si cualquiera falla, el despliegue se detiene antes de construir las imágenes Docker.
 
 ### 1. Pruebas Automatizadas del Backend (`pytest`)
 Las pruebas del backend utilizan dobles (*mocks*) del cliente LLM, base de datos SQLite en memoria (`:memory:`) y relojes simulados, ejecutándose sin conexión a internet ni consumo de saldo de API.

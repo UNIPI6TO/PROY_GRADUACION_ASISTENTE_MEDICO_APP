@@ -18,7 +18,7 @@ jobs:
     secrets: inherit
 
   backend-quality-gate:
-    name: Compuerta de Calidad del Backend (Pytest y Evaluador RAG/Flujo)
+    name: Test Calidad del Backend (Pytest y Evaluador RAG/Flujo)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -45,7 +45,7 @@ jobs:
         run: python eval/evaluar.py
 
   frontend-quality-gate:
-    name: Compuerta de Calidad del Frontend (Vitest y Auditoría de Secretos)
+    name: Test Calidad del Frontend (Vitest)
     runs-on: ubuntu-latest
     permissions:
       contents: read

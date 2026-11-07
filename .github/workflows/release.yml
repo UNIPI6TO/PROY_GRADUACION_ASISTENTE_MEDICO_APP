@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
 
     steps:
       - name: Resolver rama de destino
@@ -102,3 +103,15 @@ jobs:
               echo "El tag $TAG ya existe en Git."
             fi
           fi
+
+      # 4. Enviar el tag generado a deploy.yml para ejecutar tests, secretos y despliegue
+      - name: Disparar deploy.yml enviando el tag de versión
+        env:
+          GH_TOKEN: ${{ secrets.BUMP_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ steps.branch_info.outputs.target_branch }}"
+          TAG="${{ steps.bumper.outputs.tag }}"
+          echo "Enviando tag '$TAG' (rama '$BRANCH') a deploy.yml..."
+          gh workflow run deploy.yml \
+            --ref "$BRANCH" \
+            -f version_tag="$TAG"
