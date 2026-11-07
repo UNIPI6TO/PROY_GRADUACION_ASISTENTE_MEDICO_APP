@@ -5,13 +5,8 @@ on:
     inputs:
       version_tag:
         description: 'Tag formal de release generado por release.yml'
-        required: false
-        default: ''
+        required: true
         type: string
-  workflow_run:
-    workflows: ["Publicación y Tageo de Versiones (Post-Merge)"]
-    types:
-      - completed
 
 env:
   GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'project-3e1faa58-1e7d-4e8d-933' }}
@@ -25,59 +20,25 @@ env:
 
 jobs:
   # =========================================================================
-  # FASE 0: Compuertas de Calidad Previas al Despliegue (Bloqueantes)
+  # FASE 0: Compuertas de Calidad Previas al Despliegue sobre el TAG (Bloqueantes)
   # =========================================================================
   secret-scan:
-    name: Auditoría de Secretos (Gitleaks)
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    name: Test de Secretos (Gitleaks) sobre ${{ inputs.version_tag }}
     uses: ./.github/workflows/secretos.yml
     secrets: inherit
 
   quality-gate-backend:
-    name: Compuerta de Pruebas del Backend (Pytest + Evaluador RAG/Flujo)
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    name: Pruebas del Backend (Pytest + Evaluador RAG/Flujo)
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
-      - name: Descargar código fuente del repositorio
+      - name: Descargar código fuente desde el tag ${{ inputs.version_tag }}
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.version_tag || github.ref_name }}
           fetch-depth: 0
-
-      - name: Posicionar en la rama donde se realizó el merge (develop o main)
-        run: |
-          if [ -n "${{ inputs.version_tag }}" ]; then
-            git checkout "${{ inputs.version_tag }}"
-            exit 0
-          fi
-          TARGET_BRANCH=""
-          PR_BASE="${{ github.event.workflow_run.pull_requests[0].base.ref }}"
-          if [ "$PR_BASE" = "develop" ] || [ "$PR_BASE" = "main" ]; then
-            TARGET_BRANCH="$PR_BASE"
-          fi
-          if [ -z "$TARGET_BRANCH" ]; then
-            WF_HEAD="${{ github.event.workflow_run.head_branch }}"
-            if [ "$WF_HEAD" = "develop" ] || [ "$WF_HEAD" = "main" ]; then
-              TARGET_BRANCH="$WF_HEAD"
-            fi
-          fi
-          if [ -z "$TARGET_BRANCH" ]; then
-            TS_DEV=$(git log -1 --format=%ct origin/develop 2>/dev/null || echo 0)
-            TS_MAIN=$(git log -1 --format=%ct origin/main 2>/dev/null || echo 0)
-            if [ "$TS_DEV" -ge "$TS_MAIN" ]; then
-              TARGET_BRANCH="develop"
-            else
-              TARGET_BRANCH="main"
-            fi
-          fi
-          echo "Validando pruebas Backend sobre la rama fusionada: $TARGET_BRANCH"
-          git checkout -B "$TARGET_BRANCH" "origin/$TARGET_BRANCH"
 
       - name: Configurar entorno Python 3.12
         uses: actions/setup-python@v5
@@ -97,48 +58,17 @@ jobs:
         run: python eval/evaluar.py
 
   quality-gate-frontend:
-    name: Compuerta de Pruebas del Frontend (Vitest + Auditoría de Secretos)
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    name: Pruebas del Frontend (Vitest)
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
-      - name: Descargar código fuente del repositorio
+      - name: Descargar código fuente desde el tag ${{ inputs.version_tag }}
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.version_tag || github.ref_name }}
           fetch-depth: 0
-
-      - name: Posicionar en la rama donde se realizó el merge (develop o main)
-        run: |
-          if [ -n "${{ inputs.version_tag }}" ]; then
-            git checkout "${{ inputs.version_tag }}"
-            exit 0
-          fi
-          TARGET_BRANCH=""
-          PR_BASE="${{ github.event.workflow_run.pull_requests[0].base.ref }}"
-          if [ "$PR_BASE" = "develop" ] || [ "$PR_BASE" = "main" ]; then
-            TARGET_BRANCH="$PR_BASE"
-          fi
-          if [ -z "$TARGET_BRANCH" ]; then
-            WF_HEAD="${{ github.event.workflow_run.head_branch }}"
-            if [ "$WF_HEAD" = "develop" ] || [ "$WF_HEAD" = "main" ]; then
-              TARGET_BRANCH="$WF_HEAD"
-            fi
-          fi
-          if [ -z "$TARGET_BRANCH" ]; then
-            TS_DEV=$(git log -1 --format=%ct origin/develop 2>/dev/null || echo 0)
-            TS_MAIN=$(git log -1 --format=%ct origin/main 2>/dev/null || echo 0)
-            if [ "$TS_DEV" -ge "$TS_MAIN" ]; then
-              TARGET_BRANCH="develop"
-            else
-              TARGET_BRANCH="main"
-            fi
-          fi
-          echo "Validando pruebas Backend sobre la rama fusionada: $TARGET_BRANCH"
-          git checkout -B "$TARGET_BRANCH" "origin/$TARGET_BRANCH"
 
       - name: Configurar entorno Node.js 22
         uses: actions/setup-node@v4
@@ -166,48 +96,17 @@ jobs:
     name: Construcción y Despliegue del Backend en Cloud Run
     # Solo se ejecuta si el escaneo de secretos y ambas compuertas de pruebas pasaron exitosamente
     needs: [secret-scan, quality-gate-backend, quality-gate-frontend]
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
 
     steps:
-      - name: Descargar código fuente del repositorio
+      - name: Descargar código fuente desde el tag ${{ inputs.version_tag }}
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.version_tag || github.ref_name }}
           fetch-depth: 0
-
-      - name: Posicionar en la rama donde se realizó el merge (develop o main)
-        run: |
-          if [ -n "${{ inputs.version_tag }}" ]; then
-            git checkout "${{ inputs.version_tag }}"
-            exit 0
-          fi
-          TARGET_BRANCH=""
-          PR_BASE="${{ github.event.workflow_run.pull_requests[0].base.ref }}"
-          if [ "$PR_BASE" = "develop" ] || [ "$PR_BASE" = "main" ]; then
-            TARGET_BRANCH="$PR_BASE"
-          fi
-          if [ -z "$TARGET_BRANCH" ]; then
-            WF_HEAD="${{ github.event.workflow_run.head_branch }}"
-            if [ "$WF_HEAD" = "develop" ] || [ "$WF_HEAD" = "main" ]; then
-              TARGET_BRANCH="$WF_HEAD"
-            fi
-          fi
-          if [ -z "$TARGET_BRANCH" ]; then
-            TS_DEV=$(git log -1 --format=%ct origin/develop 2>/dev/null || echo 0)
-            TS_MAIN=$(git log -1 --format=%ct origin/main 2>/dev/null || echo 0)
-            if [ "$TS_DEV" -ge "$TS_MAIN" ]; then
-              TARGET_BRANCH="develop"
-            else
-              TARGET_BRANCH="main"
-            fi
-          fi
-          echo "Validando pruebas Backend sobre la rama fusionada: $TARGET_BRANCH"
-          git checkout -B "$TARGET_BRANCH" "origin/$TARGET_BRANCH"
 
       - name: Búsqueda y consolidación de versión del Backend
         id: meta
@@ -227,10 +126,10 @@ jobs:
           GCP_LABEL_VER="$(echo "${SEMVER_CLEAN}" | tr '[:upper:]' '[:lower:]' | tr '.' '-' | tr '+' '-')"
           IMAGE_TAG="v${SEMVER_CLEAN}"
 
-          # Determinar puntero ambiental según rama
-          BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "${GITHUB_REF_NAME:-main}")"
+          # Determinar puntero ambiental según rama o tipo de tag
+          BRANCH="${GITHUB_REF_NAME:-main}"
           ENV_TAG="latest"
-          if [ "$BRANCH" = "develop" ]; then
+          if [ "$BRANCH" = "develop" ] || [[ "$RAW_TAG" == *"SNAPSHOT"* ]]; then
             ENV_TAG="develop"
           fi
 
@@ -287,8 +186,8 @@ jobs:
 
       - name: Verificar endpoint de salud del Backend
         run: |
-          curl --fail --silent --show-error "${{ steps.deploy_backend.outputs.url }}/manage/health"
           curl --fail --silent --show-error "${{ steps.deploy_backend.outputs.url }}/manage/info"
+          curl --fail --silent --show-error "${{ steps.deploy_backend.outputs.url }}/manage/health"
 
       - name: Ejecutar pruebas funcionales de humo contra Backend canónico (Smoke Tests)
         run: |
@@ -301,48 +200,17 @@ jobs:
     name: Construcción y Despliegue del Frontend en Cloud Run
     # Espera a que el backend esté desplegado para obtener su URL dinámica
     needs: [deploy-backend]
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
 
     steps:
-      - name: Descargar código fuente del repositorio
+      - name: Descargar código fuente desde el tag ${{ inputs.version_tag }}
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.version_tag || github.ref_name }}
           fetch-depth: 0
-
-      - name: Posicionar en la rama donde se realizó el merge (develop o main)
-        run: |
-          if [ -n "${{ inputs.version_tag }}" ]; then
-            git checkout "${{ inputs.version_tag }}"
-            exit 0
-          fi
-          TARGET_BRANCH=""
-          PR_BASE="${{ github.event.workflow_run.pull_requests[0].base.ref }}"
-          if [ "$PR_BASE" = "develop" ] || [ "$PR_BASE" = "main" ]; then
-            TARGET_BRANCH="$PR_BASE"
-          fi
-          if [ -z "$TARGET_BRANCH" ]; then
-            WF_HEAD="${{ github.event.workflow_run.head_branch }}"
-            if [ "$WF_HEAD" = "develop" ] || [ "$WF_HEAD" = "main" ]; then
-              TARGET_BRANCH="$WF_HEAD"
-            fi
-          fi
-          if [ -z "$TARGET_BRANCH" ]; then
-            TS_DEV=$(git log -1 --format=%ct origin/develop 2>/dev/null || echo 0)
-            TS_MAIN=$(git log -1 --format=%ct origin/main 2>/dev/null || echo 0)
-            if [ "$TS_DEV" -ge "$TS_MAIN" ]; then
-              TARGET_BRANCH="develop"
-            else
-              TARGET_BRANCH="main"
-            fi
-          fi
-          echo "Validando pruebas Backend sobre la rama fusionada: $TARGET_BRANCH"
-          git checkout -B "$TARGET_BRANCH" "origin/$TARGET_BRANCH"
 
       - name: Búsqueda y consolidación de versión del Frontend
         id: meta
@@ -361,9 +229,9 @@ jobs:
           GCP_LABEL_VER="$(echo "${SEMVER_CLEAN}" | tr '[:upper:]' '[:lower:]' | tr '.' '-' | tr '+' '-')"
           IMAGE_TAG="v${SEMVER_CLEAN}"
 
-          BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "${GITHUB_REF_NAME:-main}")"
+          BRANCH="${GITHUB_REF_NAME:-main}"
           ENV_TAG="latest"
-          if [ "$BRANCH" = "develop" ]; then
+          if [ "$BRANCH" = "develop" ] || [[ "$RAW_TAG" == *"SNAPSHOT"* ]]; then
             ENV_TAG="develop"
           fi
 
