@@ -9,6 +9,30 @@ y el frontend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-07
+
+- feat: mejorar interfaz y control de despliegue
+
+## [0.3.3-SNAPSHOT-RC4] - 2026-11-07
+
+- feat: mejorar interfaz y control de despliegue
+
+## [0.4.0-SNAPSHOT-RC2] - 2026-11-07
+
+- feat: mejorar interfaz y control de despliegue
+
+## [0.3.3-SNAPSHOT-RC3] - 2026-11-07
+
+- feat: mejorar interfaz y control de despliegue
+
+## [0.3.3-SNAPSHOT-RC2] - 2026-11-07
+
+- feat: mejorar interfaz y control de despliegue
+
+## [0.3.3-SNAPSHOT-RC1] - 2026-11-07
+
+- feat: mejorar interfaz y control de despliegue
+
 ## [0.4.0-SNAPSHOT-RC1] - 2026-11-07
 
 - feat: mejorar interfaz y control de despliegue
