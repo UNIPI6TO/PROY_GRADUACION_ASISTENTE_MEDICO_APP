@@ -73,7 +73,7 @@ jobs:
             python scripts/actualizar_changelog.py --version "$VER" --file frontend/CHANGELOG.md || true
           fi
 
-          # Commit consolidado de versión y documentación (sin [skip ci] para no bloquear PRs de develop -> main)
+          # Commit consolidado de versión y documentación
           if ! git diff --quiet; then
             git add app/main.py frontend/package.json frontend/package-lock.json README.md app/CHANGELOG.md frontend/CHANGELOG.md || true
             git commit -m "chore(release): bump symmetric version to $TAG" || true

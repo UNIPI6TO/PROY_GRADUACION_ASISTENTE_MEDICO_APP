@@ -27,7 +27,7 @@ def obtener_commits_recientes(carpeta: str | None = None) -> list[str]:
         commits: list[str] = []
         for linea in res.stdout.splitlines():
             linea = linea.strip()
-            if linea and "[skip ci]" not in linea and not linea.startswith("Merge "):
+            if linea and not linea.startswith("chore(release):") and not linea.startswith("Merge "):
                 commits.append(linea)
         return commits[:5]
     except Exception:
