@@ -26,6 +26,19 @@ const SUGERENCIAS_RAPIDAS = [
   "¿Cómo elimino los criaderos de mosquitos transmisores de arbovirosis?",
 ];
 
+const ETAPAS_AGENTE = [
+  "Analizando...",
+  "Evaluando herramientas...",
+  "Consultando guías...",
+  "Respondiendo...",
+];
+
+const ETAPAS_ASISTENTE = [
+  "Analizando...",
+  "Consultando guías...",
+  "Respondiendo...",
+];
+
 export const App: React.FC = () => {
   const [idSesion, setIdSesion] = useState<string>(() => obtenerIdSesion());
   const [texto, setTexto] = useState<string>("");
@@ -33,6 +46,8 @@ export const App: React.FC = () => {
   const [mensajes, setMensajes] = useState<MensajeHistorialUI[]>([]);
   const [checklistAbierto, setChecklistAbierto] = useState<boolean>(false);
   const [modoAgente, setModoAgente] = useState<boolean>(true);
+  const [indiceEtapa, setIndiceEtapa] = useState<number>(0);
+  const [confirmandoAccion, setConfirmandoAccion] = useState<boolean>(false);
 
   const [estado, dispatch] = useReducer(transicionarEstado, { tipo: "inactiva" } as EstadoInterfaz);
 
@@ -122,7 +137,7 @@ export const App: React.FC = () => {
                 id: idTurnoAsistente,
                 rol: "assistant",
                 texto:
-                  "El agente solicita autorización humana explícita antes de ejecutar la siguiente acción:",
+                  respuestaV2.respuesta || "",
                 accionPendiente: respuestaV2.accion_pendiente,
                 estadoAgente: "requiere_confirmacion",
                 fuentes: respuestaV2.fuentes ?? [],
@@ -246,8 +261,24 @@ export const App: React.FC = () => {
     [idSesion, modoAgente]
   );
 
+  // Progresión automática por etapas cortas (1 a 2 palabras) mientras procesa
+  useEffect(() => {
+    if (estado.tipo !== "enviando") {
+      setIndiceEtapa(0);
+      return;
+    }
+
+    const etapas = modoAgente ? ETAPAS_AGENTE : ETAPAS_ASISTENTE;
+    const intervalo = window.setInterval(() => {
+      setIndiceEtapa((prev) => (prev < etapas.length - 1 ? prev + 1 : prev));
+    }, 1200);
+
+    return () => window.clearInterval(intervalo);
+  }, [estado.tipo, modoAgente]);
+
   // Manejo de Human-in-the-Loop: Confirmación de acción del agente
   const manejarConfirmacionAccion = async (toolCallId: string, aprobado: boolean) => {
+    setConfirmandoAccion(true);
     dispatch({ tipo: "ENVIAR" });
     try {
       const respuestaV2 = await confirmarAccionAgente({
@@ -289,6 +320,8 @@ export const App: React.FC = () => {
         detalle: "Error al procesar la confirmación con el servidor.",
         textoConservado: "",
       });
+    } finally {
+      setConfirmandoAccion(false);
     }
   };
 
@@ -386,12 +419,12 @@ export const App: React.FC = () => {
                 {modoAgente ? (
                   <>
                     <Bot size={16} />
-                    <span>Modo Agente v2 activo (Function Calling + RAG)</span>
+                    <span>Modo Agente</span>
                   </>
                 ) : (
                   <>
                     <Sparkles size={16} />
-                    <span>Modo Asistente v1 activo (Lineamientos MSP / OPS)</span>
+                    <span>Modo Asistente</span>
                   </>
                 )}
               </div>
@@ -442,10 +475,10 @@ export const App: React.FC = () => {
           {estado.tipo === "enviando" && (
             <div className="indicador-pensando" role="status">
               <span className="punto-pulso" aria-hidden="true" />
-              <span>
-                {modoAgente
-                  ? "Ejecutando bucle de razonamiento y herramientas del agente..."
-                  : "Consultando guías oficiales del MSP / OPS..."}
+              <span className="etapa-texto">
+                {confirmandoAccion
+                  ? "Procesando acción..."
+                  : (modoAgente ? ETAPAS_AGENTE : ETAPAS_ASISTENTE)[indiceEtapa] ?? "Analizando..."}
               </span>
             </div>
           )}
@@ -453,7 +486,7 @@ export const App: React.FC = () => {
           {estado.tipo === "recibiendo" && (
             <article className="mensaje mensaje-asistente mensaje-parcial">
               <div className="mensaje-encabezado">
-                <span className="etiqueta-ia">Generando respuesta con IA...</span>
+                <span className="etiqueta-ia">Redactando...</span>
               </div>
               {renderizarTextoEstructurado(estado.texto)}
             </article>

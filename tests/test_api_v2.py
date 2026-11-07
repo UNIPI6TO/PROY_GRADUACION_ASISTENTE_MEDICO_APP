@@ -76,12 +76,27 @@ def test_chat_v2_pausa_y_confirmacion():
     assert "notificado a su familiar" in res2.respuesta
 
 
-def test_chat_v2_respuesta_con_citas_validadas():
+def test_chat_v2_respuesta_con_citas_validadas(monkeypatch):
     """Verifica que el endpoint /api/v2/chat retorne las fuentes validadas en el esquema HTTP."""
     from app.schemas import Fuente
+    from app.services import agent
 
     repo = RepositorioHistorial(":memory:")
     limitador = LimitadorTasa(maximo=10, ventana_s=60)
+
+    def fake_consultar_guia_msp(_datos):
+        return {
+            "encontrado": True,
+            "fragmentos": [{"texto": "La fase febril suele durar entre 2 y 7 días."}],
+            "fuentes": [
+                {
+                    "documento": "Dengue: Guías para la atención de enfermos en la Región de las Américas (OPS, 2016)",
+                    "seccion": "2.1 Fase febril",
+                }
+            ],
+        }
+
+    monkeypatch.setitem(agent.PERMITIDAS, "consultar_guia_msp", fake_consultar_guia_msp)
 
     tc_rag = NS(
         id="call_rag_99",

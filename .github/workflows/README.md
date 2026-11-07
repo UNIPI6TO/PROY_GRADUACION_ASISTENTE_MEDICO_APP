@@ -11,8 +11,8 @@ flowchart TD
     subgraph FASE1["1. Fase de Pull Request (Validación Pura - Cero Commits)"]
         PR["Apertura / Sincronización de PR a develop o main"] --> CI["ci.yml<br/>(Quality Gates Consolidados)"]
         CI --> GITLEAKS["Auditoría de Secretos (Gitleaks)"]
-        CI --> TEST_BE["Backend: Pytest 89 tests + eval/evaluar.py"]
-        CI --> TEST_FE["Frontend: Vitest 26 tests + verify:secrets"]
+        CI --> TEST_BE["Backend: Pytest 92 tests + eval/evaluar.py"]
+        CI --> TEST_FE["Frontend: Vitest 27 tests + verify:secrets"]
     end
 
     subgraph FASE2["2. Fase Post-Merge (Versionado y Release)"]
@@ -25,7 +25,8 @@ flowchart TD
 
     subgraph FASE3["3. Fase de Despliegue Continuo (Post-Release)"]
         TAG -.->|workflow_run completado con éxito| DEPLOY["deploy.yml<br/>(Despliegue Continuo a Cloud Run)"]
-        DEPLOY --> BE_DEPLOY["Build & Deploy Backend a Cloud Run"]
+        DEPLOY --> QGATE["Compuertas Bloqueantes: Gitleaks + Pytest (92) + Vitest (27) + verify:secrets"]
+        QGATE --> BE_DEPLOY["Build & Deploy Backend a Cloud Run"]
         BE_DEPLOY --> SMOKE["Ejecuta tests/smoke.py (6/6 casos en vivo)"]
         SMOKE --> FE_DEPLOY["Build & Deploy Frontend a Cloud Run (con URL del backend)"]
     end
@@ -43,8 +44,8 @@ flowchart TD
 * **Misión:** Validar estrictamente la integridad del código sin realizar modificaciones ni commits.
 * **Compuertas:**
   1. **Auditoría de Secretos (`secret-scan`):** Ejecuta Gitleaks en todo el repositorio (`secretos.yml`).
-  2. **Calidad de Backend (`backend-quality-gate`):** Ejecuta las 89 pruebas unitarias (`pytest -q`) y el evaluador del Plan de Calidad (`python eval/evaluar.py`).
-  3. **Calidad de Frontend (`frontend-quality-gate`):** Ejecuta las 26 pruebas de Vitest (`npm test`) y la verificación de claves en el bundle web (`npm run verify:secrets`).
+  2. **Calidad de Backend (`backend-quality-gate`):** Ejecuta las 92 pruebas unitarias (`pytest -q`) y el evaluador del Plan de Calidad (`python eval/evaluar.py`).
+  3. **Calidad de Frontend (`frontend-quality-gate`):** Ejecuta las 27 pruebas de Vitest (`npm test`) y la verificación de claves en el bundle web (`npm run verify:secrets`).
 
 ---
 
@@ -64,11 +65,12 @@ flowchart TD
 
 ### 3. Despliegue Continuo a Cloud Run (`deploy.yml`)
 * **Disparador:** Automático vía `workflow_run` al completarse con éxito `release.yml` (o manual vía `workflow_dispatch`).
-* **Misión:** Construcción de imágenes Docker, despliegue serverless y validación funcional en vivo.
+* **Misión:** Ejecución de compuertas de pruebas bloqueantes, construcción de imágenes Docker, despliegue serverless y validación funcional en vivo.
 * **Pasos:**
-  1. **Backend:** Construye la imagen Docker (`app/Dockerfile`) y despliega `guiavital-backend` en Google Cloud Run.
-  2. **Pruebas de Humo:** Ejecuta `python3 tests/smoke.py` evaluando en vivo los 6 casos de salud, triaje y seguridad contra la URL del backend.
-  3. **Frontend:** Resuelve dinámicamente la URL del backend, compila `frontend/Dockerfile` y despliega `guiavital` en Cloud Run.
+  1. **Compuertas Previas Bloqueantes (`secret-scan`, `quality-gate-backend`, `quality-gate-frontend`):** Ejecuta Gitleaks (`secretos.yml`), `pytest -q` (92 pruebas), `python eval/evaluar.py`, `npm run verify:secrets` y `npm test` (27 pruebas). Si cualquiera falla, detiene el despliegue antes de construir imágenes.
+  2. **Backend:** Construye la imagen Docker (`app/Dockerfile`) y despliega `guiavital-backend` en Google Cloud Run.
+  3. **Pruebas de Humo:** Ejecuta `python3 tests/smoke.py` evaluando en vivo los 6 casos de salud, triaje y seguridad contra la URL del backend.
+  4. **Frontend:** Resuelve dinámicamente la URL del backend, compila `frontend/Dockerfile` y despliega `guiavital` en Cloud Run.
 
 ---
 
