@@ -52,7 +52,7 @@ flowchart TD
 
     subgraph FASE_2["FASE 2: Post-Merge (release.yml · Al completar Merge)"]
         E["PR Fusionado (merged == true)<br/>en develop o main"] --> F["release-and-tag:<br/>Versionado SemVer, Bitácoras y Publicación de Git Tag"]
-        F --> G["Commit consolidado [skip ci] + Push Git Tag ($TAG)"]
+        F --> G["Commit consolidado de versión + Push Git Tag ($TAG)"]
         G --> H["gh workflow run deploy.yml<br/>--ref $BRANCH -f version_tag=$TAG"]
     end
 
