@@ -758,80 +758,181 @@ body {
 /* Tarjeta HITL de autorización humana (Semana 3) */
 .bloque-confirmacion-agente {
   margin-top: 0.85rem;
-  padding: 0.85rem;
-  background: #eef2ff;
-  border: 1px solid #c7d2fe;
-  border-radius: 8px;
+  padding: 1rem;
+  background: #f5f7ff;
+  border: 1.5px solid #a5b4fc;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
 }
 
 .encabezado-confirmacion {
   display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  color: #3730a3;
+  align-items: center;
+  gap: 0.65rem;
+  color: #312e81;
 }
 
 .icono-confirmacion {
   color: #4f46e5;
   flex-shrink: 0;
-  margin-top: 2px;
 }
 
-.advertencia-hitl {
-  margin: 0.2rem 0 0;
-  font-size: 0.84rem;
-  color: #4338ca;
+.info-confirmacion-texto {
+  flex: 1;
+}
+
+.titulo-confirmacion {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  display: block;
+}
+
+.etiqueta-accion-nombre strong {
+  background: #f1f5f9;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  color: #1e293b;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
 }
 
 .detalle-herramienta-agente {
-  margin-top: 0.65rem;
+  margin-top: 0.85rem;
   background: #ffffff;
   border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  padding: 0.85rem;
+}
+
+/* Formato amigable para Notificación de Emergencia */
+.hitl-tarjeta-notificacion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hitl-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.hitl-campo-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.hitl-destinatario {
+  display: inline-block;
+  align-self: flex-start;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #15803d;
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 0.25rem 0.65rem;
   border-radius: 6px;
-  padding: 0.55rem 0.75rem;
+  letter-spacing: 0.02em;
 }
 
-.nombre-herramienta {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #1e1b4b;
-}
-
-.nombre-herramienta code {
-  background: #e0e7ff;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-}
-
-.argumentos-herramienta {
-  margin: 0.4rem 0 0;
-  font-size: 0.78rem;
+.hitl-mensaje-cita {
+  margin: 0;
+  padding: 0.65rem 0.85rem;
   background: #f8fafc;
-  padding: 0.4rem;
+  border-left: 3.5px solid #4f46e5;
   border-radius: 4px;
-  overflow-x: auto;
+  color: #1e293b;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  font-style: normal;
+}
+
+/* Formato tabular genérico para otros parámetros */
+.hitl-tabla-parametros {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.hitl-fila-parametro {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.hitl-fila-parametro:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.hitl-param-clave {
+  font-weight: 700;
   color: #334155;
+  min-width: 140px;
+}
+
+.hitl-param-valor {
+  color: #0f172a;
+}
+
+.hitl-sin-parametros {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.pie-herramienta-agente {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.etiqueta-accion-nombre {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.etiqueta-accion-nombre code {
+  background: #f1f5f9;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  color: #334155;
+  font-family: monospace;
 }
 
 .botones-confirmacion-agente {
-  margin-top: 0.75rem;
+  margin-top: 0.85rem;
   display: flex;
-  gap: 0.5rem;
+  gap: 0.65rem;
   flex-wrap: wrap;
 }
 
 .btn-aprobar-accion {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.8rem;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
   background: #16a34a;
   color: #ffffff;
   border: none;
   border-radius: 6px;
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   cursor: pointer;
+  transition: background 0.15s ease;
+  box-shadow: 0 1px 2px rgba(22, 163, 74, 0.2);
 }
 
 .btn-aprobar-accion:hover {
@@ -841,15 +942,16 @@ body {
 .btn-rechazar-accion {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.8rem;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
   background: #ffffff;
   color: #dc2626;
-  border: 1px solid #f87171;
+  border: 1.5px solid #fca5a5;
   border-radius: 6px;
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 
 .btn-rechazar-accion:hover {
@@ -917,15 +1019,34 @@ body {
 }
 
 .indicador-pensando {
-  display: flex;
+  display: inline-flex;
+  align-self: flex-start;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.65rem 0.9rem;
+  gap: 0.55rem;
+  padding: 0.45rem 0.85rem;
   background: #f0f9ff;
   border: 1px solid #bae6fd;
-  border-radius: 8px;
+  border-radius: 999px;
   color: var(--color-primario);
-  font-size: 0.86rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  width: fit-content;
+  box-shadow: 0 1px 2px rgba(15, 76, 129, 0.06);
+}
+
+.etapa-texto {
+  animation: aparecerEtapa 0.25s ease-out;
+}
+
+@keyframes aparecerEtapa {
+  from {
+    opacity: 0.4;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .punto-pulso {
