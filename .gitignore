@@ -14,7 +14,8 @@ __pycache__/
 service_account.json
 credentials.json
 
-# Datos locales y base vectorial (no subir base de datos Chroma local pesada)
+# Base vectorial ChromaDB canónica (versionada para asegurar reproducibilidad e inferencia offline en Cloud Run)
+# chroma_db/ se mantiene versionado conforme a app/Dockerfile y .dockerignore
 
 # Logs y temporales
 *.log
@@ -38,4 +39,3 @@ frontend/dist/
 
 # Colecciones y pruebas manuales locales
 bruno/GuiaVital/
-chroma_db/chroma.sqlite3
