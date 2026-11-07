@@ -11,6 +11,7 @@ from scripts.semver_bumper import (
     calculate_next_snapshot,
     detect_manual_version_change,
     update_app_version_in_file,
+    get_last_git_tag,
 )
 
 
@@ -202,3 +203,68 @@ def test_actualizacion_readme_version(tmp_path):
     update_readme_version("0.2.3-SNAPSHOT-RC2", readme_path=readme)
     contenido = readme.read_text(encoding="utf-8")
     assert "> **Versión Actual:** `0.2.3-SNAPSHOT-RC2` (SemVer)" in contenido
+
+
+def test_get_last_git_tag_semantic_filtering():
+    """
+    Verifica que get_last_git_tag ordene semánticamente y distinga con precisión:
+    - is_release=True: tags de release limpios (sin snapshot).
+    - is_release=False: tags de snapshot (con sufijo -SNAPSHOT-RC#).
+    """
+    tags_mixtos = [
+        "v0.1.0",
+        "v0.2.0-SNAPSHOT-RC1",
+        "v0.2.0-SNAPSHOT-RC4",
+        "v0.2.0-SNAPSHOT-RC5",
+        "v0.2.2",
+        "v0.2.3-SNAPSHOT-RC1",
+        "v0.2.3-SNAPSHOT-RC2",
+    ]
+
+    # En main: debe retornar v0.2.2 (último release sin snapshot)
+    ultimo_release = get_last_git_tag(is_release=True, tags_list=tags_mixtos)
+    assert ultimo_release == "v0.2.2"
+
+    # En develop: debe retornar v0.2.3-SNAPSHOT-RC2 (último snapshot con mayor correlativo)
+    ultimo_snapshot = get_last_git_tag(is_release=False, tags_list=tags_mixtos)
+    assert ultimo_snapshot == "v0.2.3-SNAPSHOT-RC2"
+
+
+def test_calculate_next_snapshot_with_base_release_progression():
+    """
+    Verifica la transición de snapshot cuando se detectan commits en develop:
+    - Commits tipo PATCH: incrementa correlativo RC del mismo core.
+    - Commits tipo MINOR: promueve el snapshot al nuevo core con RC1.
+    """
+    tags = ["v0.2.2", "v0.2.3-SNAPSHOT-RC1", "v0.2.3-SNAPSHOT-RC2"]
+
+    # 1. Commits PATCH sobre develop continúan en RC3
+    snap_patch = calculate_next_snapshot(
+        base_version="0.2.3-SNAPSHOT-RC2",
+        existing_tags=tags,
+        increment="PATCH",
+        base_release_version="0.2.2",
+    )
+    assert snap_patch == "0.2.3-SNAPSHOT-RC3"
+    assert validate_semver(snap_patch) is True
+
+    # 2. Commits MINOR (feat:) promueven el snapshot a 0.3.0-SNAPSHOT-RC1
+    snap_minor = calculate_next_snapshot(
+        base_version="0.2.3-SNAPSHOT-RC2",
+        existing_tags=tags,
+        increment="MINOR",
+        base_release_version="0.2.2",
+    )
+    assert snap_minor == "0.3.0-SNAPSHOT-RC1"
+    assert validate_semver(snap_minor) is True
+
+    # 3. Siguiente iteración de minor continúa en RC2
+    tags_con_minor = tags + ["v0.3.0-SNAPSHOT-RC1"]
+    snap_minor_2 = calculate_next_snapshot(
+        base_version="0.3.0-SNAPSHOT-RC1",
+        existing_tags=tags_con_minor,
+        increment="MINOR",
+        base_release_version="0.2.2",
+    )
+    assert snap_minor_2 == "0.3.0-SNAPSHOT-RC2"
+    assert validate_semver(snap_minor_2) is True

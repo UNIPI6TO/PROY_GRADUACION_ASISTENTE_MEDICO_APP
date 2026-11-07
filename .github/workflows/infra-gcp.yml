@@ -1,4 +1,4 @@
-name: Provision GCP Infrastructure (SRE)
+name: Aprovisionamiento de Infraestructura GCP (SRE)
 
 on:
   workflow_dispatch:
@@ -28,26 +28,26 @@ env:
 
 jobs:
   provision-infra:
-    name: Provision GAR, Secret Manager & Least-Privilege Runtime SA
+    name: Aprovisionar Artifact Registry, Secret Manager y Cuenta de Servicio de Mínimo Privilegio
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
 
     steps:
-      - name: Checkout Repository
+      - name: Descargar código fuente del repositorio
         uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud via Deployer SA (GCP_JSON_KEY)
+      - name: Autenticar en Google Cloud mediante cuenta de servicio (GCP_JSON_KEY)
         id: auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_JSON_KEY }}
 
-      - name: Set up Google Cloud SDK
+      - name: Configurar Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Enable Required GCP APIs (Idempotent)
+      - name: Habilitar APIs requeridas de GCP (Idempotente)
         env:
           PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
         run: |
@@ -58,7 +58,7 @@ jobs:
           done
           exit 0
 
-      - name: Provision Artifact Registry Repository (Ignore if Exists)
+      - name: Aprovisionar repositorio en Artifact Registry (Ignora si ya existe)
         env:
           PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
         run: |
@@ -87,7 +87,7 @@ jobs:
           fi
           exit 0
 
-      - name: Provision Dedicated Backend Runtime Service Account (Ignore if Exists)
+      - name: Aprovisionar cuenta de servicio dedicada para el Backend (Ignora si ya existe)
         id: runtime_sa
         env:
           PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
@@ -119,7 +119,7 @@ jobs:
           fi
           exit 0
 
-      - name: Provision All Backend Environment Secrets in Secret Manager & Bind IAM (Ignore if Exists)
+      - name: Aprovisionar secretos del Backend en Secret Manager y permisos IAM
         env:
           PROJECT_ID: ${{ steps.auth.outputs.project_id || env.GCP_PROJECT_ID }}
           RUNTIME_SA_EMAIL: ${{ steps.runtime_sa.outputs.sa_email }}
@@ -178,7 +178,7 @@ jobs:
           done
           exit 0
 
-      - name: Summary of Provisioned Infrastructure
+      - name: Resumen de infraestructura aprovisionada
         run: |
           cat << 'EOF' >> "$GITHUB_STEP_SUMMARY"
           ### Infraestructura GCP Verificada / Aprovisionada Exitosamente
