@@ -188,3 +188,17 @@ def test_actualizacion_simetrica_frontend(tmp_path):
 
     assert json.loads(pkg.read_text(encoding="utf-8"))["version"] == "0.2.0-SNAPSHOT-RC2"
     assert json.loads(lock.read_text(encoding="utf-8"))["version"] == "0.2.0-SNAPSHOT-RC2"
+
+
+def test_actualizacion_readme_version(tmp_path):
+    from scripts.semver_bumper import update_readme_version
+
+    readme = tmp_path / "README.md"
+    readme.write_text(
+        "# GuíaVital\n\n> **Versión Actual:** `0.2.2` (SemVer)\n> **Caso:** 05\n",
+        encoding="utf-8",
+    )
+
+    update_readme_version("0.2.3-SNAPSHOT-RC2", readme_path=readme)
+    contenido = readme.read_text(encoding="utf-8")
+    assert "> **Versión Actual:** `0.2.3-SNAPSHOT-RC2` (SemVer)" in contenido

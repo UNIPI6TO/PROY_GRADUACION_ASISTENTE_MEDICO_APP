@@ -12,6 +12,11 @@ on:
   workflow_dispatch:
 
 jobs:
+  secret-scan:
+    name: Auditoría de Secretos (Gitleaks)
+    uses: ./.github/workflows/secretos.yml
+    secrets: inherit
+
   backend-quality-gate:
     name: Backend Quality Gate (Pytest & Evaluador RAG/Flujo)
     runs-on: ubuntu-latest

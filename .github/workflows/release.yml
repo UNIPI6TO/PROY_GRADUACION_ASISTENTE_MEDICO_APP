@@ -60,6 +60,45 @@ jobs:
           echo "frontend_version=${FE_VER}" >> "$GITHUB_OUTPUT"
           echo "tag=v${VER}" >> "$GITHUB_OUTPUT"
 
+      - name: Update README.md and Changelogs before tagging (Tolerante a fallos)
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.BUMP_TOKEN }}@github.com/${{ github.repository }}.git
+          
+          BRANCH="${{ steps.branch_info.outputs.target_branch }}"
+          VER="${{ steps.meta.outputs.version }}"
+          BE_VER="${{ steps.meta.outputs.backend_version }}"
+          FE_VER="${{ steps.meta.outputs.frontend_version }}"
+          
+          # 1. Actualizar versión en README.md
+          python -c "
+          import re, pathlib
+          p = pathlib.Path('README.md')
+          if p.exists() and '$VER':
+              c = p.read_text(encoding='utf-8')
+              c = re.sub(r'(>\s*\*\*Versión Actual:\*\*\s*`)[^`]+(`\s*\(SemVer\))', rf'\g<1>$VER\g<2>', c)
+              p.write_text(c, encoding='utf-8')
+          " || true
+          
+          # 2. Actualizar app/CHANGELOG.md
+          if [ -n "$BE_VER" ] && [ -f "app/CHANGELOG.md" ]; then
+            python scripts/actualizar_changelog.py --version "$BE_VER" --file app/CHANGELOG.md || true
+          fi
+          
+          # 3. Actualizar frontend/CHANGELOG.md
+          if [ -n "$FE_VER" ] && [ -f "frontend/CHANGELOG.md" ]; then
+            python scripts/actualizar_changelog.py --version "$FE_VER" --file frontend/CHANGELOG.md || true
+          fi
+          
+          # 4. Commit y push si hubo cambios en README o changelogs antes de crear el tag
+          if ! git diff --quiet README.md app/CHANGELOG.md frontend/CHANGELOG.md; then
+            git add README.md app/CHANGELOG.md frontend/CHANGELOG.md
+            git commit -m "chore(release): actualizar versión en README y changelogs para $VER [skip ci]" || true
+            git push origin HEAD:$BRANCH || echo "Advertencia: no se pudo hacer push de la sincronización previa al tag"
+          fi
+
       - name: Create Git Tag (Tolerante a fallos)
         continue-on-error: true
         run: |
@@ -83,41 +122,3 @@ jobs:
               echo "El tag $TAG ya existe en Git."
             fi
           fi
-
-      - name: Update Application Changelogs (Tolerante a fallos)
-        continue-on-error: true
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.BUMP_TOKEN }}@github.com/${{ github.repository }}.git
-          
-          BRANCH="${{ steps.branch_info.outputs.target_branch }}"
-          BE_VER="${{ steps.meta.outputs.backend_version }}"
-          FE_VER="${{ steps.meta.outputs.frontend_version }}"
-          
-          # 1. Actualizar app/CHANGELOG.md
-          if [ -n "$BE_VER" ] && [ -f "app/CHANGELOG.md" ]; then
-            python scripts/actualizar_changelog.py --version "$BE_VER" --file app/CHANGELOG.md || true
-          fi
-          
-          # 2. Actualizar frontend/CHANGELOG.md
-          if [ -n "$FE_VER" ] && [ -f "frontend/CHANGELOG.md" ]; then
-            python scripts/actualizar_changelog.py --version "$FE_VER" --file frontend/CHANGELOG.md || true
-          fi
-          
-          # 3. Commit y push si hubo cambios en los changelogs
-          if ! git diff --quiet app/CHANGELOG.md frontend/CHANGELOG.md; then
-            git add app/CHANGELOG.md frontend/CHANGELOG.md
-            git commit -m "docs(changelog): registrar versiones post-merge en $BRANCH [skip ci]" || true
-            git push origin HEAD:$BRANCH || echo "Advertencia: no se pudo hacer push del changelog"
-          fi
-
-      - name: Disparar Pipeline de Despliegue Consolidado (deploy.yml)
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.BUMP_TOKEN || secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ steps.meta.outputs.tag }}"
-          BRANCH="${{ steps.branch_info.outputs.target_branch }}"
-          echo "Disparando deploy.yml para la rama $BRANCH con el tag formal $TAG..."
-          gh workflow run deploy.yml --ref "$BRANCH" -f version_tag="$TAG" || echo "Advertencia: no se pudo disparar deploy.yml"
