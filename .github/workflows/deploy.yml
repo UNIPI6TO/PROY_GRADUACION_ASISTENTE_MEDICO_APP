@@ -47,6 +47,9 @@ jobs:
     steps:
       - name: Descargar código fuente del repositorio
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version_tag || github.event.workflow_run.head_branch || github.ref_name }}
+          fetch-depth: 0
 
       - name: Configurar entorno Python 3.12
         uses: actions/setup-python@v5
@@ -77,6 +80,9 @@ jobs:
     steps:
       - name: Descargar código fuente del repositorio
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version_tag || github.event.workflow_run.head_branch || github.ref_name }}
+          fetch-depth: 0
 
       - name: Configurar entorno Node.js 22
         uses: actions/setup-node@v4
@@ -116,6 +122,7 @@ jobs:
       - name: Descargar código fuente del repositorio
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.version_tag || github.event.workflow_run.head_branch || github.ref_name }}
           fetch-depth: 0
 
       - name: Búsqueda y consolidación de versión del Backend
@@ -222,6 +229,7 @@ jobs:
       - name: Descargar código fuente del repositorio
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.version_tag || github.event.workflow_run.head_branch || github.ref_name }}
           fetch-depth: 0
 
       - name: Búsqueda y consolidación de versión del Frontend

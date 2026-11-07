@@ -12,7 +12,7 @@ URL Oficial Backend (Cloud Run): `https://guiavital-backend-448060764458.us-cent
 - [x] **Dockerfile endurecido:** Python 3.12-slim fijo, usuario no privilegiado `appuser` (UID 10001), modelo multilingual-e5 descargado en build, `PORT` dinámico con fallback 8080 y `.dockerignore` estricto.
 - [x] **Endpoint de salud (/manage/health):** Responde estado Liveness y Readiness (UP / 200) sin tocar el modelo generativo.
 - [x] **Despliegue activo en la nube:** Backend desplegado en Google Cloud Run bajo HTTPS respondiendo con certificados gestionados.
-- [x] **Pipeline CI/CD automatizado:** Integración y despliegue continuo con GitHub Actions (`ci.yml`, `deploy.yml`, `secretos.yml`, `release.yml`).
+- [x] **Pipeline CI/CD automatizado:** Integración y despliegue continuo con GitHub Actions en 3 fases: `ci.yml` (solo en PR hacia `develop`/`main`), `release.yml` (al completar el merge: bump SemVer, bitácoras y Git Tag) y `deploy.yml` (activado al finalizar `release.yml`, ejecutando primero las compuertas bloqueantes de Gitleaks, `pytest` 92 pruebas, `verify:secrets` y `Vitest` 27 pruebas antes de crear imágenes Docker y desplegar en Cloud Run).
 - [x] **Pruebas funcionales de humo (`smoke.py`):** Casos reales contra la URL desplegada en producción cubriendo casos felices, triaje, seguridad, inyección y errores HTTP.
 - [x] **Credenciales protegidas:** Cero secretos en código e historial; inyección de variables sensibles vía Google Secret Manager (`--set-secrets`) y escaneo continuo con Gitleaks.
 
