@@ -40,8 +40,8 @@ flowchart TD
 ## 📋 Catálogo Consolidado de Workflows
 
 ### 1. Calidad en Pull Request (`ci.yml`)
-* **Disparador:** `pull_request` y `push` (`main`, `develop`) o ejecución manual (`workflow_dispatch`).
-* **Misión:** Validar estrictamente la integridad del código sin realizar modificaciones ni commits.
+* **Disparador:** **Únicamente en `pull_request`** (`opened`, `synchronize`, `reopened`) hacia `main` y `develop` (o manual vía `workflow_dispatch`). No se ejecuta en eventos `push`.
+* **Misión:** Validar estrictamente la integridad del código del PR sin realizar modificaciones ni commits.
 * **Compuertas:**
   1. **Auditoría de Secretos (`secret-scan`):** Ejecuta Gitleaks en todo el repositorio (`secretos.yml`).
   2. **Calidad de Backend (`backend-quality-gate`):** Ejecuta las 92 pruebas unitarias (`pytest -q`) y el evaluador del Plan de Calidad (`python eval/evaluar.py`).
