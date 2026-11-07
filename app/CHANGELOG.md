@@ -9,6 +9,10 @@ y el backend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-07
+
+- No hubo cambios.
+
 ## [0.3.3-SNAPSHOT-RC4] - 2026-11-07
 
 - No hubo cambios.
