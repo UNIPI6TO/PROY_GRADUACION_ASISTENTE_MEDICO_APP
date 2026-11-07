@@ -33,7 +33,7 @@ La ejecución reproducible mediante `python eval/evaluar.py`, `python -m eval.ru
 ### Salida verificada del script de Integración Continua (`python eval/evaluar.py`):
 ```text
 Loading weights: 100%|##########| 199/199 [00:00<00:00, 5289.56it/s]
-RAG acierto top-3: 87%  ·  Silencio: 100%  ·  Flujo a revisión: 30%  ·  Errores silenciosos: 0
+RAG acierto top-3: 87%  ·  Con cita: 100%  ·  Silencio: 100%  ·  Flujo a revisión: 30%  ·  Errores silenciosos: 0
 [EXITO] Todas las metas del Plan de Calidad de la Semana 3 se han cumplido.
 ```
 

@@ -109,3 +109,31 @@ def test_confirmacion_humana_pausa_y_reanuda():
 
     assert res_final["estado"] == "completado"
     assert "notificado a su contacto" in res_final["respuesta"]
+
+
+def test_agente_acumula_y_valida_fuentes_con_cita():
+    """Valida en código que las respuestas del agente incluyan sus fuentes clínicas estructuradas."""
+    from app.schemas import Fuente
+
+    mock_llm = MagicMock()
+    # Vuelta 1: el LLM llama a la herramienta consultar_guia_msp
+    tc_rag = ToolCallMock(
+        "call_rag_1",
+        "consultar_guia_msp",
+        '{"texto": "signos de alarma y hospitalizacion dengue"}',
+    )
+    # Vuelta 2: el LLM responde al usuario utilizando los fragmentos
+    mock_llm.completar_con_herramientas.side_effect = [
+        (MensajeMock(content="", tool_calls=[tc_rag]), "simulado", "modelo-1"),
+        (MensajeMock(content="Según la guía oficial, los signos de alarma exigen valoración inmediata."), "simulado", "modelo-1"),
+    ]
+
+    mensajes = [{"role": "user", "content": "¿Cuáles son los signos de alarma según la guía?"}]
+    res = ejecutar_bucle_agente(mensajes, cliente_llm=mock_llm)
+
+    assert res["estado"] == "completado"
+    assert len(res["fuentes"]) > 0
+    for f in res["fuentes"]:
+        assert isinstance(f, Fuente)
+        assert bool(f.documento)
+        assert f.seccion is not None

@@ -466,24 +466,26 @@ pytest -q
 ```
 **Resultado real obtenido en consola:**
 ```text
-...................................................................................... [100%]
-86 passed in 4.15s
+......................................................................................... [100%]
+89 passed in 4.25s
 ```
 
 | Archivo de Prueba | Qué Valida |
 |---|---|
 | `tests/test_flujo.py` | Cinta de 7 estaciones (`app/flujo.py`): cálculo de confianza, compuerta por umbral 0.85, casos automáticos vs revisión y calibración sin errores silenciosos. |
 | `tests/test_endpoint_signos_alarma.py` | Endpoint HTTP determinista (`POST /herramientas/signos-alarma`): respuestas 200 (alarma, vigilancia, sin alarma) y validación Pydantic 422. |
-| `tests/test_api_v2.py` | Endpoints v2 (`/api/v2/chat` y `/api/v2/chat/confirmar`): flujo conversacional del agente, respuesta directa y pausa para confirmación humana. |
-| `tests/test_agent.py` | Bucle del agente (`app/services/agent.py`): camino feliz, lista cerrada (rechazo de `diagnosticar`), corte por `MAX_ITER = 6` y flujo de confirmación. |
-| `tests/test_consultar_guia_msp.py` | Herramienta RAG: validación de longitud con Pydantic, conexión con `BuscadorVectorial` y determinismo de resultados. |
-| `tests/test_evaluar_signos_alarma.py` | Herramienta determinista: normalización de texto y cruce contra los signos de alarma oficiales de `config/parametros.yaml`. |
+| `tests/test_api_v2.py` | Endpoints v2 (`/api/v2/chat` y `/api/v2/chat/confirmar`): flujo conversacional del agente, respuesta directa, pausa para confirmación humana y serialización de respuestas con citas validadas en código. |
+| `tests/test_agent.py` | Bucle del agente (`app/services/agent.py`): camino feliz, lista cerrada (rechazo de `diagnosticar`), corte por `MAX_ITER = 6`, confirmación humana y acumulación de citas `Fuente(documento, seccion)`. |
+| `tests/test_consultar_guia_msp.py` | Herramienta RAG: validación de longitud con Pydantic, conexión con `BuscadorVectorial`, determinismo de resultados y abstención ante distancias mayores al umbral. |
+| `tests/test_evaluar_signos_alarma.py` | Herramienta determinista: normalización de texto, sinónimos coloquiales (*"me sangran las encías"*) y cruce contra los signos de alarma oficiales de `config/parametros.yaml`. |
 | `tests/test_buscar_centro_salud.py` | Herramienta GeoSalud: filtro por ciudad, cálculo de distancias en km con Haversine y disponibilidad de Emergencia 24h. |
 | `tests/test_dengue.py` | Contrato `200` de `/api/v1/chat`, persistencia y memoria multi-turno en SQLite, aislamiento entre sesiones, *rate limit* `429` + cabecera `Retry-After`, delimitación `<consulta_usuario>`, validaciones `422`, errores `503`/`500` en formato RFC 9457 sin *stack trace*, abstención ante salida inválida y vigencia de `system_v4`. |
 | `tests/test_retriever.py` | Extracción de páginas 95 a 100 de SIVE-Alerta, exclusión de referencias bibliográficas de OPS 2016, asimetría de prefijos E5 (`query: ` / `passage: `), orden por distancia coseno, búsqueda híbrida por código exacto (`CIE-10 A 91`) y filtro por vigencia (`vigente: True`). |
 | `tests/test_llm.py` | Validación de esquema JSON estricto, autocorrección en 1 intento, reintentos ante `429`/`503`/respuesta vacía, respeto de `Retry-After`, espera exponencial con *jitter* y conmutación al proveedor de respaldo. |
 | `tests/test_main.py` | Diagnóstico `/manage/health` (`200` UP / `503` DOWN), cumplimiento de expresión regular SemVer en `/manage/info` y contrato de triage determinista en `/api/v1/flujo` (flujo automático vs desvío a revisión manual). |
-| `tests/test_semver_bumper.py` | Reglas de incremento SemVer (*MAJOR*, *MINOR*, *PATCH*) según *Conventional Commits* y generación de versiones *SNAPSHOT-RC*. |
+| `tests/test_semver_bumper.py` | Reglas de incremento SemVer (*MAJOR*, *MINOR*, *PATCH*), comparación contra último tag release en `main` y snapshot en `develop`, sincronización simétrica frontend y actualización de `README.md`. |
+| `tests/test_semver_bumper_frontend.py` | Versionado SemVer y sincronización de `package.json` y `package-lock.json` del frontend. |
+| `tests/test_actualizar_changelog.py` | Automatización y formato estándar de `CHANGELOG.md` para backend y frontend. |
 
 ---
 
@@ -496,7 +498,7 @@ python eval/evaluar.py
 ```
 **Resultado real obtenido:**
 ```text
-RAG acierto top-3: 87%  ·  Silencio: 100%  ·  Flujo a revisión: 30%  ·  Errores silenciosos: 0
+RAG acierto top-3: 87%  ·  Con cita: 100%  ·  Silencio: 100%  ·  Flujo a revisión: 30%  ·  Errores silenciosos: 0
 [EXITO] Todas las metas del Plan de Calidad de la Semana 3 se han cumplido.
 ```
 

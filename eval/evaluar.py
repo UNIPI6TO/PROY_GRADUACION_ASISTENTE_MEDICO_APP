@@ -26,15 +26,21 @@ def leer(ruta):
 
 def evaluar_rag(preguntas, k=3):
     from app.tools.consultar_guia_msp import consultar_guia_msp, ConsultarGuiaMspIn
-    aciertos = callados = 0
+    aciertos = callados = con_citas = 0
     con, sin = [p for p in preguntas if p.get("fuente")], [p for p in preguntas if not p.get("fuente")]
     for p in con:
         r = consultar_guia_msp(ConsultarGuiaMspIn(texto=p["pregunta"]))
         texto = " ".join(r["fragmentos"]).lower()
         aciertos += r["encontrado"] and any(kw.lower() in texto for kw in p["keywords"])
+        tiene_citas_validas = (
+            r["encontrado"]
+            and len(r.get("fuentes", [])) > 0
+            and all(bool(f.get("documento")) and f.get("seccion") is not None for f in r["fuentes"])
+        )
+        con_citas += tiene_citas_validas
     for p in sin:
         callados += not consultar_guia_msp(ConsultarGuiaMspIn(texto=p["pregunta"]))["encontrado"]
-    return aciertos / len(con), callados / len(sin)       # si Chroma no carga, que el script falle
+    return aciertos / len(con), callados / len(sin), con_citas / len(con)       # si Chroma no carga, que el script falle
 
 def evaluar_flujo(casos):
     auto = rev = silenciosos = 0
@@ -54,12 +60,13 @@ if __name__ == "__main__":
     flujo = evaluar_flujo(casos)
     
     preguntas = leer("eval/preguntas_rag.jsonl")
-    rag_acierto, rag_silencio = evaluar_rag(preguntas)
+    rag_acierto, rag_silencio, rag_con_cita = evaluar_rag(preguntas)
 
-    print(f"RAG acierto top-3: {rag_acierto:.0%}  ·  Silencio: {rag_silencio:.0%}  ·  Flujo a revisión: {flujo['revision']:.0%}  ·  Errores silenciosos: {flujo['silenciosos']}")
+    print(f"RAG acierto top-3: {rag_acierto:.0%}  ·  Con cita: {rag_con_cita:.0%}  ·  Silencio: {rag_silencio:.0%}  ·  Flujo a revisión: {flujo['revision']:.0%}  ·  Errores silenciosos: {flujo['silenciosos']}")
 
     ok = (
         (rag_acierto >= METAS["rag_acierto_top3"])
+        and (rag_con_cita >= METAS["rag_con_cita"])
         and (rag_silencio >= METAS["rag_silencio"])
         and (flujo["silenciosos"] == METAS["flujo_errores_silenciosos"])
         and (flujo["revision"] <= METAS["flujo_max_revision"])
