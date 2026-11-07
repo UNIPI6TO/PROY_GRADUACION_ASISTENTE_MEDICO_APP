@@ -167,16 +167,16 @@ def main():
         tiempos.append(seg)
         ok = evaluar_caso(caso, estado, cuerpo)
         pasan += ok
-        print(f"{'PASA ' if ok else 'FALLA'} {i:>2}. [{caso['tipo']}] {caso['metodo']} {caso['ruta']} -> {estado} en {seg:.1f} s")
+        print(f"{'PASA ' if ok else 'FALLA'} {i:>2}. [{caso['tipo']}] {caso['metodo']} {caso['ruta']} -> {estado} en {seg:.1f} s", flush=True)
         if not ok:
             esp_cont = caso.get("contiene")
             if isinstance(esp_cont, list):
                 esp_cont = " / ".join(esp_cont)
             esperado = f"{caso['estado']}" + (f" con «{esp_cont}»" if esp_cont else "")
-            print(f"         esperado {esperado}; recibido: {cuerpo[:200]!r}")
+            print(f"         esperado {esperado}; recibido: {cuerpo[:200]!r}", flush=True)
     orden = sorted(tiempos)
     p95 = orden[max(0, round(0.95 * len(orden)) - 1)]
-    print(f"RESULTADO: {pasan}/{len(CASOS)} pasan · p95 {p95:.1f} s · más lento {orden[-1]:.1f} s")
+    print(f"RESULTADO: {pasan}/{len(CASOS)} pasan · p95 {p95:.1f} s · más lento {orden[-1]:.1f} s", flush=True)
     sys.exit(0 if pasan == len(CASOS) else 1)
 
 
