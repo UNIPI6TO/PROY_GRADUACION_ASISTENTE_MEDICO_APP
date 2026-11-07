@@ -1,7 +1,7 @@
 # GuíaVital · Asistente de Orientación en Salud Pública sobre Dengue y Arbovirosis
 
 > **Nombre Oficial / Nombre Corto (`APP_NAME`):** `GuíaVital`  
-> **Versión Actual:** `0.2.3-SNAPSHOT-RC2` (SemVer)  
+> **Versión Actual:** `0.3.0-SNAPSHOT-RC1` (SemVer)  
 > **Caso:** 05 - Grupo 5 · Seminario de Titulación UNIANDES  
 > **Repositorio Oficial en GitHub:** `https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP`  
 > **Despliegue Público Frontend (Cloud Run):** `https://guiavital-533967484439.us-central1.run.app`  
