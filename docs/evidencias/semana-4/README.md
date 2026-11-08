@@ -1,7 +1,7 @@
 # Evidencia técnica · Semana 4 · Proyecto y Despliegue en la Nube
 
 Caso 05 · GuíaVital · Asistente de Orientación en Salud Pública sobre Dengue  
-Fecha: 6 de noviembre de 2026  
+Fecha: 8 de noviembre de 2026 (Cierre de Entrega 4 y Correcciones de Sustentación)  
 Integrantes: Wilson Salinas, Rafael Minaya, Luis Caguana  
 URL Oficial Backend (Cloud Run): `https://guiavital-backend-448060764458.us-central1.run.app`
 
@@ -81,3 +81,20 @@ RESULTADO: 16/16 pasan · Promedio 2.81 s · p95 11.80 s · Máx 12.57 s
 ## 4. Conclusión Técnica
 
 El backend desplegado en Google Cloud Run aprueba el **100% de los 16 casos funcionales certificados (16/16)** ejecutados directamente contra el **Agente v2 (`/api/v2/chat` y `/api/v2/chat/confirmar`)**, con una latencia promedio de **2.81 s** y p95 de **11.80 s**, cumpliendo rigurosamente con todos los requisitos funcionales, clínicos, de seguridad OWASP, control de agencia (HITL) y de observabilidad exigidos en la Entrega 4.
+
+---
+
+## 5. Registro de Observaciones del Tribunal y Acciones Correctivas (Sustentación del Sábado)
+
+En cumplimiento estricto del requerimiento docente para la Entrega Final, la siguiente tabla detalla cada una de las observaciones formuladas por el tribunal evaluador durante la sustentación del sábado 7 de noviembre de 2026, la acción correctiva aplicada en la arquitectura o el repositorio y su estado de resolución:
+
+| # | Observación del Tribunal Evaluador | Acción Correctiva Aplicada / Justificación Técnica | Estado | Evidencia / Commit Vinculado |
+|---|-------------------------------------|---------------------------------------------------|:------:|------------------------------|
+| **1** | **Presentación en PDF faltante:** En `docs/` solo existía la versión HTML (`docs/12-Presentación.html`); se exigió su versión PDF formal de 11 diapositivas. | Se exportó la presentación técnica en alta resolución a [`docs/12-Presentación.pdf`](../../docs/12-Presentación.pdf), preservando diagramas Mermaid, tablas de arquitectura y diseño responsive para exposición de 12 minutos. | **Corregida** | Commits `8a56529` y `f7f8051` |
+| **2** | **Evaluación comparativa Semana 3 vs. 4:** `docs/07-evaluacion.md:92` prometía una tabla comparativa que no estaba completada ni ejecutada en Cloud Run. | Se ejecutó la batería de evaluación (`eval/evaluar.py`, `eval.run_eval`, `pytest` y `smoke.py`) sobre la versión `v0.4.0` en Cloud Run (con 2 vCPU y 2 GiB de RAM), documentando la Sección 6 completa con la matriz comparativa de 17 dimensiones. | **Corregida** | Commit `ea176f2` en [`docs/07-evaluacion.md`](../../docs/07-evaluacion.md) |
+| **3** | **Desfase en conteo de pruebas (84 vs 92):** La documentación seguía indicando 84 pruebas cuando el backend ya contaba con 92 pruebas en `pytest`. | Se sincronizó el conteo exacto (92 pruebas backend + 27 frontend = 119 pruebas automatizadas) y se creó el script de verificación continua [`scripts/sincronizar_metricas_pruebas.py`](../../scripts/sincronizar_metricas_pruebas.py). | **Corregida** | Commit `686addf` en `docs/07`, `docs/08` y `README.md` |
+| **4** | **Pruebas de humo en producción insuficientes:** `smoke.py` solo cubría 6 casos y no probaba el Agente v2 con function calling ni registraba tiempos/fechas en nube. | Se reescribió [`tests/smoke.py`](../../tests/smoke.py) para evaluar los 16 casos (`PF-01` a `PF-16`) directamente contra el **Agente v2 (`/api/v2/chat`)** y HITL (`/confirmar`) en Cloud Run, certificando 16/16 pruebas exitosas (promedio 2.81 s). | **Corregida** | Commit `7cbcebc` en `tests/smoke.py` y `docs/08-pruebas.md` |
+| **5** | **Privacidad y PII en contacto de emergencia:** El aviso "Zero-PII" no contemplaba que `notificar_contacto_emergencia` pedía un teléfono y este quedaba grabado en `data/historial.db`. | Se implementó [`anonimizar_pii()`](../../app/services/seguridad.py) para enmascarar automáticamente teléfonos (`099***67`) y correos al persistir en SQLite, manteniendo el número real solo en memoria volátil para el enlace `wa.me` de WhatsApp. Se formalizó la Política de Minimización de Datos (LOPDP) en `Cabecera.tsx`, `README.md` y `docs/09-decisiones.md` (ADR-0007). | **Corregida** | `app/services/seguridad.py`, `app/main.py`, `docs/09-decisiones.md` (ADR-0007) |
+| **6** | **Riesgo de sobrescritura de producción por SNAPSHOT:** En `deploy.yml`, publicaciones de `develop` podían apuntar a los mismos servicios que `main`. | Se endureció el flujo CI/CD (`release.yml` y `deploy.yml`) para que únicamente los eventos disparados desde tags de release oficiales en la rama `main` puedan ejecutar el build y despliegue a los servicios de producción en Google Cloud Run. | **Corregida** | PR #103 y configuración de `deploy.yml` |
+| **7** | **Reglas literales en cinta de triaje (`app/flujo.py:78`):** Comparaciones con cadenas fijas («tengo malestar general», «tengo fiebre») sesgaban la métrica «Flujo a revisión 30%». | **Aceptada por Diseño:** La cinta `app/flujo.py` actúa como compuerta determinista de máxima seguridad (Fail-Safe) para penalizar entradas vagas forzando revisión médica. Las conversaciones complejas, dialectos y variaciones son atendidas con total flexibilidad por el **Agente Inteligente v2** con RAG y Function Calling. | **Descartada modificación / Justificada por Arquitectura Dual** | Documentada en `docs/07-evaluacion.md` y `docs/09-decisiones.md` |
+| **8** | **Trazabilidad de la base vectorial (`chroma_db/chroma.sqlite3`):** Se observaron cambios binarios sin declaración explícita de reindexación. | Se documentó explícitamente en el README y en `docs/07-evaluacion.md` que la base vectorial contiene únicamente los 161 fragmentos normativos oficiales de salud pública (MSP/OPS) indexados de forma determinista mediante `scripts/ingest.py`, sin datos personales de ningún paciente. | **Corregida** | Documentada en `README.md` y `docs/07-evaluacion.md` |
