@@ -34,7 +34,7 @@ from app.schemas import (
 )
 from app.services.agent import ejecutar_bucle_agente, reanudar_agente
 from app.services.llm import ClienteLLM, ProveedorNoDisponible, SalidaInvalida, cargar_prompt
-from app.services.seguridad import LimiteExcedido, LimitadorTasa, delimitar_consulta
+from app.services.seguridad import LimiteExcedido, LimitadorTasa, anonimizar_pii, delimitar_consulta
 from app.tools.evaluar_signos_alarma import (
     EvaluarSignosAlarmaHttpIn,
     EvaluarSignosAlarmaHttpOut,
@@ -42,7 +42,7 @@ from app.tools.evaluar_signos_alarma import (
 )
 
 APP_NAME = "GuíaVital"
-APP_VERSION = "0.3.3-SNAPSHOT-RC4"
+APP_VERSION = "0.4.0"
 SEMVER_REGEX = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
 
 PROMPT = "system_v4"
@@ -175,8 +175,8 @@ def chat(solicitud: Solicitud,
         r = llm.generar_json(cargar_prompt(PROMPT), delimitar_consulta(solicitud.texto),
                              RespuestaAsistente, historial)
         datos = r.datos
-        repo.guardar(solicitud.idSesion, "user", solicitud.texto)
-        repo.guardar(solicitud.idSesion, "assistant", datos.respuesta)
+        repo.guardar(solicitud.idSesion, "user", anonimizar_pii(solicitud.texto))
+        repo.guardar(solicitud.idSesion, "assistant", anonimizar_pii(datos.respuesta))
         return RespuestaChat(
             respuesta=datos.respuesta,
             se_abstiene=datos.se_abstiene,
@@ -240,8 +240,8 @@ def chat_v2(solicitud: Solicitud,
 
     # El ciclo concluyó (completado o tope alcanzado)
     _ACCIONES_PENDIENTES.pop(solicitud.idSesion, None)
-    repo.guardar(solicitud.idSesion, "user", solicitud.texto)
-    repo.guardar(solicitud.idSesion, "assistant", res["respuesta"])
+    repo.guardar(solicitud.idSesion, "user", anonimizar_pii(solicitud.texto))
+    repo.guardar(solicitud.idSesion, "assistant", anonimizar_pii(res["respuesta"]))
 
     estado_final = EstadoAgente.COMPLETADO if res["estado"] == "completado" else EstadoAgente.TOPE_ALCANZADO
     return RespuestaChatV2(
@@ -298,8 +298,8 @@ def confirmar_accion_v2(confirmacion: SolicitudConfirmacion,
     # Finalizado
     texto_orig = pendiente.get("texto_usuario", "")
     if texto_orig:
-        repo.guardar(confirmacion.idSesion, "user", texto_orig)
-    repo.guardar(confirmacion.idSesion, "assistant", res["respuesta"])
+        repo.guardar(confirmacion.idSesion, "user", anonimizar_pii(texto_orig))
+    repo.guardar(confirmacion.idSesion, "assistant", anonimizar_pii(res["respuesta"]))
 
     estado_final = EstadoAgente.COMPLETADO if res["estado"] == "completado" else EstadoAgente.TOPE_ALCANZADO
     return RespuestaChatV2(
