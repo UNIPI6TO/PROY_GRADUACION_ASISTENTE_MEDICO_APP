@@ -9,6 +9,7 @@ y el backend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.5.1-SNAPSHOT-RC1] - 2026-11-08
 ## [0.5.0] - 2026-11-08
 
 - fix: enmascarar datos personales en el historial
