@@ -85,7 +85,7 @@ python eval/evaluar.py
 # 2. Ejecutar el reporte detallado de ranking vectorial (Hit@1 y Hit@5 por pregunta)
 python -m eval.run_eval
 
-# 3. Ejecutar la suite completa de pruebas unitarias y de integración (84 tests sin gastar cuota de API)
+# 3. Ejecutar la suite completa de pruebas unitarias y de integración (92 tests sin gastar cuota de API)
 pytest -v
 ```
 
