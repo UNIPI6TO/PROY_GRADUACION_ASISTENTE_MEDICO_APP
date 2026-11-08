@@ -69,6 +69,11 @@ def test_persistencia_historial_sqlite(entorno):
     enviar(entorno)
     turnos = entorno.repo.ultimos_turnos("ses-01")
     assert [(t.rol, t.contenido) for t in turnos] == [("user", TEXTO), ("assistant", "respuesta 1")]
+    # Verificar enmascaramiento de PII en persistencia (LOPDP)
+    enviar(entorno, sesion="ses-pii", texto="Llamar a mi contacto al 0991234567 de emergencia")
+    turnos_pii = entorno.repo.ultimos_turnos("ses-pii")
+    assert "0991234567" not in turnos_pii[0].contenido
+    assert "099***67" in turnos_pii[0].contenido
 
 
 def test_memoria_multi_turno(entorno):

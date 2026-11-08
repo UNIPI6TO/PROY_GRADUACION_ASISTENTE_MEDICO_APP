@@ -228,3 +228,38 @@ Descartamos AWS Lambda / Vercel Serverless por el límite estricto de tamaño de
 ## Consecuencias
 
 Aceptamos una latencia de arranque en frío (cold start) de aproximadamente 6 a 10 segundos al activarse desde 0 instancias mientras carga la memoria de la base vectorial. Además, aceptamos el sistema de archivos efímero del contenedor, lo cual mantiene la base de datos SQLite de historial anónimo acotada por sesión, operando dentro de la capa gratuita de GCP ($0).
+
+---
+
+## ADR-0007: Política de minimización de datos (LOPDP) y enmascaramiento de PII en persistencia
+
+- **Estado:** Aceptado
+- **Fecha:** 2026-11-08
+- **Responsables:** Rafael Minaya, Luis Cahuana, Wilson Salinas
+- **Modifica:** ADR-003
+
+### Contexto
+
+El sistema implementó la herramienta `notificar_contacto_emergencia`, donde el usuario puede ingresar voluntariamente el número telefónico de un familiar para ser alertado ante signos de alarma de dengue mediante un enlace de WhatsApp (`wa.me`). Aunque la intención es de auxilio médico vital, registrar el número de teléfono o correo en texto plano dentro de la base de datos `data/historial.db` contradice la promesa estricta de confidencialidad de la Ley Orgánica de Protección de Datos Personales (LOPDP de Ecuador, Registro Oficial Suplemento 459, 2021). Asimismo, se requiere transparentar que la base vectorial `chroma_db/chroma.sqlite3` almacena exclusivamente fragmentos de normas clínicas oficiales (161 fragmentos) y no datos personales de pacientes.
+
+### Opciones consideradas
+
+1. **Eliminar la herramienta de notificación de emergencia:** Elimina el riesgo de PII, pero priva al paciente con dengue grave de una vía rápida para alertar a un familiar y acudir al hospital.
+2. **Almacenar el teléfono sin enmascarar:** Útil para auditoría forense, pero viola el principio de minimización de datos del Art. 10 de la LOPDP al retener datos personales innecesariamente en disco.
+3. **Procesamiento volátil en memoria y enmascaramiento en persistencia (Elegida):**
+   - El agente procesa el número real en memoria volátil de la sesión activa y se lo devuelve al navegador en la acción pendiente para que el usuario construya y abra su enlace `https://wa.me/593...`.
+   - Antes de que `repo.guardar()` inserte el mensaje en `data/historial.db`, una función determinista `anonimizar_pii()` enmascara irreversiblemente el número (`099***67`) y correos electrónicos.
+   - El backend nunca envía SMS ni contacta a terceros por su cuenta (simulación honesta en servidor; el envío real lo ejecuta el usuario desde su propio dispositivo).
+
+### Decisión
+
+Adoptar una **Política de Minimización de Datos Personales (Art. 10 y 11 LOPDP)** con excepción justificada de auxilio en emergencias médicas:
+1. El sistema no solicita nombres ni cédulas.
+2. Los teléfonos o correos ingresados para contacto de emergencia se mantienen en memoria durante el turno para permitir la apertura de WhatsApp en el navegador del usuario.
+3. Al persistir el turno en `data/historial.db`, se enmascaran automáticamente (`099***67`). En disco nunca queda PII en texto plano.
+4. La base `chroma_db/chroma.sqlite3` contiene exclusivamente guías médicas del MSP y OPS preindexadas en construcción, sin datos personales de ningún tipo.
+
+### Consecuencias
+
+- **Positivas:** Cumplimiento riguroso de la LOPDP y del checklist de la Entrega 4 del Seminario, sin sacrificar la funcionalidad de auxilio de WhatsApp para el paciente.
+- **Negativas y riesgos:** Ninguna para el usuario final; en pruebas automatizadas y trazabilidad forense los turnos en BD se visualizan enmascarados, preservando la confidencialidad.

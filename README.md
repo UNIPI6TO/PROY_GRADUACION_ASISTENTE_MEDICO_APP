@@ -14,9 +14,10 @@
 > **Condiciones de uso informadas en la primera pantalla de la aplicación:**
 > - **Hablas con una IA:** GuíaVital utiliza modelos de Inteligencia Artificial generativa apoyados en guías oficiales del MSP y la OPS. **Puede equivocarse o presentar imprecisiones.**
 > - **No reemplaza al profesional de salud:** Las respuestas son estrictamente de orientación preventiva; **nunca diagnostican ni recetan medicamentos** (evita automedicarte con ibuprofeno, aspirina o diclofenaco). Ante signos de alarma, acude de inmediato a un centro de salud o llama al **ECU-911**.
-> - **Qué datos guarda y por cuánto tiempo:** Opera bajo una política **Zero-PII** (no solicita ni guarda nombres, cédulas ni datos personales). Únicamente conserva:
+> - **Política de Minimización de Datos y Privacidad (LOPDP):** El sistema opera bajo el principio de minimización de datos personales (Art. 10 y 11 de la Ley Orgánica de Protección de Datos Personales del Ecuador). No solicita nombres, cédulas ni datos de filiación. En caso de solicitar voluntariamente la notificación a un familiar de auxilio (`notificar_contacto_emergencia`), dicho número solo se procesa en memoria volátil de la sesión para preparar el enlace seguro de WhatsApp (`https://wa.me/...`) en el navegador del usuario y **se enmascara irreversiblemente (ej. `099***67`) antes de cualquier persistencia en base de datos (`data/historial.db`)**. Únicamente conserva:
 >   1. Un identificador anónimo de sesión (`idSesion`) en el navegador (`sessionStorage`), que **se elimina automáticamente al cerrar la pestaña** o al pulsar *"Nueva consulta"*.
->   2. Los turnos de conversación asociados a ese ID anónimo en una base temporal (`data/historial.db`) **solo durante la sesión activa / vida efímera del contenedor** en Cloud Run, y métricas técnicas sin texto del usuario en `logs/llm.jsonl`.
+>   2. Los turnos de conversación asociados a ese ID anónimo en la base SQLite temporal (`data/historial.db`) con PII enmascarada/anonimizada, **solo durante la sesión activa / vida efímera del contenedor** en Cloud Run.
+>   3. La base vectorial (`chroma_db/chroma.sqlite3`) almacena únicamente los 161 fragmentos normativos oficiales de salud pública (MSP/OPS), sin datos personales de ningún paciente ni usuario.
 
 ---
 
@@ -66,7 +67,7 @@ En Ecuador, especialmente en las provincias costeras y amazónicas durante las t
 - **NUNCA** emite diagnósticos médicos ni confirma o descarta enfermedades.
 - **NUNCA** prescribe ni recomienda fármacos, dosis o remedios caseros (advierte explícitamente contra la automedicación con aspirina, ibuprofeno, naproxeno, diclofenaco, metamizol, corticoides o antibióticos).
 - **NUNCA** reemplaza la consulta médica presencial ni exámenes de laboratorio.
-- **NUNCA** almacena ni registra datos personales identificables (arquitectura *Zero-PII* alineada con la LOPDP de Ecuador).
+- **NUNCA** almacena datos personales identificables en texto plano (política de minimización y enmascaramiento automático de teléfonos/correos alineada con la LOPDP de Ecuador).
 
 ---
 

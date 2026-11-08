@@ -233,11 +233,12 @@ export const Cabecera: React.FC<CabeceraProps> = ({
                   síntomas críticos, acude a un centro médico o llama al 911.
                 </li>
                 <li>
-                  <strong>Qué datos guarda y por cuánto tiempo:</strong> No solicita ni almacena
-                  datos personales (Zero-PII). Solo guarda un código de sesión anónimo en tu
-                  navegador (<code>sessionStorage</code>, se borra al cerrar la pestaña) y los
-                  mensajes de la conversación temporalmente durante la vigencia de la sesión e
-                  instancia activa.
+                  <strong>Política de Minimización de Datos (LOPDP):</strong> No solicitamos ni
+                  almacenamos datos personales para el uso general. Si voluntariamente ingresas
+                  el teléfono de un contacto de emergencia para auxilio médico, dicho número solo
+                  se procesa en memoria volátil de tu navegador para preparar tu enlace de WhatsApp
+                  y se enmascara irreversiblemente (ej. <code>099***67</code>) antes de cualquier
+                  registro temporal en el servidor.
                 </li>
               </ul>
 
