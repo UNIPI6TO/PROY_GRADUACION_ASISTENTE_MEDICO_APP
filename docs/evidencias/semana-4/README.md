@@ -98,3 +98,27 @@ En cumplimiento estricto del requerimiento docente para la Entrega Final, la sig
 | **6** | **Riesgo de sobrescritura de producción por SNAPSHOT:** En `deploy.yml`, publicaciones de `develop` podían apuntar a los mismos servicios que `main`. | Se endureció el flujo CI/CD (`release.yml` y `deploy.yml`) para que únicamente los eventos disparados desde tags de release oficiales en la rama `main` puedan ejecutar el build y despliegue a los servicios de producción en Google Cloud Run. | **Corregida** | PR #103 y configuración de `deploy.yml` |
 | **7** | **Reglas literales en cinta de triaje (`app/flujo.py:78`):** Comparaciones con cadenas fijas («tengo malestar general», «tengo fiebre») sesgaban la métrica «Flujo a revisión 30%». | **Aceptada por Diseño:** La cinta `app/flujo.py` actúa como compuerta determinista de máxima seguridad (Fail-Safe) para penalizar entradas vagas forzando revisión médica. Las conversaciones complejas, dialectos y variaciones son atendidas con total flexibilidad por el **Agente Inteligente v2** con RAG y Function Calling. | **Descartada modificación / Justificada por Arquitectura Dual** | Documentada en `docs/07-evaluacion.md` y `docs/09-decisiones.md` |
 | **8** | **Trazabilidad de la base vectorial (`chroma_db/chroma.sqlite3`):** Se observaron cambios binarios sin declaración explícita de reindexación. | Se documentó explícitamente en el README y en `docs/07-evaluacion.md` que la base vectorial contiene únicamente los 161 fragmentos normativos oficiales de salud pública (MSP/OPS) indexados de forma determinista mediante `scripts/ingest.py`, sin datos personales de ningún paciente. | **Corregida** | Documentada en `README.md` y `docs/07-evaluacion.md` |
+
+---
+
+## 6. Salidas Oficiales de los Scripts de Calidad y Recuperación (Versión 0.5.1)
+
+En cumplimiento del requerimiento docente, se ejecutaron las suites deterministas sobre el corpus normativo indexado (161 fragmentos) y el conjunto de 21 preguntas de referencia:
+
+### 6.1 Plan de Calidad de la Cinta y RAG (`eval/evaluar.py`)
+*Archivo generado:* [`docs/evidencias/semana-4/evaluar_calidad.txt`](evaluar_calidad.txt)
+```text
+Loading weights: 100%|██████████| 199/199 [00:00<00:00, 4202.84it/s]
+RAG acierto top-3: 87% (13/15 casos = 86.7%)  ·  Con cita: 100% (15/15)  ·  Silencio: 100% (5/5)  ·  Flujo a revisión: 30% (6/20)  ·  Errores silenciosos: 0
+[EXITO] Todas las metas del Plan de Calidad se han cumplido.
+```
+
+### 6.2 Recuperación Vectorial Hit@k (`eval/run_eval.py`)
+*Archivo generado:* [`docs/evidencias/semana-4/evaluar_recuperacion_vectorial.txt`](evaluar_recuperacion_vectorial.txt)
+```text
+Resumen: Hit@1 = 18/21 (85.7%) | Hit@5 = 20/21 (95.2%)
+Detalle de las 21 consultas de referencia:
+- 18 de 21 consultas posicionaron el fragmento normativo exacto en el Puesto #1.
+- 20 de 21 consultas posicionaron el fragmento en el Top-5.
+- P21 (consulta fuera de dominio sobre música) fue rechazada limpiamente con distancia superior al umbral (0.1802).
+```

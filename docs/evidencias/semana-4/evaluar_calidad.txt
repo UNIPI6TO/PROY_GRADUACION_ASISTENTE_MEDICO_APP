@@ -1,0 +1,7 @@
+=== EVALUACIÓN PLAN DE CALIDAD (eval/evaluar.py) · VERSIÓN 0.5.1 ===
+Fecha de ejecución: 2026-11-10 16:53:45 EST
+Ambiente: Local / Python 3.12 (Indexación Multilingual-E5-Small + ChromaDB)
+
+Loading weights: 100%|██████████| 199/199 [00:00<00:00, 4202.84it/s]
+RAG acierto top-3: 87% (13/15 casos)  ·  Con cita: 100% (15/15)  ·  Silencio: 100% (5/5)  ·  Flujo a revisión: 30% (6/20)  ·  Errores silenciosos: 0
+[EXITO] Todas las metas del Plan de Calidad se han cumplido.
