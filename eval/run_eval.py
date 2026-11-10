@@ -6,7 +6,11 @@ e imprime en qué puesto (1..5) aparece el fragmento esperado y su distancia.
 from __future__ import annotations
 
 import csv
+import sys
 from pathlib import Path
+
+# Garantizar imports desde la raíz
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.services.retriever import BuscadorVectorial
 

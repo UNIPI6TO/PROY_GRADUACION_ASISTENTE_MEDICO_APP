@@ -74,11 +74,20 @@ def clasificar_texto(texto: str) -> Clase:
     if tiene_sintoma and tiene_consulta:
         return Clase(tipo="reporte_sintomas", confianza=0.75)  # Menor a 0.85 -> revisión humana
 
-    # 4. Síntomas vagos sin contexto suficiente
-    if t_min.strip() in ["tengo malestar general", "tengo fiebre"]:
-        return Clase(tipo="reporte_sintomas", confianza=0.70)
-    if "no se si es dengue" in t_min or "mareado" in t_min:
-        return Clase(tipo="reporte_sintomas", confianza=0.70)
+    # 4. Síntomas vagos o aislados sin contexto clínico suficiente
+    # (falta de temporalidad/días de evolución y ausencia de signos de alarma complementarios)
+    sintomas_vagos = ["malestar general", "malestar", "mareado", "veo borroso", "desgano", "no se si es dengue"]
+    es_sintoma_vago = any(s in t_min for s in sintomas_vagos)
+
+    palabras_tiempo = ["dia", "dias", "semana", "ayer", "hoy", "hace"]
+    tiene_tiempo = any(p in t_min for p in palabras_tiempo) or any(c.isdigit() for c in t_min)
+    signos_especificos = ["dolor", "vomit", "sangr", "encia", "alarma"]
+    tiene_otros_signos = any(s in t_min for s in signos_especificos)
+
+    fiebre_aislada = ("fiebre" in t_min or "fievre" in t_min) and not tiene_tiempo and not tiene_otros_signos
+
+    if es_sintoma_vago or fiebre_aislada:
+        return Clase(tipo="reporte_sintomas", confianza=0.70)  # Forzar revisión médica ante información clínica incompleta
 
     # 5. Consultas generales informativas claras
     if tiene_consulta and not any(p in t_min for p in ["fiebre", "sangr", "vomit", "dolor"]):
