@@ -72,7 +72,7 @@ El backend llama al modelo con una clave de API. Los usuarios (Ciudadano, Famili
 
 ### Opciones consideradas
 
-1. Clave en .env local + variables de entorno de la plataforma; logs y BD sin datos personales (Zero-PII): La clave nunca toca el repositorio Git ni llega al cliente. Los logs y SQLite solo guardan métricas operativas (tokens, tiempo de respuesta, status) y UUIDs anónimos de sesión, sin persistir nombres, cédulas ni síntomas identificables.
+1. Clave en .env local + variables de entorno de la plataforma; logs y BD bajo Minimización de Datos (LOPDP): La clave nunca toca el repositorio Git ni llega al cliente. Los logs y SQLite solo guardan métricas operativas (tokens, tiempo de respuesta, status) y UUIDs anónimos de sesión, sin persistir nombres, cédulas ni síntomas identificables.
 
 2. Clave en el frontend con llamadas directas al proveedor: Descartada de inmediato porque expone la credencial en el navegador cliente, vulnerando la seguridad de la cuota y reprobando el criterio de integración (nota 0).
 
@@ -80,7 +80,7 @@ El backend llama al modelo con una clave de API. Los usuarios (Ciudadano, Famili
 
 ### Decisión
 
-Usaremos la configuración de Clave en .env local + variables de entorno de la plataforma, y mantendremos logs estructurados y base de datos SQLite sin datos personales (Zero-PII). El sistema solo registrará métricas operativas y descartará cualquier dato de identidad asociado al ciudadano.
+Usaremos la configuración de Clave en .env local + variables de entorno de la plataforma, y mantendremos logs estructurados y base de datos SQLite bajo la Política de Minimización de Datos (LOPDP) con enmascaramiento irreversible de PII. El sistema solo registrará métricas operativas y descartará cualquier dato de identidad asociado al ciudadano.
 
 ### Consecuencias
 

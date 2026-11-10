@@ -172,7 +172,7 @@ export const Cabecera: React.FC<CabeceraProps> = ({
               >
                 <Info size={18} />
                 <div className="item-texto">
-                  <strong>Aviso ético (Zero-PII)</strong>
+                  <strong>Aviso de privacidad (LOPDP)</strong>
                   <span>Políticas de privacidad y salud</span>
                 </div>
               </button>
@@ -233,12 +233,14 @@ export const Cabecera: React.FC<CabeceraProps> = ({
                   síntomas críticos, acude a un centro médico o llama al 911.
                 </li>
                 <li>
-                  <strong>Política de Minimización de Datos (LOPDP):</strong> No solicitamos ni
-                  almacenamos datos personales para el uso general. Si voluntariamente ingresas
-                  el teléfono de un contacto de emergencia para auxilio médico, dicho número solo
-                  se procesa en memoria volátil de tu navegador para preparar tu enlace de WhatsApp
-                  y se enmascara irreversiblemente (ej. <code>099***67</code>) antes de cualquier
-                  registro temporal en el servidor.
+                  <strong>Política de Minimización de Datos (LOPDP):</strong> No solicitamos nombres,
+                  cédulas ni datos de filiación. Si voluntariamente ingresas el número telefónico de
+                  un contacto de emergencia, este viaja por HTTPS al servidor y es procesado temporalmente
+                  por el proveedor del modelo de IA (Gemini o Groq) para estructurar la llamada a la herramienta;
+                  se conserva en memoria efímera del servidor mientras autorizas su envío en el flujo
+                  de confirmación y se enmascara irreversiblemente (ej. <code>099***67</code>) antes de
+                  guardarse en la base de datos temporal, utilizándose el número real únicamente en tu navegador
+                  para abrir el enlace seguro a WhatsApp.
                 </li>
               </ul>
 

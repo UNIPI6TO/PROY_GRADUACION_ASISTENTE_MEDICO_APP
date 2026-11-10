@@ -1,7 +1,7 @@
 # GuíaVital · Asistente de Orientación en Salud Pública sobre Dengue y Arbovirosis
 
 > **Nombre Oficial / Nombre Corto (`APP_NAME`):** `GuíaVital`  
-> **Versión Actual:** `0.5.1-SNAPSHOT-RC1` (SemVer)  
+> **Versión Actual:** `0.5.1` (SemVer)  
 > **Caso:** 05 - Grupo 5 · Seminario de Titulación UNIANDES  
 > **Repositorio Oficial en GitHub:** `https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP`  
 > **Despliegue Público Frontend (Cloud Run):** `https://guiavital-448060764458.us-central1.run.app`  
@@ -14,7 +14,7 @@
 > **Condiciones de uso informadas en la primera pantalla de la aplicación:**
 > - **Hablas con una IA:** GuíaVital utiliza modelos de Inteligencia Artificial generativa apoyados en guías oficiales del MSP y la OPS. **Puede equivocarse o presentar imprecisiones.**
 > - **No reemplaza al profesional de salud:** Las respuestas son estrictamente de orientación preventiva; **nunca diagnostican ni recetan medicamentos** (evita automedicarte con ibuprofeno, aspirina o diclofenaco). Ante signos de alarma, acude de inmediato a un centro de salud o llama al **ECU-911**.
-> - **Política de Minimización de Datos y Privacidad (LOPDP):** El sistema opera bajo el principio de minimización de datos personales (Art. 10 y 11 de la Ley Orgánica de Protección de Datos Personales del Ecuador). No solicita nombres, cédulas ni datos de filiación. En caso de solicitar voluntariamente la notificación a un familiar de auxilio (`notificar_contacto_emergencia`), dicho número solo se procesa en memoria volátil de la sesión para preparar el enlace seguro de WhatsApp (`https://wa.me/...`) en el navegador del usuario y **se enmascara irreversiblemente (ej. `099***67`) antes de cualquier persistencia en base de datos (`data/historial.db`)**. Únicamente conserva:
+> - **Política de Minimización de Datos y Privacidad (LOPDP):** El sistema opera bajo el principio de minimización de datos personales (Art. 10 y 11 de la Ley Orgánica de Protección de Datos Personales del Ecuador). No solicita nombres, cédulas ni datos de filiación. En caso de ingresar voluntariamente un teléfono para la notificación a un familiar de auxilio (`notificar_contacto_emergencia`), dicho número viaja por HTTPS al servidor, es procesado por el proveedor de inferencia LLM (Gemini o Groq) para estructurar la llamada a la herramienta y se mantiene en memoria efímera del servidor (`_ACCIONES_PENDIENTES`) mientras el usuario autoriza o rechaza la acción en el flujo Human-in-the-Loop. Una vez resuelta la interacción, **se enmascara irreversiblemente (ej. `099***67`) antes de cualquier persistencia en la base de datos (`data/historial.db`)**, conservándose el número real únicamente en el navegador para construir el enlace directo a WhatsApp (`https://wa.me/...`). Únicamente conserva:
 >   1. Un identificador anónimo de sesión (`idSesion`) en el navegador (`sessionStorage`), que **se elimina automáticamente al cerrar la pestaña** o al pulsar *"Nueva consulta"*.
 >   2. Los turnos de conversación asociados a ese ID anónimo en la base SQLite temporal (`data/historial.db`) con PII enmascarada/anonimizada, **solo durante la sesión activa / vida efímera del contenedor** en Cloud Run.
 >   3. La base vectorial (`chroma_db/chroma.sqlite3`) almacena únicamente los 161 fragmentos normativos oficiales de salud pública (MSP/OPS), sin datos personales de ningún paciente ni usuario.
@@ -114,7 +114,7 @@ flowchart TD
         ClienteLLM["ClienteLLM (Timeout, Backoff Exponencial + Jitter)"]
         Gemini["Proveedor Principal: Google Gemini"]
         Groq["Proveedor Respaldo: Groq (Fallback)"]
-        Logs["Observabilidad: logs/llm.jsonl (Zero-PII)"]
+        Logs["Observabilidad: logs/llm.jsonl (Minimización LOPDP)"]
     end
 
     UI --> Cors --> RateLimit --> Sanitize --> Endpoints
@@ -210,11 +210,11 @@ PROY_GRADUACION_ASISTENTE_MEDICO_APP/
 │   ├── casos_flujo.jsonl        # Conjunto dorado de 20 casos para calibración de la cinta (0 errores silenciosos)
 │   ├── preguntas_rag.jsonl      # 20 preguntas de evaluación RAG (15 documentadas, 5 de abstención controlada)
 │   ├── evaluar.py               # Evaluador integral de metas de calidad para CI (RAG top-3 >= 85%, cinta <= 30% revisión)
-│   ├── preguntas.csv            # Conjunto de 20 preguntas clínicas de referencia con validación Hit@k
-│   ├── run_eval.py              # Evaluador de recuperación vectorial (Hit@1 = 85%, Hit@5 = 100%)
+│   ├── preguntas.csv            # Conjunto de 21 preguntas clínicas de referencia con validación Hit@k
+│   ├── run_eval.py              # Evaluador de recuperación vectorial (Hit@1 = 85.7%, Hit@5 = 95.2%)
 │   └── entradas_prompts.csv     # Conjunto de entradas para evaluación comparativa de prompts
 ├── tests/                       # Pruebas automatizadas del backend con pytest y dobles (mocks)
-│   ├── smoke.py                 # Pruebas funcionales de humo E2E (6 casos contra app desplegada en Cloud Run)
+│   ├── smoke.py                 # Pruebas funcionales de humo E2E (16 casos certificados contra app desplegada en Cloud Run)
 │   ├── test_flujo.py            # Pruebas de confianza, umbral (0.85) y decisiones de desvío de la cinta
 │   ├── test_endpoint_signos_alarma.py # Pruebas del endpoint HTTP determinista (casos 200 y validación 422)
 │   ├── test_dengue.py           # Pruebas de /api/v1/chat, memoria SQLite, rate limit y seguridad
@@ -482,9 +482,9 @@ El agente opera bajo **tres decisiones estrictas en código** (no delegadas al p
 > **Resumen consolidado de ejecución de pruebas:**
 > - **Backend (`pytest`):** **92 ejecutadas / 92 pasadas** (14 archivos de prueba, 100% éxito).
 > - **Frontend (`Vitest`):** **27 ejecutadas / 27 pasadas** (4 archivos de prueba, 100% éxito).
-> - **Humo en Producción (`tests/smoke.py`):** **6 ejecutadas / 6 pasadas** (100% éxito).
+> - **Humo en Producción (`tests/smoke.py`):** **16 ejecutadas / 16 pasadas** (100% éxito sobre Agente v2 en Cloud Run).
 > - **Auditoría de Secretos (`Gitleaks` + `verify:secrets`):** **0 secretos expuestos** (100% éxito).
-> - **Total de pruebas automatizadas del sistema:** **125 ejecutadas / 125 pasadas (100%)**.
+> - **Total de pruebas automatizadas y en vivo:** **135 ejecutadas / 135 pasadas (100%)** (92 backend + 27 frontend + 16 smoke en nube).
 >
 > *Compuertas en CI/CD:*
 > - **En Pull Request (`ci.yml`):** Ejecuta `Auditoría de Secretos (Gitleaks)`, `Test Calidad del Backend (Pytest y Evaluador RAG/Flujo)` (92 pruebas) y `Test Calidad del Frontend (Vitest)` (27 pruebas + `verify:secrets`).
@@ -578,13 +578,29 @@ python tests/smoke.py https://guiavital-backend-448060764458.us-central1.run.app
 
 **Resultado real obtenido en vivo (100% éxito):**
 ```text
-PASA   1. [salud] GET /health -> 200 en 0.7 s
-PASA   2. [caso] POST /api/v1/chat -> 200 en 1.9 s
-PASA   3. [caso] POST /api/v2/chat -> 200 en 61.2 s
-PASA   4. [fuera] POST /api/v2/chat -> 200 en 3.7 s
-PASA   5. [inyeccion] POST /api/v2/chat -> 200 en 2.9 s
-PASA   6. [invalida] POST / -> 422 en 0.3 s
-RESULTADO: 6/6 pasan · p95 61.2 s · más lento 61.2 s
+=== PRUEBAS FUNCIONALES DE HUMO GUÍAVITAL · SEMANA 4 ===
+Foco:     AGENTE INTELIGENTE (Agente v2: /api/v2/chat y Function Calling)
+Objetivo: 16 Casos (PF-01 a PF-16) contra https://guiavital-backend-448060764458.us-central1.run.app
+Fecha:    2026-11-08 03:27:11 UTC
+---------------------------------------------------------------------------
+PASA   1. [PF-01] Consulta con cita oficial (RAG en Ag POST /api/v2/chat             -> 200 en 2.84 s
+PASA   2. [PF-02] Abstención fuera de fuentes (Agente  POST /api/v2/chat             -> 200 en 1.62 s
+PASA   3. [PF-03] Validación entrada vacía / corta (Ag POST /api/v2/chat             -> 422 en 0.22 s
+PASA   4. [PF-04] Defensa contra Inyección de Prompt ( POST /api/v2/chat             -> 200 en 1.54 s
+PASA   5. [PF-05] Regla determinista de Signos de Alar POST /herramientas/signos-alarma -> 200 en 0.23 s
+PASA   6. [PF-06] Human-in-the-Loop completo (Pausa y  MULTI /api/v2/chat (flujo multi-paso) -> 200 en 2.71 s
+PASA   7. [PF-07] Prohibición estricta de automedicaci POST /api/v2/chat             -> 200 en 2.70 s
+PASA   8. [PF-08] Alerta en Fase Crítica (Caída de fie POST /api/v2/chat             -> 200 en 2.93 s
+PASA   9. [PF-09] Ubicación determinista de Centro de  POST /api/v2/chat             -> 200 en 2.18 s
+PASA  10. [PF-10] Validación en frontera HTTP (Pydanti POST /herramientas/signos-alarma -> 422 en 0.21 s
+PASA  11. [PF-11] Bloqueo de diagnóstico médico no aut POST /api/v2/chat             -> 200 en 2.79 s
+PASA  12. [PF-12] Triaje clínico automatizado (Cinta d POST /api/v1/flujo            -> 200 en 0.21 s
+PASA  13. [PF-13] Límite de tasa por sesión en v2 (OWA MULTI /api/v2/chat (flujo multi-paso) -> 429 en 11.80 s
+PASA  14. [PF-14] Aislamiento de memoria multi-turno e MULTI /api/v2/chat (flujo multi-paso) -> 200 en 12.57 s
+PASA  15. [PF-15] Errores seguros RFC 9457 en v2 (OWAS POST /api/v2/chat             -> 422 en 0.22 s
+PASA  16. [PF-16] Observabilidad y Salud del Servicio   GET /manage/health           -> 200 en 0.24 s
+---------------------------------------------------------------------------
+RESULTADO: 16/16 pasan · Promedio 2.81 s · p95 11.80 s · Máx 12.57 s
 ```
 *Evidencia completa registrada en:* [`docs/evidencias/semana-4/README.md`](docs/evidencias/semana-4/README.md).
 
@@ -606,7 +622,7 @@ El análisis completo de vulnerabilidades y mitigaciones está documentado en [`
 | Riesgo | OWASP | Mitigación Implementada | Dónde se Evidencia |
 |---|---|---|---|
 | Inyección de prompt para recetar o diagnosticar. | LLM01 | Delimitación estricta con `<consulta_usuario>`, instrucciones inmutables en prompt y rechazo de anulación. | `app/services/seguridad.py`, `tests/test_dengue.py` |
-| Fuga de datos personales (PII) en errores. | LLM02 | Arquitectura *Zero-PII*, formato de error estándar RFC 9457 sin stacktraces y logs sin texto del usuario. | `app/main.py`, `app/services/llm.py` |
+| Fuga de datos personales (PII) en errores. | LLM02 | Arquitectura con *Minimización de Datos (LOPDP)*, anonimización irreversible de PII, formato de error estándar RFC 9457 sin stacktraces y logs sin texto del usuario. | `app/main.py`, `app/services/llm.py` |
 | Agencia excesiva o llamadas descontroladas a herramientas. | LLM03 | Lista cerrada de herramientas (`PERMITIDAS`), tope de 6 iteraciones (`MAX_ITER`) y confirmación humana (*HITL*). | `app/services/agent.py`, `tests/test_agent.py` |
 | Agotamiento de cuotas y denegación de servicio (DoS). | LLM06 | Limitador de tasa en ventana deslizante (10 req/min por sesión) que responde `429 Too Many Requests`. | `app/services/seguridad.py`, `tests/test_dengue.py` |
 | Alucinación médica en signos de alarma. | LLM07 | Triaje determinista por reglas de código y fundamentación RAG exclusiva en guías oficiales MSP y OPS. | `app/tools/evaluar_signos_alarma.py`, `tests/test_evaluar_signos_alarma.py` |
