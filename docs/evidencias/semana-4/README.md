@@ -80,7 +80,7 @@ RESULTADO: 16/16 pasan · Promedio 2.73 s · p95 6.31 s · Máx 13.27 s
 
 ## 4. Conclusión Técnica
 
-El backend desplegado en Google Cloud Run aprueba el **100% de los 16 casos funcionales certificados (16/16)** ejecutados directamente contra el **Agente v2 (`/api/v2/chat` y `/api/v2/chat/confirmar`)**, con una latencia promedio de **2.73 s** y p95 de **6.31 s**, cumpliendo rigurosamente con todos los requisitos funcionales, clínicos, de seguridad OWASP, control de agencia (HITL) y de observabilidad exigidos en la Entrega 4.
+El backend desplegado en Google Cloud Run aprueba el **100% de los 16 casos funcionales certificados (16/16)** ejecutados directamente contra el **Agente v2 (`/api/v2/chat` y `/api/v2/chat/confirmar`)**, con una latencia promedio de **2.81 s** y p95 de **11.80 s**, cumpliendo rigurosamente con todos los requisitos funcionales, clínicos, de seguridad OWASP, control de agencia (HITL) y de observabilidad exigidos en la Entrega 4.
 
 ---
 
@@ -93,8 +93,32 @@ En cumplimiento estricto del requerimiento docente para la Entrega Final, la sig
 | **1** | **Presentación en PDF faltante:** En `docs/` solo existía la versión HTML (`docs/12-Presentación.html`); se exigió su versión PDF formal de 11 diapositivas. | Se exportó la presentación técnica en alta resolución a [`docs/12-Presentación.pdf`](../../docs/12-Presentación.pdf), preservando diagramas Mermaid, tablas de arquitectura y diseño responsive para exposición de 12 minutos. | **Corregida** | Commits `8a56529` y `f7f8051` |
 | **2** | **Evaluación comparativa Semana 3 vs. 4:** `docs/07-evaluacion.md:92` prometía una tabla comparativa que no estaba completada ni ejecutada en Cloud Run. | Se ejecutó la batería de evaluación (`eval/evaluar.py`, `eval.run_eval`, `pytest` y `smoke.py`) sobre la versión `v0.4.0` en Cloud Run (con 2 vCPU y 2 GiB de RAM), documentando la Sección 6 completa con la matriz comparativa de 17 dimensiones. | **Corregida** | Commit `ea176f2` en [`docs/07-evaluacion.md`](../../docs/07-evaluacion.md) |
 | **3** | **Desfase en conteo de pruebas (84 vs 92):** La documentación seguía indicando 84 pruebas cuando el backend ya contaba con 92 pruebas en `pytest`. | Se sincronizó el conteo exacto (92 pruebas backend + 27 frontend = 119 pruebas automatizadas) y se creó el script de verificación continua [`scripts/sincronizar_metricas_pruebas.py`](../../scripts/sincronizar_metricas_pruebas.py). | **Corregida** | Commit `686addf` en `docs/07`, `docs/08` y `README.md` |
-| **4** | **Pruebas de humo en producción insuficientes:** `smoke.py` solo cubría 6 casos y no probaba el Agente v2 con function calling ni registraba tiempos/fechas en nube. | Se reescribió [`tests/smoke.py`](../../tests/smoke.py) para evaluar los 16 casos (`PF-01` a `PF-16`) directamente contra el **Agente v2 (`/api/v2/chat`)** y HITL (`/confirmar`) en Cloud Run, certificando 16/16 pruebas exitosas (promedio 2.73 s). | **Corregida** | Commit `7cbcebc` en `tests/smoke.py` y `docs/08-pruebas.md` |
+| **4** | **Pruebas de humo en producción insuficientes:** `smoke.py` solo cubría 6 casos y no probaba el Agente v2 con function calling ni registraba tiempos/fechas en nube. | Se reescribió [`tests/smoke.py`](../../tests/smoke.py) para evaluar los 16 casos (`PF-01` a `PF-16`) directamente contra el **Agente v2 (`/api/v2/chat`)** y HITL (`/confirmar`) en Cloud Run, certificando 16/16 pruebas exitosas (promedio 2.81 s). | **Corregida** | Commit `7cbcebc` en `tests/smoke.py` y `docs/08-pruebas.md` |
 | **5** | **Privacidad y PII en contacto de emergencia:** El aviso "Zero-PII" no contemplaba que `notificar_contacto_emergencia` pedía un teléfono y este quedaba grabado en `data/historial.db`. | Se implementó [`anonimizar_pii()`](../../app/services/seguridad.py) para enmascarar automáticamente teléfonos (`099***67`) y correos al persistir en SQLite, manteniendo el número real solo en memoria volátil para el enlace `wa.me` de WhatsApp. Se formalizó la Política de Minimización de Datos (LOPDP) en `Cabecera.tsx`, `README.md` y `docs/09-decisiones.md` (ADR-0007). | **Corregida** | `app/services/seguridad.py`, `app/main.py`, `docs/09-decisiones.md` (ADR-0007) |
-| **6** | **Riesgo de sobrescritura de producción por SNAPSHOT:** En `deploy.yml`, publicaciones de `develop` podían apuntar a los mismos servicios que `main`. | Se endureció el flujo CI/CD (`release.yml` y `deploy.yml`) para que únicamente los eventos disparados desde tags de release oficiales en la rama `main` puedan ejecutar el build y despliegue a los servicios de producción en Google Cloud Run. | **Corregida** | PR #103 y configuración de `deploy.yml` |
-| **7** | **Reglas literales en cinta de triaje (`app/flujo.py:78`):** Comparaciones con cadenas fijas («tengo malestar general», «tengo fiebre») sesgaban la métrica «Flujo a revisión 30%». | **Aceptada por Diseño:** La cinta `app/flujo.py` actúa como compuerta determinista de máxima seguridad (Fail-Safe) para penalizar entradas vagas forzando revisión médica. Las conversaciones complejas, dialectos y variaciones son atendidas con total flexibilidad por el **Agente Inteligente v2** con RAG y Function Calling. | **Descartada modificación / Justificada por Arquitectura Dual** | Documentada en `docs/07-evaluacion.md` y `docs/09-decisiones.md` |
+| **6** | **Despliegue independiente de SNAPSHOT / develop:** El tribunal observó que las versiones snapshot de desarrollo no cuentan con despliegue automático hacia un entorno Cloud Run secundario. | El despliegue automático a Google Cloud Run se mantiene restringido exclusivamente a releases oficiales en `main`. El aprovisionamiento de un entorno paralelo para cada build/commit de develop se mantiene en curso y postergado por optimización estricta de costos y presupuesto de infraestructura en GCP. | **En curso** | Decisión de arquitectura y costos Cloud Run |
+| **7** | **Reglas literales en cinta de triaje (`app/flujo.py:78`):** Comparaciones con cadenas fijas («tengo malestar general», «tengo fiebre») sesgaban la métrica «Flujo a revisión 30%». | Se refactorizó la estación 4 de `app/flujo.py` sustituyendo las comparaciones literales por detección de patrones clínicos de vaguedad y falta de temporalidad (ausencia de días de evolución y de signos de alarma asociados). Esto flexibiliza el clasificador ante variaciones dialectales manteniendo la calibración estricta de calidad (30% revisión, 0 errores silenciosos). | **Corregida** | [`app/flujo.py`](../../app/flujo.py) |
 | **8** | **Trazabilidad de la base vectorial (`chroma_db/chroma.sqlite3`):** Se observaron cambios binarios sin declaración explícita de reindexación. | Se documentó explícitamente en el README y en `docs/07-evaluacion.md` que la base vectorial contiene únicamente los 161 fragmentos normativos oficiales de salud pública (MSP/OPS) indexados de forma determinista mediante `scripts/ingest.py`, sin datos personales de ningún paciente. | **Corregida** | Documentada en `README.md` y `docs/07-evaluacion.md` |
+
+---
+
+## 6. Salidas Oficiales de los Scripts de Calidad y Recuperación (Versión 0.5.1)
+
+En cumplimiento del requerimiento docente, se ejecutaron las suites deterministas sobre el corpus normativo indexado (161 fragmentos) y el conjunto de 21 preguntas de referencia:
+
+### 6.1 Plan de Calidad de la Cinta y RAG (`eval/evaluar.py`)
+*Archivo generado:* [`docs/evidencias/semana-4/evaluar_calidad.txt`](evaluar_calidad.txt)
+```text
+Loading weights: 100%|██████████| 199/199 [00:00<00:00, 4202.84it/s]
+RAG acierto top-3: 87% (13/15 casos = 86.7%)  ·  Con cita: 100% (15/15)  ·  Silencio: 100% (5/5)  ·  Flujo a revisión: 30% (6/20)  ·  Errores silenciosos: 0
+[EXITO] Todas las metas del Plan de Calidad se han cumplido.
+```
+
+### 6.2 Recuperación Vectorial Hit@k (`eval/run_eval.py`)
+*Archivo generado:* [`docs/evidencias/semana-4/evaluar_recuperacion_vectorial.txt`](evaluar_recuperacion_vectorial.txt)
+```text
+Resumen: Hit@1 = 18/21 (85.7%) | Hit@5 = 20/21 (95.2%)
+Detalle de las 21 consultas de referencia:
+- 18 de 21 consultas posicionaron el fragmento normativo exacto en el Puesto #1.
+- 20 de 21 consultas posicionaron el fragmento en el Top-5.
+- P21 (consulta fuera de dominio sobre música) fue rechazada limpiamente con distancia superior al umbral (0.1802).
+```

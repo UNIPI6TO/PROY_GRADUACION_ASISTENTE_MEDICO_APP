@@ -107,19 +107,19 @@ A diferencia de la Semana 3 (ejecutada en contenedor local o con recursos mínim
 
 ### 6.2 Tabla Comparativa: Semana 3 vs. Semana 4
 
-| Dimensión / Métrica Evaluada | Semana 3 (Línea Base v0.3.3) | Semana 4 (Versión Desplegada v0.4.0) | Variación / Impacto | Cumplimiento |
+| Dimensión / Métrica Evaluada | Semana 3 (Línea Base v0.3.3) | Semana 4 (Versión Desplegada v0.5.1) | Variación / Impacto | Cumplimiento |
 | :--- | :---: | :---: | :---: | :---: |
-| **Versión SemVer y Estado** | `v0.3.3` (Local / CI) | `v0.4.0` (Producción Cloud Run) | Maduración a versión candidata y desplegada en la nube | ✅ Superado |
+| **Versión SemVer y Estado** | `v0.3.3` (Local / CI) | `v0.5.1` (Producción Cloud Run) | Maduración a versión de entrega final desplegada en la nube | ✅ Superado |
 | **Infraestructura Cloud Run** | 1 vCPU / 1 GiB RAM (Local) | **2 vCPU / 2 GiB RAM** (Producción) | +100% CPU y RAM; soporte robusto de embeddings locales | ✅ Optimizado |
 | **Pruebas Automatizadas Backend (`pytest`)** | 84 pruebas unitarias | **92 pruebas unitarias e integración** | +8 pruebas (citas estructuradas, rate limit, aislamiento) | ✅ Incrementado |
 | **Pruebas Automatizadas Frontend (`Vitest`)** | 0 pruebas formales | **27 pruebas unitarias de componentes** | Cobertura integral de UI, modales legales y flujo HITL | ✅ Incorporado |
 | **Total Pruebas Automatizadas (Cero Tokens)** | 84 pruebas | **119 pruebas automatizadas** | +35 pruebas en total (+41.6% de cobertura) | ✅ Superado |
 | **Pruebas Funcionales en Vivo (Smoke E2E)** | 6 casos preliminares locales | **16 casos certificados en Cloud Run** | Cobertura completa PF-01 a PF-16 sobre el Agente v2 | ✅ 100% (16/16) |
-| **Latencia Promedio en Producción (Cloud Run)** | No disponible en nube | **2.81 s** (Promedio) · **11.80 s** (p95) | Medición real con llamadas LLM y function calling en v2 | ✅ Certificado |
+| **Latencia Promedio en Producción (Cloud Run)** | No disponible en nube | **2.81 s** (Promedio) · **11.80 s** (p95) · **12.57 s** (máx) | Medición real con llamadas LLM y function calling en v2 (docs/08) | ✅ Certificado |
 | **Sondas de Observabilidad (`/manage/health`)** | 0.45 s (Local) | **0.24 s** (Cloud Run) | Respuesta ultrarrápida Liveness/Readiness (0 tokens) | ✅ Optimizado |
-| **RAG: Acierto Top-3 (`eval/evaluar.py`)** | 87.0% (13/15 casos) | **87.0% (13/15 casos)** | Precisión sostenida sobre corpus curado (meta $\ge 85\%$) | ✅ Cumple |
-| **RAG: Ranking Hit@1 (`eval/run_eval.py`)** | 85.0% (17/20) | **85.7% (18/21 consultas)** | Mejora de ranking en consultas con dialecto ecuatoriano | ✅ Cumple |
-| **RAG: Ranking Hit@5 (`eval/run_eval.py`)** | 100.0% (20/20) | **95.2% (20/21 consultas)** | 20 de 21 consultas en top-5; P21 rechazada limpiamente | ✅ Cumple |
+| **RAG: Acierto Top-3 (`eval/evaluar.py`)** | 86.7% (13/15 casos) | **86.7% (13/15 casos)** | Precisión sostenida sobre corpus curado (13/15 = 86.7%, meta $\ge 85\%$) | ✅ Cumple |
+| **RAG: Ranking Hit@1 (`eval/run_eval.py`)** | 85.7% (18/21 consultas) | **85.7% (18/21 consultas)** | Evaluación sobre el total unificado de 21 preguntas base | ✅ Cumple |
+| **RAG: Ranking Hit@5 (`eval/run_eval.py`)** | 95.2% (20/21 consultas) | **95.2% (20/21 consultas)** | 20 de 21 consultas en top-5; P21 rechazada limpiamente | ✅ Cumple |
 | **RAG: Respuestas con Cita Estructurada** | 86.7% | **100.0%** (15/15 consultas válidas) | `Fuente(documento, seccion)` validada por contrato | ✅ 100% Cumple |
 | **RAG: Abstención / Silencio Fuera de Dominio** | 100.0% (5/5 casos) | **100.0% (5/5 casos)** | Cero alucinaciones ante consultas no clínicas (`dist > 0.155`) | ✅ 100% Cumple |
 | **Flujo Clínico Dorado: Errores Silenciosos** | 0 errores | **0 errores silenciosos** | Exactitud determinista absoluta en triaje de dengue | ✅ 100% Cumple |
@@ -132,7 +132,7 @@ A diferencia de la Semana 3 (ejecutada en contenedor local o con recursos mínim
 ### 6.3 Conclusiones del Diagnóstico Evolutivo
 
 1. **Robustez y Capacidad de Cómputo:** El escalamiento de Cloud Run a **2 vCPU y 2 GiB de memoria** resolvió de forma definitiva la latencia en la vectorización en frío del modelo `multilingual-e5-small`, permitiendo atender las 16 pruebas funcionales de humo en producción con una latencia promedio de **2.81 s** sin caídas ni reinicios por memoria.
-2. **Cero Regresiones en Calidad Documental:** La precisión en recuperación RAG se mantuvo intacta en **87.0% en Top-3**, mientras que la exigencia de **citas estructuradas** se perfeccionó del 86.7% al **100.0%**, garantizando que toda respuesta clínica esté respaldada por las guías del MSP o de la OPS.
+2. **Cero Regresiones en Calidad Documental:** La precisión en recuperación RAG se mantuvo intacta en **86.7% en Top-3** (13/15 casos), mientras que la exigencia de **citas estructuradas** se perfeccionó del 86.7% al **100.0%**, garantizando que toda respuesta clínica esté respaldada por las guías del MSP o de la OPS.
 3. **Seguridad y Control de Agencia Demostrados en Nube:** El Agente v2 superó con éxito las pruebas de Human-in-the-Loop en vivo (PF-06), el límite de tasa defensivo de 429 con `Retry-After` (PF-13) y el aislamiento multi-turno en SQLite (PF-14), certificando que la arquitectura desacoplada cumple rigurosamente con los estándares de producción médica exigidos para el cierre del seminario.
 
 ---

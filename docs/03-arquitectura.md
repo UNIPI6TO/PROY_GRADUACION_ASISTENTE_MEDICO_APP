@@ -19,7 +19,7 @@ La aplicación resuelve el problema de las complicaciones graves por dengue asoc
 |---|---|---|
 | **Luis Cahuana** | Tech Lead | Arquitectura general, pipeline RAG (`intfloat/multilingual-e5-small` + ChromaDB), herramientas deterministas MSP, evolución de prompts y evaluación de calidad (`eval/evaluar.py`). |
 | **Wilson Salinas** | Builder | Desarrollo Frontend (`React 19 + TypeScript + Vite`), máquina de 7 estados, integración de endpoints v1/v2 y confirmación *HITL*, contenedorización Docker y CI/CD en Google Cloud Run. |
-| **Rafael Minaya** | QA / Seguridad | Estrategia de pruebas automatizadas (`pytest` 92 tests, `Vitest` 27 tests, `smoke.py` 6 casos en vivo), seguridad OWASP LLM, límite de tasa (`LimitadorTasa`) y auditoría de secretos. |
+| **Rafael Minaya** | QA / Seguridad | Estrategia de pruebas automatizadas (`pytest` 92 tests, `Vitest` 27 tests, `smoke.py` 16 casos certificados en vivo), seguridad OWASP LLM, límite de tasa (`LimitadorTasa`) y auditoría de secretos. |
 
 ---
 
@@ -74,7 +74,7 @@ flowchart LR
       PR[("Prompts · app/prompts/<br/>system_v1..v4 + system_agente")]
       DB[("SQLite Efímero<br/>data/historial.db")]
       VEC[("ChromaDB Persistente<br/>chroma_db/ (HNSW Coseno)")]
-      OB["Observabilidad Zero-PII<br/>logs/llm.jsonl"]
+      OB["Observabilidad y Minimización LOPDP<br/>logs/llm.jsonl"]
     end
   end
 
@@ -126,7 +126,7 @@ flowchart TD
     SM["Secret Manager<br/>GEMINI_API_KEY · GROQ_API_KEY · Config"]
     CR_BE["Cloud Run: <b>guiavital-backend</b><br/>Python 3.12-slim · UID 10001 · 1 GiB RAM · min=0 max=5"]
     CR_FE["Cloud Run: <b>guiavital</b><br/>Nginx Alpine · Bundle React 19 · min=0 max=5"]
-    SMOKE["Sondas SRE (/manage/info, /manage/health)<br/>+ Smoke Tests en vivo (tests/smoke.py 6/6)"]
+    SMOKE["Sondas SRE (/manage/info, /manage/health)<br/>+ Smoke Tests en vivo (tests/smoke.py 16/16)"]
   end
 
   CI -->|Merge aprobado| REL
@@ -135,7 +135,7 @@ flowchart TD
   GAR --> CR_BE
   SM -. "Inyección segura (--set-secrets)" .-> CR_BE
   CR_BE --> SMOKE
-  SMOKE -->|6/6 OK| CR_FE
+  SMOKE -->|16/16 OK| CR_FE
 ```
 
 ---
@@ -146,7 +146,7 @@ flowchart TD
 |---|---|
 | **Frontend Web** | React 19 + TypeScript + Vite (servido con Nginx en contenedor Alpine) |
 | **Backend API** | FastAPI (Python 3.12-slim, usuario sin privilegios `appuser` UID 10001) + Pydantic v2 |
-| **Persistencia de Sesión** | SQLite (`data/historial.db`) aislado por `idSesion` anónimo (política *Zero-PII*) |
+| **Persistencia de Sesión** | SQLite (`data/historial.db`) aislado por `idSesion` anónimo (política de *Minimización de Datos / LOPDP*) |
 | **Base Vectorial (RAG)** | ChromaDB local persistente (`chroma_db/`, índice HNSW con distancia `cosine`) |
 | **Modelo de Embeddings** | `intfloat/multilingual-e5-small` (384 dimensiones, asimétrico con `query:` y `passage:`) |
 | **Proveedor LLM Principal** | Google Gemini (`gemini-3.8-flash` / `gemini-2.0-flash`) |
@@ -258,6 +258,6 @@ flowchart LR
 Documentadas en detalle en [`docs/09-decisiones.md`](09-decisiones.md) y [`docs/10-automatizacion.md`](10-automatizacion.md):
 - **ADR-001:** Selección de Google Gemini como proveedor principal y Groq como proveedor de respaldo bajo interfaz unificada compatible con OpenAI.
 - **ADR-002:** Evolución de flujo estructurado JSON (`v1`) a Agente de Alcance Controlado con *Function Calling* y confirmación explícita (`v2`).
-- **ADR-003:** Arquitectura *Zero-PII* (identificador de sesión efímero, secretos en Google Secret Manager / variables de entorno y logs sin texto del usuario).
+- **ADR-003:** Arquitectura de *Minimización de Datos (LOPDP)* (identificador de sesión efímero, anonimización irreversible de PII, secretos en Secret Manager y logs sin texto del usuario).
 - **ADR-004:** Evaluación de signos de alarma mediante reglas deterministas en código Python (`evaluar_signos_alarma.py`), nunca delegada al criterio libre del LLM.
 - **ADR-005:** Cinta de automatización de 7 estaciones con compuerta de confianza `0.85` para garantizar cero errores silenciosos.
