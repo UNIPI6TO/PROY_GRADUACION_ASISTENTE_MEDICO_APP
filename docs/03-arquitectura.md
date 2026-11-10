@@ -74,7 +74,7 @@ flowchart LR
       PR[("Prompts · app/prompts/<br/>system_v1..v4 + system_agente")]
       DB[("SQLite Efímero<br/>data/historial.db")]
       VEC[("ChromaDB Persistente<br/>chroma_db/ (HNSW Coseno)")]
-      OB["Observabilidad Zero-PII<br/>logs/llm.jsonl"]
+      OB["Observabilidad y Minimización LOPDP<br/>logs/llm.jsonl"]
     end
   end
 
@@ -146,7 +146,7 @@ flowchart TD
 |---|---|
 | **Frontend Web** | React 19 + TypeScript + Vite (servido con Nginx en contenedor Alpine) |
 | **Backend API** | FastAPI (Python 3.12-slim, usuario sin privilegios `appuser` UID 10001) + Pydantic v2 |
-| **Persistencia de Sesión** | SQLite (`data/historial.db`) aislado por `idSesion` anónimo (política *Zero-PII*) |
+| **Persistencia de Sesión** | SQLite (`data/historial.db`) aislado por `idSesion` anónimo (política de *Minimización de Datos / LOPDP*) |
 | **Base Vectorial (RAG)** | ChromaDB local persistente (`chroma_db/`, índice HNSW con distancia `cosine`) |
 | **Modelo de Embeddings** | `intfloat/multilingual-e5-small` (384 dimensiones, asimétrico con `query:` y `passage:`) |
 | **Proveedor LLM Principal** | Google Gemini (`gemini-3.8-flash` / `gemini-2.0-flash`) |
@@ -258,6 +258,6 @@ flowchart LR
 Documentadas en detalle en [`docs/09-decisiones.md`](09-decisiones.md) y [`docs/10-automatizacion.md`](10-automatizacion.md):
 - **ADR-001:** Selección de Google Gemini como proveedor principal y Groq como proveedor de respaldo bajo interfaz unificada compatible con OpenAI.
 - **ADR-002:** Evolución de flujo estructurado JSON (`v1`) a Agente de Alcance Controlado con *Function Calling* y confirmación explícita (`v2`).
-- **ADR-003:** Arquitectura *Zero-PII* (identificador de sesión efímero, secretos en Google Secret Manager / variables de entorno y logs sin texto del usuario).
+- **ADR-003:** Arquitectura de *Minimización de Datos (LOPDP)* (identificador de sesión efímero, anonimización irreversible de PII, secretos en Secret Manager y logs sin texto del usuario).
 - **ADR-004:** Evaluación de signos de alarma mediante reglas deterministas en código Python (`evaluar_signos_alarma.py`), nunca delegada al criterio libre del LLM.
 - **ADR-005:** Cinta de automatización de 7 estaciones con compuerta de confianza `0.85` para garantizar cero errores silenciosos.

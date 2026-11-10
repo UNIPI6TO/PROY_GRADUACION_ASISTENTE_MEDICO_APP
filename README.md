@@ -14,7 +14,7 @@
 > **Condiciones de uso informadas en la primera pantalla de la aplicación:**
 > - **Hablas con una IA:** GuíaVital utiliza modelos de Inteligencia Artificial generativa apoyados en guías oficiales del MSP y la OPS. **Puede equivocarse o presentar imprecisiones.**
 > - **No reemplaza al profesional de salud:** Las respuestas son estrictamente de orientación preventiva; **nunca diagnostican ni recetan medicamentos** (evita automedicarte con ibuprofeno, aspirina o diclofenaco). Ante signos de alarma, acude de inmediato a un centro de salud o llama al **ECU-911**.
-> - **Política de Minimización de Datos y Privacidad (LOPDP):** El sistema opera bajo el principio de minimización de datos personales (Art. 10 y 11 de la Ley Orgánica de Protección de Datos Personales del Ecuador). No solicita nombres, cédulas ni datos de filiación. En caso de solicitar voluntariamente la notificación a un familiar de auxilio (`notificar_contacto_emergencia`), dicho número solo se procesa en memoria volátil de la sesión para preparar el enlace seguro de WhatsApp (`https://wa.me/...`) en el navegador del usuario y **se enmascara irreversiblemente (ej. `099***67`) antes de cualquier persistencia en base de datos (`data/historial.db`)**. Únicamente conserva:
+> - **Política de Minimización de Datos y Privacidad (LOPDP):** El sistema opera bajo el principio de minimización de datos personales (Art. 10 y 11 de la Ley Orgánica de Protección de Datos Personales del Ecuador). No solicita nombres, cédulas ni datos de filiación. En caso de ingresar voluntariamente un teléfono para la notificación a un familiar de auxilio (`notificar_contacto_emergencia`), dicho número viaja por HTTPS al servidor, es procesado por el proveedor de inferencia LLM (Gemini o Groq) para estructurar la llamada a la herramienta y se mantiene en memoria efímera del servidor (`_ACCIONES_PENDIENTES`) mientras el usuario autoriza o rechaza la acción en el flujo Human-in-the-Loop. Una vez resuelta la interacción, **se enmascara irreversiblemente (ej. `099***67`) antes de cualquier persistencia en la base de datos (`data/historial.db`)**, conservándose el número real únicamente en el navegador para construir el enlace directo a WhatsApp (`https://wa.me/...`). Únicamente conserva:
 >   1. Un identificador anónimo de sesión (`idSesion`) en el navegador (`sessionStorage`), que **se elimina automáticamente al cerrar la pestaña** o al pulsar *"Nueva consulta"*.
 >   2. Los turnos de conversación asociados a ese ID anónimo en la base SQLite temporal (`data/historial.db`) con PII enmascarada/anonimizada, **solo durante la sesión activa / vida efímera del contenedor** en Cloud Run.
 >   3. La base vectorial (`chroma_db/chroma.sqlite3`) almacena únicamente los 161 fragmentos normativos oficiales de salud pública (MSP/OPS), sin datos personales de ningún paciente ni usuario.
@@ -114,7 +114,7 @@ flowchart TD
         ClienteLLM["ClienteLLM (Timeout, Backoff Exponencial + Jitter)"]
         Gemini["Proveedor Principal: Google Gemini"]
         Groq["Proveedor Respaldo: Groq (Fallback)"]
-        Logs["Observabilidad: logs/llm.jsonl (Zero-PII)"]
+        Logs["Observabilidad: logs/llm.jsonl (Minimización LOPDP)"]
     end
 
     UI --> Cors --> RateLimit --> Sanitize --> Endpoints
@@ -606,7 +606,7 @@ El análisis completo de vulnerabilidades y mitigaciones está documentado en [`
 | Riesgo | OWASP | Mitigación Implementada | Dónde se Evidencia |
 |---|---|---|---|
 | Inyección de prompt para recetar o diagnosticar. | LLM01 | Delimitación estricta con `<consulta_usuario>`, instrucciones inmutables en prompt y rechazo de anulación. | `app/services/seguridad.py`, `tests/test_dengue.py` |
-| Fuga de datos personales (PII) en errores. | LLM02 | Arquitectura *Zero-PII*, formato de error estándar RFC 9457 sin stacktraces y logs sin texto del usuario. | `app/main.py`, `app/services/llm.py` |
+| Fuga de datos personales (PII) en errores. | LLM02 | Arquitectura con *Minimización de Datos (LOPDP)*, anonimización irreversible de PII, formato de error estándar RFC 9457 sin stacktraces y logs sin texto del usuario. | `app/main.py`, `app/services/llm.py` |
 | Agencia excesiva o llamadas descontroladas a herramientas. | LLM03 | Lista cerrada de herramientas (`PERMITIDAS`), tope de 6 iteraciones (`MAX_ITER`) y confirmación humana (*HITL*). | `app/services/agent.py`, `tests/test_agent.py` |
 | Agotamiento de cuotas y denegación de servicio (DoS). | LLM06 | Limitador de tasa en ventana deslizante (10 req/min por sesión) que responde `429 Too Many Requests`. | `app/services/seguridad.py`, `tests/test_dengue.py` |
 | Alucinación médica en signos de alarma. | LLM07 | Triaje determinista por reglas de código y fundamentación RAG exclusiva en guías oficiales MSP y OPS. | `app/tools/evaluar_signos_alarma.py`, `tests/test_evaluar_signos_alarma.py` |
