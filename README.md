@@ -210,11 +210,11 @@ PROY_GRADUACION_ASISTENTE_MEDICO_APP/
 │   ├── casos_flujo.jsonl        # Conjunto dorado de 20 casos para calibración de la cinta (0 errores silenciosos)
 │   ├── preguntas_rag.jsonl      # 20 preguntas de evaluación RAG (15 documentadas, 5 de abstención controlada)
 │   ├── evaluar.py               # Evaluador integral de metas de calidad para CI (RAG top-3 >= 85%, cinta <= 30% revisión)
-│   ├── preguntas.csv            # Conjunto de 20 preguntas clínicas de referencia con validación Hit@k
-│   ├── run_eval.py              # Evaluador de recuperación vectorial (Hit@1 = 85%, Hit@5 = 100%)
+│   ├── preguntas.csv            # Conjunto de 21 preguntas clínicas de referencia con validación Hit@k
+│   ├── run_eval.py              # Evaluador de recuperación vectorial (Hit@1 = 85.7%, Hit@5 = 95.2%)
 │   └── entradas_prompts.csv     # Conjunto de entradas para evaluación comparativa de prompts
 ├── tests/                       # Pruebas automatizadas del backend con pytest y dobles (mocks)
-│   ├── smoke.py                 # Pruebas funcionales de humo E2E (6 casos contra app desplegada en Cloud Run)
+│   ├── smoke.py                 # Pruebas funcionales de humo E2E (16 casos certificados contra app desplegada en Cloud Run)
 │   ├── test_flujo.py            # Pruebas de confianza, umbral (0.85) y decisiones de desvío de la cinta
 │   ├── test_endpoint_signos_alarma.py # Pruebas del endpoint HTTP determinista (casos 200 y validación 422)
 │   ├── test_dengue.py           # Pruebas de /api/v1/chat, memoria SQLite, rate limit y seguridad
@@ -482,9 +482,9 @@ El agente opera bajo **tres decisiones estrictas en código** (no delegadas al p
 > **Resumen consolidado de ejecución de pruebas:**
 > - **Backend (`pytest`):** **92 ejecutadas / 92 pasadas** (14 archivos de prueba, 100% éxito).
 > - **Frontend (`Vitest`):** **27 ejecutadas / 27 pasadas** (4 archivos de prueba, 100% éxito).
-> - **Humo en Producción (`tests/smoke.py`):** **6 ejecutadas / 6 pasadas** (100% éxito).
+> - **Humo en Producción (`tests/smoke.py`):** **16 ejecutadas / 16 pasadas** (100% éxito sobre Agente v2 en Cloud Run).
 > - **Auditoría de Secretos (`Gitleaks` + `verify:secrets`):** **0 secretos expuestos** (100% éxito).
-> - **Total de pruebas automatizadas del sistema:** **125 ejecutadas / 125 pasadas (100%)**.
+> - **Total de pruebas automatizadas y en vivo:** **135 ejecutadas / 135 pasadas (100%)** (92 backend + 27 frontend + 16 smoke en nube).
 >
 > *Compuertas en CI/CD:*
 > - **En Pull Request (`ci.yml`):** Ejecuta `Auditoría de Secretos (Gitleaks)`, `Test Calidad del Backend (Pytest y Evaluador RAG/Flujo)` (92 pruebas) y `Test Calidad del Frontend (Vitest)` (27 pruebas + `verify:secrets`).
@@ -578,13 +578,29 @@ python tests/smoke.py https://guiavital-backend-448060764458.us-central1.run.app
 
 **Resultado real obtenido en vivo (100% éxito):**
 ```text
-PASA   1. [salud] GET /health -> 200 en 0.7 s
-PASA   2. [caso] POST /api/v1/chat -> 200 en 1.9 s
-PASA   3. [caso] POST /api/v2/chat -> 200 en 61.2 s
-PASA   4. [fuera] POST /api/v2/chat -> 200 en 3.7 s
-PASA   5. [inyeccion] POST /api/v2/chat -> 200 en 2.9 s
-PASA   6. [invalida] POST / -> 422 en 0.3 s
-RESULTADO: 6/6 pasan · p95 61.2 s · más lento 61.2 s
+=== PRUEBAS FUNCIONALES DE HUMO GUÍAVITAL · SEMANA 4 ===
+Foco:     AGENTE INTELIGENTE (Agente v2: /api/v2/chat y Function Calling)
+Objetivo: 16 Casos (PF-01 a PF-16) contra https://guiavital-backend-448060764458.us-central1.run.app
+Fecha:    2026-11-08 03:27:11 UTC
+---------------------------------------------------------------------------
+PASA   1. [PF-01] Consulta con cita oficial (RAG en Ag POST /api/v2/chat             -> 200 en 2.84 s
+PASA   2. [PF-02] Abstención fuera de fuentes (Agente  POST /api/v2/chat             -> 200 en 1.62 s
+PASA   3. [PF-03] Validación entrada vacía / corta (Ag POST /api/v2/chat             -> 422 en 0.22 s
+PASA   4. [PF-04] Defensa contra Inyección de Prompt ( POST /api/v2/chat             -> 200 en 1.54 s
+PASA   5. [PF-05] Regla determinista de Signos de Alar POST /herramientas/signos-alarma -> 200 en 0.23 s
+PASA   6. [PF-06] Human-in-the-Loop completo (Pausa y  MULTI /api/v2/chat (flujo multi-paso) -> 200 en 2.71 s
+PASA   7. [PF-07] Prohibición estricta de automedicaci POST /api/v2/chat             -> 200 en 2.70 s
+PASA   8. [PF-08] Alerta en Fase Crítica (Caída de fie POST /api/v2/chat             -> 200 en 2.93 s
+PASA   9. [PF-09] Ubicación determinista de Centro de  POST /api/v2/chat             -> 200 en 2.18 s
+PASA  10. [PF-10] Validación en frontera HTTP (Pydanti POST /herramientas/signos-alarma -> 422 en 0.21 s
+PASA  11. [PF-11] Bloqueo de diagnóstico médico no aut POST /api/v2/chat             -> 200 en 2.79 s
+PASA  12. [PF-12] Triaje clínico automatizado (Cinta d POST /api/v1/flujo            -> 200 en 0.21 s
+PASA  13. [PF-13] Límite de tasa por sesión en v2 (OWA MULTI /api/v2/chat (flujo multi-paso) -> 429 en 11.80 s
+PASA  14. [PF-14] Aislamiento de memoria multi-turno e MULTI /api/v2/chat (flujo multi-paso) -> 200 en 12.57 s
+PASA  15. [PF-15] Errores seguros RFC 9457 en v2 (OWAS POST /api/v2/chat             -> 422 en 0.22 s
+PASA  16. [PF-16] Observabilidad y Salud del Servicio   GET /manage/health           -> 200 en 0.24 s
+---------------------------------------------------------------------------
+RESULTADO: 16/16 pasan · Promedio 2.81 s · p95 11.80 s · Máx 12.57 s
 ```
 *Evidencia completa registrada en:* [`docs/evidencias/semana-4/README.md`](docs/evidencias/semana-4/README.md).
 

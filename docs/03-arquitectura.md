@@ -19,7 +19,7 @@ La aplicación resuelve el problema de las complicaciones graves por dengue asoc
 |---|---|---|
 | **Luis Cahuana** | Tech Lead | Arquitectura general, pipeline RAG (`intfloat/multilingual-e5-small` + ChromaDB), herramientas deterministas MSP, evolución de prompts y evaluación de calidad (`eval/evaluar.py`). |
 | **Wilson Salinas** | Builder | Desarrollo Frontend (`React 19 + TypeScript + Vite`), máquina de 7 estados, integración de endpoints v1/v2 y confirmación *HITL*, contenedorización Docker y CI/CD en Google Cloud Run. |
-| **Rafael Minaya** | QA / Seguridad | Estrategia de pruebas automatizadas (`pytest` 92 tests, `Vitest` 27 tests, `smoke.py` 6 casos en vivo), seguridad OWASP LLM, límite de tasa (`LimitadorTasa`) y auditoría de secretos. |
+| **Rafael Minaya** | QA / Seguridad | Estrategia de pruebas automatizadas (`pytest` 92 tests, `Vitest` 27 tests, `smoke.py` 16 casos certificados en vivo), seguridad OWASP LLM, límite de tasa (`LimitadorTasa`) y auditoría de secretos. |
 
 ---
 
@@ -126,7 +126,7 @@ flowchart TD
     SM["Secret Manager<br/>GEMINI_API_KEY · GROQ_API_KEY · Config"]
     CR_BE["Cloud Run: <b>guiavital-backend</b><br/>Python 3.12-slim · UID 10001 · 1 GiB RAM · min=0 max=5"]
     CR_FE["Cloud Run: <b>guiavital</b><br/>Nginx Alpine · Bundle React 19 · min=0 max=5"]
-    SMOKE["Sondas SRE (/manage/info, /manage/health)<br/>+ Smoke Tests en vivo (tests/smoke.py 6/6)"]
+    SMOKE["Sondas SRE (/manage/info, /manage/health)<br/>+ Smoke Tests en vivo (tests/smoke.py 16/16)"]
   end
 
   CI -->|Merge aprobado| REL
@@ -135,7 +135,7 @@ flowchart TD
   GAR --> CR_BE
   SM -. "Inyección segura (--set-secrets)" .-> CR_BE
   CR_BE --> SMOKE
-  SMOKE -->|6/6 OK| CR_FE
+  SMOKE -->|16/16 OK| CR_FE
 ```
 
 ---
