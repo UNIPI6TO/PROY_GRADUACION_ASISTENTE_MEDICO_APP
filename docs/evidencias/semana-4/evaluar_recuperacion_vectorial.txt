@@ -1,6 +1,6 @@
 ===============================================================================================
 EVALUACIÓN DE BASE VECTORIAL GUÍAVITAL (Top-5 vecinos más cercanos · Distancia Coseno)
-Versión: 0.5.1 · Archivo: eval/preguntas.csv (Total: 21 preguntas)
+Versión: 0.5.2 · Archivo: eval/preguntas.csv (Total: 21 preguntas)
 Fecha: 2026-11-10 16:54:24 EST
 ===============================================================================================
 Loading weights: 100%|██████████| 199/199 [00:00<00:00, 4471.76it/s]

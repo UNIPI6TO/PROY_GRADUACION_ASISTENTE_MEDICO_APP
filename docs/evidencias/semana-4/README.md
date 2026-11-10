@@ -101,7 +101,7 @@ En cumplimiento estricto del requerimiento docente para la Entrega Final, la sig
 
 ---
 
-## 6. Salidas Oficiales de los Scripts de Calidad y Recuperación (Versión 0.5.1)
+## 6. Salidas Oficiales de los Scripts de Calidad y Recuperación (Versión 0.5.2)
 
 En cumplimiento del requerimiento docente, se ejecutaron las suites deterministas sobre el corpus normativo indexado (161 fragmentos) y el conjunto de 21 preguntas de referencia:
 
