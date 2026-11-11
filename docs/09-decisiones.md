@@ -219,7 +219,7 @@ El producto necesita, además de responder con nuestros documentos (RAG), ejecut
 
 ## Decisión
 
-Google Cloud Run. Empaquetamos el backend en Docker con FastAPI, ChromaDB embebido y los pesos de intfloat/multilingual-e5-small (~470 MB). Google Cloud Run nos permite desplegar contenedores con 1 GiB de RAM, escala a cero instancias (min-instances=0) para no generar costos y se integra nativamente con GCP Secret Manager para proteger las llaves de Gemini y Groq.
+Google Cloud Run. Empaquetamos el backend en Docker con FastAPI, ChromaDB embebido y los pesos de intfloat/multilingual-e5-small (~470 MB). Google Cloud Run nos permite desplegar contenedores con 2 vCPU y 2 GiB de RAM (`--cpu=2`, `--memory=2Gi`), escala a cero instancias (`min-instances=0`) para no generar costos y se integra nativamente con GCP Secret Manager para proteger las llaves de Gemini y Groq.
 
 ## Alternativas descartadas
 

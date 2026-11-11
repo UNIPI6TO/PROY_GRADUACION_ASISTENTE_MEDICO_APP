@@ -35,8 +35,8 @@
 
 | Integrante | Rol | Aportes y Componentes Desarrollados / Verificados |
 |---|---|---|
-| **Luis Cahuana** | Tech Lead | Arquitectura general del sistema, ingesta y calibración del pipeline RAG (`scripts/ingest.py`, `app/services/retriever.py` con ChromaDB + E5), herramientas clínicas deterministas (`app/tools/`), evolución de prompts (`system_v1.md` a `system_v4.md`, `system_agente.md`) y evaluación de calidad (`eval/evaluar.py`). |
-| **Wilson Salinas** | Builder | Desarrollo del Frontend en React 19 + TypeScript (`frontend/src/`), máquina de 7 estados (`estados.ts`), integración de endpoints v1/v2 y confirmación de acciones (*HITL*), contenedorización (`Dockerfile`) y despliegue continuo en Google Cloud Run (`deploy.yml`, `release.yml`). |
+| **Luis Cahuana** | Tech Lead | Arquitectura general del sistema, herramientas clínicas deterministas (`app/tools/`), evolución de prompts con salvaguardas (`system_v1.md` a `system_v4.md`, `system_agente.md`) y evaluación integral de calidad (`eval/evaluar.py`). |
+| **Wilson Salinas** | Builder | Pipeline RAG e ingesta clínica (`scripts/ingest.py`, `app/services/retriever.py` con ChromaDB + E5), desarrollo del Frontend en React 19 + TypeScript (`frontend/src/`), máquina de 7 estados (`estados.ts`), integración Agente/HITL (`agent.py`), contenedorización (`Dockerfile`) y despliegue en Google Cloud Run (`deploy.yml`, `release.yml`). |
 | **Rafael Minaya** | QA / Seguridad | Diseño y ejecución de suites de pruebas automatizadas (`tests/` en `pytest`, `frontend/tests/` en `Vitest` + `MSW`, `tests/smoke.py`), controles de seguridad OWASP LLM (`app/services/seguridad.py`, `LimitadorTasa`, sanitización `DOMPurify`, errores RFC 9457) y matriz de riesgos (`docs/riesgos.md`). |
 
 ---

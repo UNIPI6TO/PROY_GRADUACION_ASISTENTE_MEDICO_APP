@@ -4,16 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GuíaVital - Presentación Técnica (Sustentación Caso 05)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
 <style>
 :root {
-  --navy: #0b1730;
-  --blue: #13294b;
-  --teal: #18c6b5;
-  --cyan: #73e2dc;
-  --paper: #f4f8fc;
-  --white: #ffffff;
-  --text: #43536b;
+  --bg-stage: #090d16;
+  --bg-slide: #fbfcfe;
+  --surface: #ffffff;
+  --surface-alt: #f4f6f9;
+  --ink: #0f172a;
+  --ink-secondary: #334155;
+  --ink-muted: #64748b;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
+  --accent: #0d9488;
+  --accent-dark: #0f766e;
+  --accent-soft: #f0fdfa;
+  --navy: #0f172a;
+  --crimson: #be123c;
+  --crimson-soft: #fff1f2;
+  --emerald: #047857;
+  --emerald-soft: #ecfdf5;
+  --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
 * {
@@ -22,9 +38,11 @@
 
 body {
   margin: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #071226;
-  color: var(--text);
+  font-family: var(--font-sans);
+  background: var(--bg-stage);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .deck {
@@ -32,20 +50,24 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 25px;
+  padding: 16px;
 }
 
 .slide {
   display: none;
   flex-direction: column;
+  justify-content: space-between;
   position: relative;
   width: min(1280px, 96vw);
-  min-height: 700px;
-  background: var(--paper);
-  border-radius: 20px;
-  padding: 50px 65px 80px;
-  box-shadow: 0 20px 60px #0008;
+  height: 720px;
+  min-height: 720px;
+  max-height: 720px;
+  background: var(--bg-slide);
+  border-radius: 2px;
+  padding: 32px 52px 20px;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.65);
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .slide.active {
@@ -53,260 +75,421 @@ body {
   flex-direction: column;
 }
 
+/* PORTADA MINIMALISTA ARQUITECTÓNICA */
 .cover {
-  background: linear-gradient(
-    130deg,
-    #09152d,
-    #132d52,
-    #075b68
-  );
-  color: white;
-  justify-content: center;
+  background: #090d16;
+  background-image:
+    radial-gradient(circle at 88% 18%, rgba(13, 148, 136, 0.22) 0%, transparent 45%),
+    linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 64px 64px, 64px 64px;
+  color: #f8fafc;
+  justify-content: space-between;
+  padding: 52px 64px 56px;
 }
 
-.brand {
-  color: var(--teal);
-  font-weight: bold;
-  letter-spacing: 2px;
+/* CABECERA EDITORIAL DE DIAPOSITIVA */
+.slide-head {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
 }
 
 .eyebrow {
-  color: var(--teal);
+  font-family: var(--font-mono);
+  color: var(--accent);
   font-size: 13px;
-  font-weight: bold;
-  letter-spacing: 2px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
   text-transform: uppercase;
-  margin-bottom: 14px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+  background: var(--accent);
 }
 
 h1 {
-  font-size: 62px;
-  line-height: 1.05;
-  margin: 0 0 18px;
+  font-family: var(--font-display);
+  font-size: 74px;
+  line-height: 0.98;
+  margin: 0 0 14px;
+  color: #ffffff;
+  font-weight: 800;
+  letter-spacing: -0.04em;
 }
 
 h2 {
-  color: var(--navy);
-  font-size: 34px;
-  margin: 0 0 20px;
+  font-family: var(--font-display);
+  color: var(--ink);
+  font-size: 32px;
+  line-height: 1.15;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.025em;
 }
 
 .cover h2 {
-  color: #d8f7f3;
-  font-size: 26px;
-  max-width: 850px;
+  font-family: var(--font-sans);
+  color: #94a3b8;
+  font-size: 24px;
+  font-weight: 400;
+  max-width: 820px;
   line-height: 1.4;
+  letter-spacing: -0.01em;
 }
 
 p {
-  font-size: 16px;
-  line-height: 1.55;
-  margin-top: 0;
-}
-
-ul {
-  font-size: 15px;
-  line-height: 1.55;
-  margin-top: 8px;
-  padding-left: 20px;
-}
-
-li {
-  margin-bottom: 8px;
+  font-size: 16.5px;
+  line-height: 1.5;
+  margin: 0 0 8px;
+  color: var(--ink-secondary);
 }
 
 a {
-  color: #087f7a;
+  color: var(--ink);
   font-weight: 600;
   text-decoration: none;
-  border-bottom: 1px dashed #18c6b5;
+  border-bottom: 1px solid var(--accent);
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 a:hover {
-  color: var(--navy);
-  border-bottom-style: solid;
+  color: var(--accent);
 }
 
 .cover a {
-  color: var(--cyan);
-  border-bottom-color: var(--cyan);
+  color: #e2e8f0;
+  border-bottom-color: rgba(94, 234, 212, 0.5);
 }
 
 .cover a:hover {
-  color: var(--white);
+  color: #5eead4;
+  border-bottom-color: #5eead4;
 }
 
 code {
-  background: #e6f2f8;
-  color: var(--navy);
+  font-family: var(--font-mono);
+  background: var(--surface-alt);
+  color: var(--ink);
   padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 13px;
+  border-radius: 2px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--line);
 }
 
-.content {
+/* ETIQUETAS TÉCNICAS RECTAS (SIN PÍLDORAS REDONDEADAS) */
+.tag {
+  font-family: var(--font-mono);
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 2px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tag-teal { background: var(--accent-soft); color: var(--accent-dark); border: 1px solid #99f6e4; }
+.tag-dark { background: var(--navy); color: #f8fafc; }
+.tag-crimson { background: var(--crimson-soft); color: var(--crimson); border: 1px solid #fecdd3; }
+.tag-emerald { background: var(--emerald-soft); color: var(--emerald); border: 1px solid #a7f3d0; }
+.tag-outline { background: transparent; color: #cbd5e1; border: 1px solid rgba(255,255,255,0.2); }
+
+/* ÍNDICE NUMÉRICO EDITORIAL */
+.idx {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+
+.idx-crimson { color: var(--crimson); }
+.idx-navy { color: var(--ink-muted); }
+
+/* GRIDS ARQUITECTÓNICOS */
+.grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 22px;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+/* PANELES MINIMALISTAS DE LÍNEA FINA Y ACENTO SUPERIOR */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--ink);
+  border-radius: 2px;
+  padding: 15px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.panel-teal { border-top-color: var(--accent); }
+.panel-crimson { border-top-color: var(--crimson); }
+.panel-emerald { border-top-color: var(--emerald); }
+.panel-subtle { border-top: 1px solid var(--line); background: var(--surface); }
+
+.panel-dark {
+  background: var(--navy);
+  color: #f8fafc;
+  border: 1px solid #1e293b;
+  border-top: 2px solid var(--accent);
+  border-radius: 2px;
+  padding: 20px 24px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  min-height: 28px;
+}
+
+.panel-title {
+  font-family: var(--font-display);
+  font-size: 18.5px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.panel-dark .panel-title {
+  color: #ffffff;
+}
+
+.panel-body {
+  font-size: 16.5px;
+  line-height: 1.48;
+  color: var(--ink-secondary);
   flex: 1;
 }
 
-.panel {
-  background: white;
-  border: 1px solid #dce6f0;
-  border-radius: 16px;
-  padding: 22px;
+.panel-dark .panel-body {
+  color: #cbd5e1;
 }
 
-.panel h3 {
-  color: var(--navy);
-  margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 19px;
-}
-
-.kpis {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.kpi {
-  background: white;
-  border-radius: 14px;
-  padding: 16px 18px;
-  border: 1px solid #dce6f0;
-}
-
-.kpi b {
-  display: block;
-  font-size: 28px;
-  color: #087f7a;
-}
-
-.kpi span {
+.panel-foot {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-mono);
   font-size: 13px;
-}
-
-.note {
-  background: #e8f7f6;
-  border-left: 4px solid var(--teal);
-  padding: 13px 16px;
-  margin-top: 14px;
-  border-radius: 8px;
-  line-height: 1.45;
-  font-size: 14.5px;
-}
-
-.meta {
-  display: flex;
-  gap: 32px;
-  flex-wrap: wrap;
-  margin-top: 28px;
-  color: #d2deee;
-}
-
-.meta strong {
-  display: block;
-  color: white;
-  margin-bottom: 4px;
-}
-
-.footer {
-  position: absolute;
-  bottom: 22px;
-  left: 65px;
-  right: 65px;
+  color: var(--ink-muted);
   display: flex;
   justify-content: space-between;
-  color: #91a0b2;
-  font-size: 12px;
+  align-items: center;
 }
 
-table {
+/* MÉTRICAS ESTILO SWISS DESIGN */
+.stat-cell {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--accent);
+  border-radius: 2px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.stat-val {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.0;
+  letter-spacing: -0.04em;
+}
+
+.stat-lbl {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-top: 8px;
+  letter-spacing: -0.01em;
+}
+
+.stat-sub {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin-top: 3px;
+}
+
+/* FRANJA DE ESTADO */
+.status-bar {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  font-size: 15.5px;
+}
+
+/* LISTA NUMERADA MINIMALISTA */
+.row-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line);
+}
+
+.row-item {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 15.5px;
+  line-height: 1.38;
+  color: var(--ink-secondary);
+}
+
+.row-item strong {
+  color: var(--ink);
+}
+
+/* TABLA EDITORIAL LIMPIA */
+table.swiss-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
-  font-size: 13.5px;
+  background: var(--surface);
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--line-strong);
+  font-size: 16px;
 }
 
-th {
-  background: var(--navy);
-  color: white;
-  padding: 11px 12px;
+table.swiss-table th {
+  font-family: var(--font-mono);
+  background: var(--surface-alt);
+  color: var(--ink);
+  padding: 12px 16px;
+  font-weight: 700;
   text-align: left;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-bottom: 1px solid var(--line-strong);
 }
 
-td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #e4ebf2;
-  vertical-align: top;
+table.swiss-table td {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  line-height: 1.42;
+  color: var(--ink-secondary);
 }
 
+table.swiss-table td strong {
+  color: var(--ink);
+}
+
+/* PIE DE PÁGINA */
+.footer {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  flex-shrink: 0;
+}
+
+/* BARRA DE NAVEGACIÓN MINIMALISTA */
 .nav {
   position: fixed;
-  bottom: 15px;
+  bottom: 14px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--navy);
-  padding: 10px 15px;
-  border-radius: 40px;
+  background: #090d16;
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 5px 10px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   color: white;
-  z-index: 10;
+  z-index: 100;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 .nav button {
-  background: #203958;
-  color: white;
-  border: none;
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
+  background: transparent;
+  color: #e2e8f0;
+  border: 1px solid rgba(255,255,255,0.12);
+  width: 30px;
+  height: 30px;
+  border-radius: 2px;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
 }
 
 .nav button:hover {
-  background: #0e9c93;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
 }
 
+.nav span {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  min-width: 58px;
+  text-align: center;
+  color: #94a3b8;
+}
 
 .progress {
   position: fixed;
   top: 0;
   left: 0;
-  height: 4px;
-  background: var(--teal);
-  z-index: 20;
+  height: 3px;
+  background: var(--accent);
+  z-index: 200;
+  transition: width 0.2s ease;
 }
 
-@media(max-width: 800px) {
-  .slide {
-    width: 100%;
-    padding: 30px 25px 80px;
-  }
-
-  .content {
-    grid-template-columns: 1fr;
-  }
-
-  h1 {
-    font-size: 42px;
-  }
-
-  h2 {
-    font-size: 26px;
-  }
-
-  .footer {
-    left: 25px;
-    right: 25px;
-  }
-}
-
+/* IMPRESIÓN Y EXPORTACIÓN PDF 16:9 */
 @page {
   size: 338.67mm 190.5mm;
   margin: 0;
@@ -321,7 +504,7 @@ td {
   html, body {
     margin: 0 !important;
     padding: 0 !important;
-    background: var(--paper) !important;
+    background: var(--bg-slide) !important;
     width: 338.67mm !important;
   }
 
@@ -340,7 +523,7 @@ td {
     height: 190.5mm !important;
     min-height: 190.5mm !important;
     max-height: 190.5mm !important;
-    padding: 26px 46px 46px !important;
+    padding: 36px 52px 52px !important;
     margin: 0 !important;
     box-shadow: none !important;
     border-radius: 0 !important;
@@ -352,135 +535,13 @@ td {
   }
 
   .slide.cover {
-    justify-content: center !important;
-    padding: 45px 65px 65px !important;
+    justify-content: space-between !important;
+    padding: 48px 60px 52px !important;
   }
 
   .slide:last-child {
     page-break-after: auto !important;
     break-after: auto !important;
-  }
-
-  .eyebrow {
-    font-size: 11.5px !important;
-    margin-bottom: 6px !important;
-  }
-
-  h1 {
-    font-size: 56px !important;
-    margin: 0 0 14px !important;
-  }
-
-  h2 {
-    font-size: 25px !important;
-    margin: 0 0 12px !important;
-    line-height: 1.2 !important;
-  }
-
-  .cover h2 {
-    font-size: 24px !important;
-    line-height: 1.35 !important;
-  }
-
-  p {
-    font-size: 13px !important;
-    line-height: 1.38 !important;
-    margin-bottom: 7px !important;
-  }
-
-  ul {
-    font-size: 12.8px !important;
-    line-height: 1.36 !important;
-    margin-top: 4px !important;
-    margin-bottom: 4px !important;
-    padding-left: 18px !important;
-  }
-
-  li {
-    margin-bottom: 4px !important;
-  }
-
-  code {
-    font-size: 11.5px !important;
-    padding: 1px 5px !important;
-  }
-
-  .content {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 16px !important;
-    flex: 1 !important;
-    align-content: start !important;
-  }
-
-  .panel {
-    padding: 13px 16px !important;
-    border-radius: 12px !important;
-  }
-
-  .panel h3 {
-    font-size: 16px !important;
-    margin-bottom: 7px !important;
-  }
-
-  .kpis {
-    gap: 10px !important;
-  }
-
-  .kpi {
-    padding: 10px 14px !important;
-    border-radius: 10px !important;
-  }
-
-  .kpi b {
-    font-size: 23px !important;
-  }
-
-  .kpi span {
-    font-size: 11.8px !important;
-  }
-
-  .note {
-    padding: 8px 12px !important;
-    margin-top: 8px !important;
-    font-size: 12.2px !important;
-    line-height: 1.34 !important;
-  }
-
-  .flow {
-    gap: 5px !important;
-    margin-top: 6px !important;
-  }
-
-  .box {
-    padding: 7px 12px !important;
-    font-size: 12px !important;
-    line-height: 1.3 !important;
-  }
-
-  .arrow {
-    font-size: 14px !important;
-    line-height: 1 !important;
-  }
-
-  table {
-    font-size: 11.8px !important;
-  }
-
-  th {
-    padding: 6px 9px !important;
-  }
-
-  td {
-    padding: 5.5px 9px !important;
-    line-height: 1.32 !important;
-  }
-
-  .footer {
-    bottom: 12px !important;
-    left: 46px !important;
-    right: 46px !important;
-    font-size: 11px !important;
   }
 
   .nav,
@@ -497,509 +558,799 @@ td {
 
 <main class="deck" id="deck">
 
-
 <!-- DIAPOSITIVA 1: PORTADA -->
 <section class="slide cover active">
-  <div class="brand">GUÍAVITAL v0.4.0 · CASO N.º 05 – GRUPO 5</div>
-  <div class="eyebrow" style="margin-top:25px">
-    Proceso de Titulación Complexivo · Ingeniería de Software con IA Generativa
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:16px;margin-bottom:36px">
+      <span style="font-family:var(--font-mono);font-size:13px;letter-spacing:2px;color:#5eead4;font-weight:600">UNIANDES · PROCESO DE TITULACIÓN COMPLEXIVO · CASO 05</span>
+      <span style="font-family:var(--font-mono);font-size:13px;color:#94a3b8">RELEASE v0.5.2 · GRUPO 5</span>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      <span class="tag tag-outline">RAG Oficial OPS/MSP · dist ≤ 0.155</span>
+      <span class="tag tag-outline">Triaje Determinista · 0 Falsos Negativos</span>
+      <span class="tag tag-outline">Minimización LOPDP & HITL</span>
+    </div>
+
+    <h1>GuíaVital</h1>
+    <h2>Asistente de orientación en salud pública sobre dengue y arbovirosis fundamentado en evidencia oficial y reglas clínicas deterministas.</h2>
   </div>
-  <h1>GuíaVital</h1>
-  <h2>Asistente de Orientación en Salud Pública sobre Dengue y Arbovirosis<br>
-  <span style="font-size:20px;color:#73e2dc;font-weight:normal">(RAG sobre guías del MSP y la OPS – Agente de signos de alarma basado en reglas)</span></h2>
-  <p style="color:#d2deee;max-width:850px">
-    Plataforma inteligente de orientación ciudadana que combina recuperación aumentada por generación (RAG) con citas oficiales, triaje determinista por reglas clínicas, confirmación humana (HITL) y salvaguardas estrictas Zero-PII.
-  </p>
-  <div class="meta">
-    <div><strong>Institución y Carrera</strong>UNIANDES · Software</div>
-    <div><strong>Integrantes (Grupo 5)</strong>Luis Caguana (Tech Lead) · Wilson Salinas (Builder) · Rafael Minaya (QA / Seguridad)</div>
-    <div><strong>Despliegue Público Activo (Cloud Run)</strong>
-      <a href="https://guiavital-448060764458.us-central1.run.app" target="_blank" rel="noopener">App Web Frontend</a> ·
-      <a href="https://guiavital-backend-448060764458.us-central1.run.app/manage/health" target="_blank" rel="noopener">/manage/health</a> ·
-      <a href="https://guiavital-backend-448060764458.us-central1.run.app/docs" target="_blank" rel="noopener">API Swagger</a> ·
-      <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/tree/develop" target="_blank" rel="noopener">Repositorio GitHub (develop)</a>
+
+  <div>
+    <div class="grid-3" style="margin-bottom:28px;border-top:1px solid rgba(255,255,255,0.12);padding-top:22px">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:12px;color:#5eead4;letter-spacing:1px;text-transform:uppercase">01 / Tech Lead</div>
+        <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:white;margin:4px 0">Luis Caguana</div>
+        <div style="font-size:14.5px;color:#94a3b8;line-height:1.4">Arquitectura, Tools deterministas, Prompts y Evaluador CI</div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:12px;color:#5eead4;letter-spacing:1px;text-transform:uppercase">02 / Builder</div>
+        <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:white;margin:4px 0">Wilson Salinas</div>
+        <div style="font-size:14.5px;color:#94a3b8;line-height:1.4">Pipeline RAG e Ingesta, Frontend React 19 y CI/CD Cloud Run</div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:12px;color:#5eead4;letter-spacing:1px;text-transform:uppercase">03 / QA & Seguridad</div>
+        <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:white;margin:4px 0">Rafael Minaya</div>
+        <div style="font-size:14.5px;color:#94a3b8;line-height:1.4">Suite de 135 Pruebas, OWASP LLM y Minimización LOPDP</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:13px;color:#94a3b8;border-top:1px solid rgba(255,255,255,0.12);padding-top:14px">
+      <div>
+        <span style="color:#5eead4">CLOUD RUN:</span>
+        <a href="https://guiavital-448060764458.us-central1.run.app" target="_blank" rel="noopener" style="margin-left:8px">App Frontend ↗</a> ·
+        <a href="https://guiavital-backend-448060764458.us-central1.run.app/manage/health" target="_blank" rel="noopener">/manage/health ↗</a> ·
+        <a href="https://guiavital-backend-448060764458.us-central1.run.app/docs" target="_blank" rel="noopener">API Docs ↗</a> ·
+        <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+      <span>01 / 12</span>
     </div>
   </div>
-  <div class="footer"><span>Sustentación Caso 05</span><span>01 / 11</span></div>
 </section>
-
 
 <!-- DIAPOSITIVA 2: PROBLEMA, ANTECEDENTES Y USUARIO -->
 <section class="slide">
-  <div class="eyebrow">Problema, Antecedentes Clínicos y Usuario</div>
-  <h2>Antecedentes en Ecuador, problema central y población objetivo</h2>
-  <div class="content">
-    <div>
-      <p>
-        <strong>Antecedentes epidemiológicos (Caso 05):</strong> El dengue y otras arbovirosis (Zika, Chikungunya, Fiebre Amarilla) son endémicos en la <strong>Costa y la Amazonía ecuatorianas</strong> (Guayas, Manabí, Los Ríos, El Oro, Esmeraldas, Santo Domingo, Sucumbíos), con brotes estacionales durante la etapa invernal que saturan los servicios de emergencia.
-      </p>
-      <p>
-        Aunque el <strong>Ministerio de Salud Pública (MSP)</strong> y la <strong>Organización Panamericana de la Salud (OPS)</strong> disponen de guías clínicas y material educativo (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/README.md#L45-L55" target="_blank" rel="noopener">README.md</a>), la ciudadanía enfrenta cuatro barreras críticas:
-      </p>
-      <ul>
-        <li><strong>Reconocimiento tardío de signos de alarma:</strong> Demora al identificar extravasación plasmática (dolor abdominal continuo, vómitos persistentes, sangrado de mucosas, letargo), elevando la letalidad evitable.</li>
-        <li><strong>Automedicación peligrosa con AINEs:</strong> Consumo de <em>ibuprofeno, aspirina, diclofenaco o naproxeno</em> ante fiebre, lo que agrava el riesgo de hemorragias severas y choque por dengue.</li>
-        <li><strong>Brecha técnica y desinformación:</strong> Documentos extensos con terminología clínica compleja o consejos en internet sin respaldo oficial.</li>
-        <li><strong>Saturación de salas de guardia:</strong> Ausencia de un canal inicial disponible 24/7 que clasifique la severidad y derive oportunamente al Centro de Salud MSP o al <strong>ECU-911</strong>.</li>
-      </ul>
-    </div>
-    <div>
-      <div class="panel">
-        <h3>¿Para quién está diseñado GuíaVital?</h3>
-        <ul>
-          <li><strong>Ciudadanos y familias en zonas endémicas:</strong> Personas que requieren orientación inmediata y comprensible ante cuadros febriles propios o de un familiar.</li>
-          <li><strong>Cuidadores de grupos vulnerables:</strong> Familias a cargo de niños menores de 5 años, mujeres embarazadas o adultos mayores con comorbilidades (atención desde el 1.er día de fiebre).</li>
-          <li><strong>Promotores de salud comunitaria:</strong> Apoyo rápido estandarizado en las directrices vigentes del MSP y SIVE-Alerta.</li>
-        </ul>
+  <div class="slide-head">
+    <div class="eyebrow">01 · Contexto Epidemiológico y Usuario</div>
+    <h2>¿Qué problema de salud pública resolvemos en Ecuador?</h2>
+  </div>
+
+  <div class="grid-2">
+    <!-- IZQUIERDA: 3 BARRERAS CRÍTICAS -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="panel panel-crimson" style="flex:1">
+        <div class="panel-header">
+          <span class="panel-title"><span class="idx idx-crimson">01 /</span> Brotes Invernales y Saturación</span>
+          <span class="tag tag-crimson">Costa y Amazonía</span>
+        </div>
+        <div class="panel-body">
+          Endemia estacional en Guayas, Manabí, El Oro y Esmeraldas satura las salas de emergencia hospitalaria del MSP.
+        </div>
       </div>
-      <div class="note">
-        <strong>Condiciones informadas al usuario y Privacidad (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/README.md#L12-L20" target="_blank" rel="noopener">README.md</a>):</strong><br>
-        • <strong>Orientación, NO diagnóstico ni receta:</strong> Informa que se conversa con una IA que puede equivocarse y nunca reemplaza al médico.<br>
-        • <strong>Política Zero-PII (LOPDP Ecuador):</strong> No pide nombres ni cédulas; solo guarda un <code>idSesion</code> anónimo y efímero en <code>sessionStorage</code>.
+
+      <div class="panel panel-crimson" style="flex:1">
+        <div class="panel-header">
+          <span class="panel-title"><span class="idx idx-crimson">02 /</span> Automedicación con AINEs</span>
+          <span class="tag tag-crimson">Riesgo de Choque</span>
+        </div>
+        <div class="panel-body">
+          El consumo ciudadano de <strong>ibuprofeno, aspirina o naproxeno</strong> ante fiebre dispara el riesgo de hemorragia severa.
+        </div>
+      </div>
+
+      <div class="panel panel-crimson" style="flex:1">
+        <div class="panel-header">
+          <span class="panel-title"><span class="idx idx-crimson">03 /</span> Reconocimiento Tardío de Alarma</span>
+          <span class="tag tag-crimson">Fase Crítica · Días 3 a 7</span>
+        </div>
+        <div class="panel-body">
+          Dolor abdominal continuo, vómitos persistentes y sangrado de mucosas no se identifican a tiempo en el hogar.
+        </div>
+      </div>
+    </div>
+
+    <!-- DERECHA: USUARIO Y PRIVACIDAD LOPDP -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="panel" style="flex:1">
+        <div class="panel-header">
+          <span class="panel-title">Población Objetivo</span>
+          <span class="tag tag-dark">Orientación 24/7</span>
+        </div>
+        <div class="row-list" style="margin-top:6px">
+          <div class="row-item"><span class="idx">A.</span><div><strong>Familias en zonas endémicas:</strong> Orientación inmediata en lenguaje claro.</div></div>
+          <div class="row-item"><span class="idx">B.</span><div><strong>Grupos prioritarios:</strong> Cuidadores de niños &lt;5 años, gestantes y adultos mayores.</div></div>
+          <div class="row-item" style="border-bottom:none"><span class="idx">C.</span><div><strong>Promotores comunitarios:</strong> Consulta estandarizada sobre guías MSP y OPS.</div></div>
+        </div>
+      </div>
+
+      <div class="panel panel-teal" style="flex:1">
+        <div class="panel-header">
+          <span class="panel-title">Garantías Éticas y Privacidad (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/docs/09-decisiones.md#L234-L265" target="_blank" rel="noopener">ADR-0007</a>)</span>
+          <span class="tag tag-teal">Art. 10 y 11 LOPDP</span>
+        </div>
+        <div class="row-list" style="margin-top:6px">
+          <div class="row-item"><span class="idx">01</span><div><strong>Frontera clínica estricta:</strong> Orienta y deriva; jamás diagnostica ni receta.</div></div>
+          <div class="row-item" style="border-bottom:none"><span class="idx">02</span><div><strong>Minimización LOPDP:</strong> Sin nombres ni cédulas; teléfonos enmascarados (<code>099***67</code>) con <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/services/seguridad.py#L26-L37" target="_blank" rel="noopener">anonimizar_pii()</a>.</div></div>
+        </div>
       </div>
     </div>
   </div>
-  <div class="footer"><span>GuíaVital · Problema y Usuario</span><span>02 / 11</span></div>
-</section>
 
+  <div class="footer">
+    <span>GUÍAVITAL v0.5.2 — PROBLEMA CLÍNICO Y POBLACIÓN OBJETIVO</span>
+    <span>02 / 12</span>
+  </div>
+</section>
 
 <!-- DIAPOSITIVA 3: OBJETIVOS DEL CASO 05 -->
 <section class="slide">
-  <div class="eyebrow">Objetivos del Proyecto (Caso N.º 05 – Grupo 5)</div>
-  <h2>Objetivos del caso y alcance por fases de ingeniería</h2>
-  <div class="content">
-    <div class="panel">
-      <h3>Objetivo General del Caso 05</h3>
-      <p style="font-size:16.5px;color:#13294b;font-weight:600;line-height:1.55">
-        «Construir un asistente web de orientación ciudadana que explique prevención, síntomas y signos de alarma del dengue con base exclusiva en material oficial, e incorporar un agente que aplique una lista de verificación de signos de alarma mediante reglas deterministas y derive a un establecimiento de salud o al 911 cuando corresponda, sin emitir diagnósticos ni recomendar medicamentos.»
-      </p>
-      <div class="note">
-        <strong>Sustento documental en repositorio:</strong><br>
-        • Propuesta y alcance: <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/01-propuesta.md#L1-L55" target="_blank" rel="noopener">docs/01-propuesta.md</a><br>
-        • Requisitos y seguridad: <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/02-requisitos.md#L1-L60" target="_blank" rel="noopener">docs/02-requisitos.md</a><br>
-        • Fuentes oficiales MSP/OPS: <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/04-fuentes.md#L1-L45" target="_blank" rel="noopener">docs/04-fuentes.md</a>
-      </div>
+  <div class="slide-head">
+    <div class="eyebrow">02 · Alcance y Objetivos de Ingeniería</div>
+    <h2>Objetivo general del Caso 05 y ejecución en 4 fases</h2>
+  </div>
+
+  <div class="panel-dark" style="margin-bottom:20px">
+    <div style="font-family:var(--font-mono);font-size:12px;color:#5eead4;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">
+      Mandato Técnico y Clínico · Caso N.º 05
     </div>
-    <div class="panel">
-      <h3>Objetivos Específicos (Fases 1 a 4)</h3>
-      <ul>
-        <li><strong>Fase 1 · Alcance y Diseño Seguro:</strong> Definir qué hace y qué nunca hace el asistente (alcance negativo estricto), arquitectura en capas, análisis de riesgos éticos/OWASP y catálogo normativo MSP y OPS 2016.</li>
-        <li><strong>Fase 2 · MVP e Integración IA Resiliente:</strong> Construir el backend FastAPI y frontend React 19 con prompts con salvaguardas (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/prompts/system_v4.md#L1-L58" target="_blank" rel="noopener">system_v4.md</a>), validación Pydantic v2, respaldo Gemini/Groq y secretos en entorno.</li>
-        <li><strong>Fase 3 · RAG con Citas, Agente y Triaje por Reglas:</strong> Indexar guías OPS/MSP en ChromaDB, implementar el agente con <code>evaluar_signos_alarma</code> (reglas deterministas) y <code>buscar_centro_salud</code> (GeoSalud), más el flujo automatizado con umbral <code>0.85</code>.</li>
-        <li><strong>Fase 4 · Despliegue Cloud y Validación en Vivo:</strong> Desplegar en Google Cloud Run con Secret Manager y comprobar los indicadores mínimos (100% derivación en alarma, 100% rechazo de recetas y ≥80% citas).</li>
-      </ul>
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:600;line-height:1.4;color:#f8fafc">
+      Construir un asistente web que explique prevención y síntomas con <span style="color:#5eead4">RAG oficial (OPS/MSP)</span>, aplique <span style="color:#5eead4">triaje determinista de signos de alarma</span> y derive al 911 o centros de salud, <span style="border-bottom:2px solid #f43f5e;color:#fda4af">sin diagnosticar ni recetar medicamentos</span>.
     </div>
   </div>
-  <div class="footer"><span>GuíaVital · Objetivos del Caso 05</span><span>03 / 11</span></div>
-</section>
 
+  <div class="grid-4" style="flex:1">
+    <div class="panel">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:12.5px;color:var(--ink-muted);margin-bottom:8px">FASE 01 / DISEÑO</div>
+        <div class="panel-title" style="margin-bottom:10px">Alcance & Ética</div>
+        <div class="panel-body" style="font-size:15.5px">
+          Frontera negativa estricta, curaduría de guías OPS 2016 / MSP y matriz de riesgos OWASP LLM.
+        </div>
+      </div>
+      <div class="panel-foot"><a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/docs/01-propuesta.md" target="_blank" rel="noopener">01-propuesta.md ↗</a></div>
+    </div>
+
+    <div class="panel">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:12.5px;color:var(--ink-muted);margin-bottom:8px">FASE 02 / MVP</div>
+        <div class="panel-title" style="margin-bottom:10px">IA Resiliente</div>
+        <div class="panel-body" style="font-size:15.5px">
+          Backend FastAPI, Frontend React 19, salvaguardas en prompt y respaldo dual Gemini Flash + Groq.
+        </div>
+      </div>
+      <div class="panel-foot"><a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/prompts/system_v4.md" target="_blank" rel="noopener">system_v4.md ↗</a></div>
+    </div>
+
+    <div class="panel panel-teal">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:12.5px;color:var(--accent);font-weight:700;margin-bottom:8px">FASE 03 / NÚCLEO</div>
+        <div class="panel-title" style="margin-bottom:10px">RAG & Reglas</div>
+        <div class="panel-body" style="font-size:15.5px">
+          161 fragmentos en ChromaDB, umbral <code>dist ≤ 0.155</code>, triaje determinista y pausa HITL.
+        </div>
+      </div>
+      <div class="panel-foot"><a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/docs/06-rag.md" target="_blank" rel="noopener">06-rag.md ↗</a></div>
+    </div>
+
+    <div class="panel panel-emerald">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:12.5px;color:var(--emerald);font-weight:700;margin-bottom:8px">FASE 04 / CLOUD</div>
+        <div class="panel-title" style="margin-bottom:10px">Nube & 135 Tests</div>
+        <div class="panel-body" style="font-size:15.5px">
+          Cloud Run con <strong>2 vCPU y 2 GiB RAM</strong>, 135 pruebas automatizadas y 16 casos en vivo.
+        </div>
+      </div>
+      <div class="panel-foot"><a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/docs/09-decisiones.md" target="_blank" rel="noopener">09-decisiones.md ↗</a></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>GUÍAVITAL v0.5.2 — OBJETIVOS Y FASES DE INGENIERÍA</span>
+    <span>03 / 12</span>
+  </div>
+</section>
 
 <!-- DIAPOSITIVA 4: DEMO EN VIVO SOBRE LA URL PÚBLICA -->
 <section class="slide">
-  <div class="eyebrow">Demostración en Vivo en la URL Pública</div>
-  <h2>Demo en vivo: Citas RAG, Abstención y Confirmación Humana</h2>
-  <p style="margin-bottom:14px">
-    Se ejecuta directamente sobre la aplicación desplegada en Google Cloud Run:
-    <a href="https://guiavital-448060764458.us-central1.run.app" target="_blank" rel="noopener">https://guiavital-448060764458.us-central1.run.app</a>
-    · Estado previo: <a href="https://guiavital-backend-448060764458.us-central1.run.app/manage/health" target="_blank" rel="noopener">GET /manage/health (UP)</a>
-  </p>
-  <div class="content">
-    <div class="panel">
-      <h3>Los 3 escenarios demostrados en vivo</h3>
-      <ul>
-        <li>
-          <strong>1. Caso normal con cita oficial (RAG):</strong><br>
-          <em>Consulta:</em> «¿Cuáles son los signos de alarma del dengue y cómo prevenir criaderos en casa?»<br>
-          <em>Comportamiento:</em> Invoca <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/tools/consultar_guia_msp.py#L15-L32" target="_blank" rel="noopener">consultar_guia_msp.py</a> y muestra la respuesta en lenguaje claro con las etiquetas de cita oficial (<code>OPS, 2016</code> / <code>MSP SIVE-Alerta</code>).
-        </li>
-        <li>
-          <strong>2. Pregunta fuera de tema / Solicitud de receta (Se abstiene):</strong><br>
-          <em>Consulta:</em> «Tengo fiebre, ¿qué dosis de ibuprofeno puedo tomar? ¿Y quién ganó el partido de ayer?»<br>
-          <em>Comportamiento:</em> Rechaza recetar (advierte riesgo hemorrágico de AINEs) y se abstiene en temas ajenos (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/prompts/system_agente.md#L33-L51" target="_blank" rel="noopener">system_agente.md</a>).
-        </li>
-        <li>
-          <strong>3. Signos de alarma + Confirmación humana (HITL):</strong><br>
-          <em>Consulta:</em> «Estoy en Guayaquil con dolor abdominal fuerte y vómitos constantes. Busca un hospital y avisa a mi familiar al 0991234567.»<br>
-          <em>Comportamiento:</em> Evalúa alarma por reglas, lista hospitales 24h y <strong>pausa en <code>requiere_confirmacion</code></strong> mostrando destinatario y mensaje para aprobar o rechazar (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/main.py#L220-L239" target="_blank" rel="noopener">app/main.py</a>).
-        </li>
-      </ul>
-    </div>
+  <div class="slide-head">
+    <div class="eyebrow">03 · Demostración en Vivo</div>
+    <h2>3 comportamientos verificables en Google Cloud Run</h2>
+  </div>
+
+  <div class="status-bar">
     <div>
-      <div class="kpis">
-        <div class="kpi"><b>RAG</b><span>161 fragmentos MSP/OPS con cita verificable</span></div>
-        <div class="kpi"><b>Reglas</b><span>Checklist determinista + derivación 911</span></div>
-        <div class="kpi"><b>HITL</b><span>Aprobación humana antes de notificar</span></div>
-        <div class="kpi"><b>Zero-PII</b><span>Sin login personal ni claves en cliente</span></div>
+      <span class="tag tag-emerald">PRODUCCIÓN ACTIVA</span>
+      <span style="margin-left:12px;font-weight:600">
+        <a href="https://guiavital-448060764458.us-central1.run.app" target="_blank" rel="noopener">https://guiavital-448060764458.us-central1.run.app ↗</a>
+      </span>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:13.5px;color:var(--ink-muted)">
+      ESTADO: <a href="https://guiavital-backend-448060764458.us-central1.run.app/manage/health" target="_blank" rel="noopener">GET /manage/health (200 OK · 0.31s)</a>
+    </div>
+  </div>
+
+  <div class="grid-3" style="flex:1">
+    <div class="panel panel-teal">
+      <div>
+        <div class="panel-header">
+          <span class="idx">ESCENARIO 01</span>
+          <span class="tag tag-teal">Cita Oficial</span>
+        </div>
+        <div class="panel-title" style="margin:6px 0 12px">Consulta con RAG Asertivo</div>
+        <div class="panel-body">
+          «¿Cuáles son los signos de alarma y cómo prevenir criaderos?»<br><br>
+          <strong>Respuesta:</strong> Exige proximidad <code>dist ≤ 0.155</code> y adjunta cita verificable (<code>OPS, 2016</code> / <code>MSP SIVE-Alerta</code>).
+        </div>
       </div>
-      <div class="note">
-        <strong>Trazabilidad en código para la demo:</strong><br>
-        • Endpoint conversacional agente: <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/main.py#L201-L253" target="_blank" rel="noopener">app/main.py (chat_v2)</a><br>
-        • Endpoint confirmación humana: <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/main.py#L256-L311" target="_blank" rel="noopener">app/main.py (confirmar_accion_v2)</a><br>
-        • Checklist interactivo UI: <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/frontend/src/components/ChecklistSignosAlarma.tsx#L1-L120" target="_blank" rel="noopener">ChecklistSignosAlarma.tsx</a><br>
-        • Máquina de 7 estados UI: <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/frontend/src/types/estados.ts#L14-L128" target="_blank" rel="noopener">estados.ts</a>
+      <div class="panel-foot">
+        <span>RAG Vectorial</span>
+        <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/tools/consultar_guia_msp.py" target="_blank" rel="noopener">consultar_guia_msp.py ↗</a>
+      </div>
+    </div>
+
+    <div class="panel panel-crimson">
+      <div>
+        <div class="panel-header">
+          <span class="idx idx-crimson">ESCENARIO 02</span>
+          <span class="tag tag-crimson">Abstención</span>
+        </div>
+        <div class="panel-title" style="margin:6px 0 12px">Bloqueo de Recetas y AINEs</div>
+        <div class="panel-body">
+          «Tengo fiebre, ¿qué dosis de ibuprofeno puedo tomar?»<br><br>
+          <strong>Respuesta:</strong> Rechaza prescribir, advierte el riesgo hemorrágico de los AINEs y se abstiene fuera de tema.
+        </div>
+      </div>
+      <div class="panel-foot">
+        <span>Salvaguarda Clínica</span>
+        <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/prompts/system_agente.md" target="_blank" rel="noopener">system_agente.md ↗</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div>
+        <div class="panel-header">
+          <span class="idx idx-navy">ESCENARIO 03</span>
+          <span class="tag tag-dark">Supervisión HITL</span>
+        </div>
+        <div class="panel-title" style="margin:6px 0 12px">Alarma + Confirmación Humana</div>
+        <div class="panel-body">
+          «Dolor abdominal fuerte y vómitos. Busca hospital y avisa al 0991234567.»<br><br>
+          <strong>Respuesta:</strong> Triaje por reglas, hospital 24h y <strong>pausa en pantalla</strong> antes de enviar notificación.
+        </div>
+      </div>
+      <div class="panel-foot">
+        <span>Control Humano</span>
+        <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/main.py#L220-L239" target="_blank" rel="noopener">app/main.py ↗</a>
       </div>
     </div>
   </div>
-  <div class="footer"><span>GuíaVital · Demo en Vivo</span><span>04 / 11</span></div>
-</section>
 
+  <div class="footer">
+    <span>GUÍAVITAL v0.5.2 — DEMOSTRACIÓN EN VIVO</span>
+    <span>04 / 12</span>
+  </div>
+</section>
 
 <!-- DIAPOSITIVA 5: ARQUITECTURA GENERAL Y FLUJO -->
 <section class="slide">
-  <div class="eyebrow">Arquitectura del Sistema y Referencias en Git</div>
-  <h2>Arquitectura en capas, Agente controlado y Cinta de 7 estaciones</h2>
-  <div class="panel" style="padding:18px 22px;margin-bottom:14px">
-    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:4px 0">
-      <div style="background:#e4f7f5;padding:12px 16px;border-radius:12px;text-align:center;font-size:14px">
-        <strong>FRONTEND (React 19 + TS)</strong><br>
-        7 Estados + Checklist MSP<br>
-        <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/frontend/src/types/estados.ts#L14-L37" target="_blank" rel="noopener">estados.ts</a>
-      </div>
-      <div style="font-size:22px;color:#0e9c93">→</div>
-      <div style="background:#e4f7f5;padding:12px 16px;border-radius:12px;text-align:center;font-size:14px">
-        <strong>API GATEWAY (FastAPI)</strong><br>
-        CORS + Rate Limit 429 + RFC 9457<br>
-        <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/main.py#L78-L163" target="_blank" rel="noopener">app/main.py</a>
-      </div>
-      <div style="font-size:22px;color:#0e9c93">→</div>
-      <div style="background:#13294b;color:white;padding:12px 16px;border-radius:12px;text-align:center;font-size:14px">
-        <strong>AGENTE v2 (MAX_ITER=6)</strong><br>
-        PERMITIDAS + REQUIEREN_OK<br>
-        <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/services/agent.py#L26-L173" target="_blank" rel="noopener" style="color:#73e2dc">agent.py</a>
-      </div>
-      <div style="font-size:22px;color:#0e9c93">⇄</div>
-      <div style="background:#13294b;color:white;padding:12px 16px;border-radius:12px;text-align:center;font-size:14px">
-        <strong>CINTA 7 ESTACIONES</strong><br>
-        Umbral Confianza ≥ 0.85<br>
-        <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/flujo.py#L130-L190" target="_blank" rel="noopener" style="color:#73e2dc">app/flujo.py</a>
-      </div>
-    </div>
+  <div class="slide-head">
+    <div class="eyebrow">04 · Diseño de Sistemas y Trazabilidad</div>
+    <h2>Arquitectura desacoplada en 4 capas de seguridad</h2>
   </div>
-  <div class="content">
-    <div class="panel">
-      <h3>Herramientas Modulares y Contratos Pydantic</h3>
-      <ul>
-        <li><strong>Esquemas estrictos (<code>extra="forbid"</code>):</strong> <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/schemas.py#L18-L151" target="_blank" rel="noopener">app/schemas.py</a></li>
-        <li><code>consultar_guia_msp</code> (Libre · RAG top_k=3, dist≤0.155): <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/tools/consultar_guia_msp.py#L15-L32" target="_blank" rel="noopener">consultar_guia_msp.py</a></li>
-        <li><code>evaluar_signos_alarma</code> (Libre · Reglas MSP + sinónimos): <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/tools/evaluar_signos_alarma.py#L23-L94" target="_blank" rel="noopener">evaluar_signos_alarma.py</a></li>
-        <li><code>buscar_centro_salud</code> (Libre · GeoSalud Haversine 24h): <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/tools/buscar_centro_salud.py#L20-L77" target="_blank" rel="noopener">buscar_centro_salud.py</a></li>
-        <li><code>notificar_contacto_emergencia</code> (Con confirmación HITL): <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/tools/notificar_contacto_emergencia.py#L8-L20" target="_blank" rel="noopener">notificar_contacto_emergencia.py</a></li>
-      </ul>
-    </div>
-    <div class="panel">
-      <h3>Capa de Datos, RAG, LLM y Parámetros</h3>
-      <ul>
-        <li><strong>Ingesta PDF (161 fragmentos OPS + SIVE-Alerta págs. 95–100):</strong> <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/scripts/ingest.py#L90-L278" target="_blank" rel="noopener">scripts/ingest.py</a></li>
-        <li><strong>Buscador Vectorial (ChromaDB + E5 <code>query:</code>/<code>passage:</code>):</strong> <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/services/retriever.py#L46-L136" target="_blank" rel="noopener">retriever.py</a></li>
-        <li><strong>ClienteLLM Resiliente (Gemini → Fallback Groq):</strong> <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/services/llm.py#L117-L239" target="_blank" rel="noopener">app/services/llm.py</a></li>
-        <li><strong>Persistencia SQLite por <code>idSesion</code>:</strong> <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/repositorio/historial.py#L23-L57" target="_blank" rel="noopener">historial.py</a></li>
-        <li><strong>Parámetros desacoplados:</strong> <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/config/parametros.yaml#L1-L39" target="_blank" rel="noopener">config/parametros.yaml</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer"><span>GuíaVital · Arquitectura y Componentes</span><span>05 / 11</span></div>
-</section>
 
+  <div class="grid-2" style="grid-template-rows:1fr 1fr;gap:16px;flex:1">
+    <div class="panel panel-teal">
+      <div class="panel-header">
+        <span class="panel-title"><span class="idx">01 /</span> Cliente Web (React 19 + TS)</span>
+        <span class="tag tag-teal">7 Estados & LOPDP</span>
+      </div>
+      <div class="row-list" style="margin-top:4px;flex:1;justify-content:space-around">
+        <div class="row-item"><span class="idx">—</span><div><strong>Máquina 7 estados:</strong> Controla flujo y pausa HITL (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/frontend/src/types/estados.ts" target="_blank" rel="noopener">estados.ts</a>).</div></div>
+        <div class="row-item"><span class="idx">—</span><div><strong>Checklist MSP:</strong> Selección visual de los 8 signos de alarma.</div></div>
+        <div class="row-item" style="border-bottom:none"><span class="idx">—</span><div><strong>Minimización LOPDP:</strong> Enmascara PII (<code>099***67</code>) en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/services/seguridad.py#L26-L37" target="_blank" rel="noopener">seguridad.py</a>.</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title"><span class="idx">02 /</span> API Gateway (FastAPI)</span>
+        <span class="tag tag-dark">OWASP & RFC 9457</span>
+      </div>
+      <div class="row-list" style="margin-top:4px;flex:1;justify-content:space-around">
+        <div class="row-item"><span class="idx">—</span><div><strong>CORS restringido:</strong> Solo admite origen del frontend (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/main.py" target="_blank" rel="noopener">main.py</a>).</div></div>
+        <div class="row-item"><span class="idx">—</span><div><strong>Rate Limit (LLM06):</strong> 10 req/min por sesión + <code>Retry-After</code>.</div></div>
+        <div class="row-item" style="border-bottom:none"><span class="idx">—</span><div><strong>Errores RFC 9457:</strong> Respuestas limpias sin trazas internas.</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title"><span class="idx">03 /</span> Núcleo Clínico (Agente v2)</span>
+        <span class="tag tag-dark">ReAct Controlado</span>
+      </div>
+      <div class="row-list" style="margin-top:4px;flex:1;justify-content:space-around">
+        <div class="row-item"><span class="idx">—</span><div><strong>Agente cerrado:</strong> 4 tools fijas y tope <code>MAX_ITER=6</code> (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/services/agent.py" target="_blank" rel="noopener">agent.py</a>).</div></div>
+        <div class="row-item"><span class="idx">—</span><div><strong>Cinta 7 estaciones:</strong> Umbral 0.85 (70% auto / 30% revisión) (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/flujo.py" target="_blank" rel="noopener">flujo.py</a>).</div></div>
+        <div class="row-item" style="border-bottom:none"><span class="idx">—</span><div><strong>RAG Asertivo:</strong> Umbral <code>distancia ≤ 0.155</code> (similitud ≥ 84.5%).</div></div>
+      </div>
+    </div>
+
+    <div class="panel panel-emerald">
+      <div class="panel-header">
+        <span class="panel-title"><span class="idx">04 /</span> Datos, IA Dual y GeoSalud</span>
+        <span class="tag tag-emerald">ChromaDB + E5</span>
+      </div>
+      <div class="row-list" style="margin-top:4px;flex:1;justify-content:space-around">
+        <div class="row-item"><span class="idx">—</span><div><strong>ChromaDB Local:</strong> 161 chunks con <code>multilingual-e5-small</code> (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/services/retriever.py" target="_blank" rel="noopener">retriever.py</a>).</div></div>
+        <div class="row-item"><span class="idx">—</span><div><strong>ClienteLLM Dual:</strong> Gemini Flash (1M TPM) + fallback Groq (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/services/llm.py" target="_blank" rel="noopener">llm.py</a>).</div></div>
+        <div class="row-item" style="border-bottom:none"><span class="idx">—</span><div><strong>GeoSalud 24h:</strong> Cálculo Haversine hacia hospitales (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/tools/buscar_centro_salud.py" target="_blank" rel="noopener">buscar_centro_salud.py</a>).</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>GUÍAVITAL v0.5.2 — ARQUITECTURA EN 4 CAPAS</span>
+    <span>05 / 12</span>
+  </div>
+</section>
 
 <!-- DIAPOSITIVA 6: DECISIONES DE ARQUITECTURA (ADRs) -->
 <section class="slide">
-  <div class="eyebrow">Decisiones Técnicas (ADR): ¿Por qué así y qué descartamos?</div>
-  <h2>Registro de Decisiones de Arquitectura y Justificación Clínica</h2>
-  <table>
+  <div class="slide-head">
+    <div class="eyebrow">05 · Registro de Decisiones de Arquitectura (ADR)</div>
+    <h2>¿Por qué diseñamos así y qué alternativas descartamos?</h2>
+  </div>
+
+  <table class="swiss-table" style="flex:1">
     <thead>
       <tr>
-        <th>Decisión (ADR)</th>
-        <th>Qué elegimos y cómo funciona</th>
-        <th>Alternativa descartada y dato clave</th>
-        <th>Evidencia en Git</th>
+        <th style="width:20%">Decisión (ADR)</th>
+        <th style="width:38%">Arquitectura Elegida</th>
+        <th style="width:30%">Alternativa Descartada</th>
+        <th style="width:12%">Referencia</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><strong>ADR-001</strong><br>Proveedor IA y Fallback</td>
-        <td><strong>Gemini Flash</strong> como principal + <strong>Groq</strong> como respaldo automático bajo interfaz unificada OpenAI.</td>
-        <td><em>Descartado:</em> Groq como principal, porque su capa gratuita (6k–12k TPM) se agota en 1–2 consultas con contexto RAG; Gemini ofrece 1M TPM.</td>
-        <td>
-          <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/09-decisiones.md#L5-L31" target="_blank" rel="noopener">09-decisiones.md</a><br>
-          <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/config.py#L21-L42" target="_blank" rel="noopener">app/config.py</a>
-        </td>
+        <td><strong>ADR-001</strong><br><span style="font-size:13.5px;color:var(--ink-muted)">IA Principal + Fallback</span></td>
+        <td><strong>Gemini Flash</strong> (1M TPM) + respaldo automático a <strong>Groq Llama 3</strong>.</td>
+        <td><span class="tag tag-crimson">Descartado</span> Groq principal (su cuota gratis colapsa en 2 consultas RAG).</td>
+        <td><a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/docs/09-decisiones.md#L5-L31" target="_blank" rel="noopener">ADR-001 ↗</a></td>
       </tr>
       <tr>
-        <td><strong>ADR-002 / 004</strong><br>Signos de alarma por reglas, NO por LLM</td>
-        <td>Evaluación 100% determinista en Python sobre los 8 signos oficiales del MSP y sinónimos coloquiales.</td>
-        <td><em>Descartado:</em> Delegar el triaje al modelo generativo, por riesgo inaceptable de <strong>falsos negativos</strong> por alucinación ante extravasación plasmática.</td>
-        <td>
-          <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/09-decisiones.md#L33-L60" target="_blank" rel="noopener">09-decisiones.md (ADR-002)</a><br>
-          <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/09-decisiones.md#L93-L121" target="_blank" rel="noopener">09-decisiones.md (ADR-004)</a>
-        </td>
+        <td><strong>ADR-002 / 004</strong><br><span style="font-size:13.5px;color:var(--ink-muted)">Triaje por Reglas</span></td>
+        <td>Evaluación <strong>100% determinista en Python</strong> de los 8 signos MSP.</td>
+        <td><span class="tag tag-crimson">Descartado</span> Triaje por LLM (riesgo clínico de <strong>falsos negativos</strong>).</td>
+        <td><a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/docs/09-decisiones.md#L33-L60" target="_blank" rel="noopener">ADR-002 ↗</a></td>
       </tr>
       <tr>
-        <td><strong>ADR-005</strong><br>RAG Local ChromaDB + E5</td>
-        <td><code>chromadb</code> persistente (HNSW coseno) + <code>intfloat/multilingual-e5-small</code> (384 dim) con prefijos <code>query:</code> y <code>passage:</code>.</td>
-        <td><em>Descartado:</em> Pinecone + API externa de embeddings, por costo por consulta y latencia. En local: costo $0, Hit@5 = 100% y Hit@1 = 85%.</td>
-        <td>
-          <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/09-decisiones.md#L124-L164" target="_blank" rel="noopener">09-decisiones.md</a><br>
-          <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/06-rag.md#L1-L65" target="_blank" rel="noopener">docs/06-rag.md</a>
-        </td>
+        <td><strong>ADR-005</strong><br><span style="font-size:13.5px;color:var(--ink-muted)">RAG Asertivo E5</span></td>
+        <td>ChromaDB local (161 chunks) con <strong>distancia coseno ≤ 0.155 (similitud ≥ 84.5%)</strong>.</td>
+        <td><span class="tag tag-crimson">Descartado</span> Pinecone externo. En local: costo $0 y <strong>0 citas basura</strong>.</td>
+        <td><a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/docs/09-decisiones.md#L124-L164" target="_blank" rel="noopener">ADR-005 ↗</a></td>
       </tr>
       <tr>
-        <td><strong>ADR Agente / Flujo</strong><br>Alcance controlado y Cinta 0.85</td>
-        <td>Agente con <code>PERMITIDAS</code> (4 tools), <code>MAX_ITER=6</code> y <code>REQUIEREN_OK</code>. Cinta fija de 7 estaciones con umbral <code>0.85</code>.</td>
-        <td><em>Descartado:</em> Agente libre sin tope o herramienta <code>diagnosticar</code>. Con umbral <code>0.85</code> se logra 70% automático, 30% revisión y <strong>0 errores silenciosos</strong>.</td>
-        <td>
-          <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/09-decisiones.md#L165-L204" target="_blank" rel="noopener">09-decisiones.md</a><br>
-          <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/10-automatizacion.md#L1-L36" target="_blank" rel="noopener">10-automatizacion.md</a>
-        </td>
+        <td><strong>ADR Flujo</strong><br><span style="font-size:13.5px;color:var(--ink-muted)">Cinta Confianza 0.85</span></td>
+        <td>Agente cerrado (4 tools) y umbral 0.85: 70% auto / 30% revisión.</td>
+        <td><span class="tag tag-crimson">Descartado</span> Agente abierto. Logramos <strong>0 errores silenciosos</strong>.</td>
+        <td><a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/docs/09-decisiones.md#L165-L204" target="_blank" rel="noopener">ADR Flujo ↗</a></td>
       </tr>
       <tr>
-        <td><strong>ADR-0006</strong><br>Despliegue Cloud Run</td>
-        <td>Contenedor Docker en <strong>Google Cloud Run</strong> (1 GiB RAM, <code>min-instances=0</code>) con modelo E5 pre-descargado en build y Secret Manager.</td>
-        <td><em>Descartado:</em> AWS Lambda / Vercel Serverless porque su límite de paquete (250 MB) no soporta PyTorch CPU + modelo E5 (~470 MB).</td>
-        <td>
-          <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/09-decisiones.md#L206-L230" target="_blank" rel="noopener">09-decisiones.md</a><br>
-          <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/Dockerfile#L16-L24" target="_blank" rel="noopener">app/Dockerfile</a>
-        </td>
+        <td><strong>ADR-0006</strong><br><span style="font-size:13.5px;color:var(--ink-muted)">Cloud Run Serverless</span></td>
+        <td>Contenedor con <strong>2 vCPU y 2 GiB de RAM</strong> (<code>min-instances=0</code>, costo $0 reposo).</td>
+        <td><span class="tag tag-crimson">Descartado</span> Lambda / Vercel (límite 250 MB no aloja PyTorch + E5).</td>
+        <td><a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/docs/09-decisiones.md#L206-L230" target="_blank" rel="noopener">ADR-0006 ↗</a></td>
       </tr>
     </tbody>
   </table>
-  <div class="footer"><span>GuíaVital · Decisiones de Arquitectura (ADRs)</span><span>06 / 11</span></div>
-</section>
 
+  <div class="footer">
+    <span>GUÍAVITAL v0.5.2 — REGISTRO DE DECISIONES DE ARQUITECTURA</span>
+    <span>06 / 12</span>
+  </div>
+</section>
 
 <!-- DIAPOSITIVA 7: EVIDENCIAS I: PRUEBAS CONTRA LA URL Y SUITE TOTAL -->
 <section class="slide">
-  <div class="eyebrow">Evidencias I: Pruebas Funcionales contra la URL Pública</div>
-  <h2>Pruebas de humo en producción (6/6) y Suite Automatizada (125/125)</h2>
-  <div class="content">
-    <div class="panel">
-      <h3>Pruebas contra la URL Pública (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/tests/smoke.py#L29-L95" target="_blank" rel="noopener">tests/smoke.py</a>)</h3>
-      <p style="font-size:14px;margin-bottom:8px">
-        Ejecutadas en vivo contra <code>guiavital-backend-448060764458.us-central1.run.app</code> (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/evidencias/semana-4/README.md#L20-L53" target="_blank" rel="noopener">evidencias/semana-4/README.md</a>):
-      </p>
-      <table>
-        <thead>
-          <tr><th>#</th><th>Caso</th><th>Endpoint</th><th>Estado / Latencia</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>1</td><td><code>[salud]</code> Liveness/Readiness</td><td><code>GET /manage/health</code></td><td><strong>PASA · 200</strong> (0.7 s)</td></tr>
-          <tr><td>2</td><td><code>[caso]</code> Identidad GuíaVital</td><td><code>POST /api/v1/chat</code></td><td><strong>PASA · 200</strong> (1.9 s)</td></tr>
-          <tr><td>3</td><td><code>[caso]</code> Triaje signos alarma MSP</td><td><code>POST /api/v2/chat</code></td><td><strong>PASA · 200</strong> (61.2 s)</td></tr>
-          <tr><td>4</td><td><code>[fuera]</code> Rechazo a recetar</td><td><code>POST /api/v2/chat</code></td><td><strong>PASA · 200</strong> (3.7 s)</td></tr>
-          <tr><td>5</td><td><code>[inyeccion]</code> Neutraliza Jailbreak</td><td><code>POST /api/v2/chat</code></td><td><strong>PASA · 200</strong> (2.9 s)</td></tr>
-          <tr><td>6</td><td><code>[invalida]</code> Cuerpo vacío</td><td><code>POST /api/v1/chat</code></td><td><strong>PASA · 422</strong> (0.3 s)</td></tr>
-        </tbody>
-      </table>
-      <div class="note" style="margin-top:10px;padding:10px 14px">
-        <strong>RESULTADO EN VIVO:</strong> <code>6/6 pasan (100%) · p95: 61.2 s · más lento: 61.2 s</code>
+  <div class="slide-head">
+    <div class="eyebrow">06 · Evidencias Funcionales y Suite de Pruebas</div>
+    <h2>135 pruebas automatizadas y 16 casos en vivo en Cloud Run</h2>
+  </div>
+
+  <div class="grid-4" style="margin-bottom:18px">
+    <div class="stat-cell">
+      <div class="stat-val">135/135</div>
+      <div class="stat-lbl">Suite Total</div>
+      <div class="stat-sub">100% PRUEBAS PASANDO</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-val">92</div>
+      <div class="stat-lbl">Backend Pytest</div>
+      <div class="stat-sub">14 ARCHIVOS DE PRUEBA</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-val">27</div>
+      <div class="stat-lbl">Frontend Vitest</div>
+      <div class="stat-sub">4 SUITES CON MSW</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-val">16/16</div>
+      <div class="stat-lbl">Smoke Cloud Run</div>
+      <div class="stat-sub">PROM: 2.73s · P95: 6.31s</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="flex:1">
+    <div class="panel panel-subtle">
+      <div class="panel-header">
+        <span class="panel-title"><span class="idx">01 /</span> Salud & Triaje (PF-01 a PF-06)</span>
+        <span class="tag tag-emerald">PASA · 0.25s</span>
+      </div>
+      <div class="panel-body">
+        Verificación de <code>/manage/health</code>, evaluación determinista MSP sin LLM (0.22s) y esquemas de error RFC 9457 sin stacktraces (0.23s).
       </div>
     </div>
-    <div>
-      <div class="kpis">
-        <div class="kpi"><b>125 / 125</b><span>Total de pruebas automatizadas (100% éxito)</span></div>
-        <div class="kpi"><b>92 passed</b><span>Backend Pytest (14 archivos de prueba)</span></div>
-        <div class="kpi"><b>27 passed</b><span>Frontend Vitest + MSW (4 archivos)</span></div>
-        <div class="kpi"><b>0 secretos</b><span>Gitleaks + verify:secrets en bundle</span></div>
+
+    <div class="panel panel-subtle">
+      <div class="panel-header">
+        <span class="panel-title"><span class="idx">02 /</span> RAG & Bloqueo AINEs (PF-07 a PF-11)</span>
+        <span class="tag tag-emerald">PASA · 2.64s</span>
       </div>
-      <div class="panel" style="margin-top:14px">
-        <h3>Cobertura por componente en Git</h3>
-        <ul>
-          <li><strong>Cinta y conjunto dorado (8 tests):</strong> <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/tests/test_flujo.py#L18-L173" target="_blank" rel="noopener">tests/test_flujo.py</a></li>
-          <li><strong>Agente v2, lista cerrada, tope y citas (5 tests):</strong> <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/tests/test_agent.py#L22-L139" target="_blank" rel="noopener">tests/test_agent.py</a></li>
-          <li><strong>Signos de alarma y sinónimos (12 tests):</strong> <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/tests/test_evaluar_signos_alarma.py#L6-L44" target="_blank" rel="noopener">test_evaluar_signos_alarma.py</a> y <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/tests/test_endpoint_signos_alarma.py#L1-L75" target="_blank" rel="noopener">test_endpoint_signos_alarma.py</a></li>
-          <li><strong>Seguridad, SQLite, 429 y RFC 9457 (20 tests):</strong> <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/tests/test_dengue.py#L60-L169" target="_blank" rel="noopener">tests/test_dengue.py</a></li>
-          <li><strong>Resiliencia ClienteLLM y Fallback (11 tests):</strong> <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/tests/test_llm.py#L1-L160" target="_blank" rel="noopener">tests/test_llm.py</a></li>
-        </ul>
+      <div class="panel-body">
+        Citas verificables OPS/MSP (3.22s), alerta de fase crítica y rechazo terminante de dosis de ibuprofeno (2.21s).
+      </div>
+    </div>
+
+    <div class="panel panel-subtle">
+      <div class="panel-header">
+        <span class="panel-title"><span class="idx">03 /</span> GeoSalud & HITL (PF-12 a PF-15)</span>
+        <span class="tag tag-emerald">PASA · 3.38s</span>
+      </div>
+      <div class="panel-body">
+        Geolocalización Haversine de hospitales 24h (2.15s) y pausa obligatoria de confirmación humana antes de notificar (4.38s).
+      </div>
+    </div>
+
+    <div class="panel panel-subtle">
+      <div class="panel-header">
+        <span class="panel-title"><span class="idx">04 /</span> Blindaje OWASP LLM (PF-09 y PF-16)</span>
+        <span class="tag tag-emerald">PASA · 100%</span>
+      </div>
+      <div class="panel-body">
+        Neutralización de Jailbreak LLM01 (1.99s) y Rate Limit HTTP 429 con <code>Retry-After</code> en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/tests/smoke.py" target="_blank" rel="noopener">tests/smoke.py ↗</a>.
       </div>
     </div>
   </div>
-  <div class="footer"><span>GuíaVital · Evidencias de Pruebas</span><span>07 / 11</span></div>
-</section>
 
+  <div class="footer">
+    <span>GUÍAVITAL v0.5.2 — CERTIFICACIÓN FUNCIONAL EN PRODUCCIÓN</span>
+    <span>07 / 12</span>
+  </div>
+</section>
 
 <!-- DIAPOSITIVA 8: EVIDENCIAS II: EVALUACIÓN FINAL Y PIPELINE EN VERDE -->
 <section class="slide">
-  <div class="eyebrow">Evidencias II: Evaluación Final vs. Semana 3 y Pipeline CI/CD</div>
-  <h2>Métricas de calidad comprobadas y despliegue continuo en verde</h2>
-  <div class="content">
-    <div>
-      <div class="kpis">
-        <div class="kpi"><b>87%</b><span>Acierto RAG Top-3 (Meta ≥ 85%)</span></div>
-        <div class="kpi"><b>100%</b><span>Respuestas con cita oficial (Meta ≥ 85%)</span></div>
-        <div class="kpi"><b>100%</b><span>Silencio / Abstención fuera de tema (5/5)</span></div>
-        <div class="kpi"><b>100%</b><span>Hit@5 recuperación vectorial (Hit@1: 85%)</span></div>
-        <div class="kpi"><b>30%</b><span>Desvío a revisión humana (6 de 20 · Meta ≤ 30%)</span></div>
-        <div class="kpi"><b>0</b><span>Errores silenciosos en conjunto dorado</span></div>
+  <div class="slide-head">
+    <div class="eyebrow">07 · Métricas Clínicas y Despliegue Continuo</div>
+    <h2>Evaluación cuantitativa y pipeline CI/CD en verde</h2>
+  </div>
+
+  <div class="grid-2" style="flex:1">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="stat-cell">
+        <div class="stat-val">86.7%</div>
+        <div class="stat-lbl">Acierto RAG Top-3</div>
+        <div class="stat-sub">13/15 · META ≥ 85%</div>
       </div>
-      <div class="note">
-        <strong>Verificación automática en CI (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/eval/evaluar.py#L11-L80" target="_blank" rel="noopener">eval/evaluar.py</a>):</strong><br>
-        Evalúa los 20 casos de <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/eval/preguntas_rag.jsonl#L1-L20" target="_blank" rel="noopener">preguntas_rag.jsonl</a> y los 20 casos clínicos de <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/eval/casos_flujo.jsonl#L1-L20" target="_blank" rel="noopener">casos_flujo.jsonl</a> frente al <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/11-plan-de-calidad.md#L5-L33" target="_blank" rel="noopener">Plan de Calidad (11-plan-de-calidad.md)</a>. Si cualquier métrica baja de la meta, el pipeline bloquea el despliegue.
+      <div class="stat-cell">
+        <div class="stat-val">100%</div>
+        <div class="stat-lbl">Citas Oficiales</div>
+        <div class="stat-sub">DISTANCIA ≤ 0.155</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-val">100%</div>
+        <div class="stat-lbl">Abstención</div>
+        <div class="stat-sub">5/5 FUERA DE TEMA</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-val">95.2%</div>
+        <div class="stat-lbl">Hit@5 Vectorial</div>
+        <div class="stat-sub">21 CASOS · HIT@1: 85.7%</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-val">30%</div>
+        <div class="stat-lbl">Desvío Humano</div>
+        <div class="stat-sub">META ≤ 30% CUMPLIDA</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-val">0</div>
+        <div class="stat-lbl">Errores Silenciosos</div>
+        <div class="stat-sub">CONJUNTO DORADO</div>
       </div>
     </div>
-    <div class="panel">
-      <h3>Pipeline CI/CD en Verde (GitHub Actions → Cloud Run)</h3>
-      <ul>
-        <li>
-          <strong>1. Integración Continua en PR (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/.github/workflows/ci.yml#L14-L74" target="_blank" rel="noopener">ci.yml</a>):</strong><br>
-          Ejecuta <code>Gitleaks</code>, <code>pytest -q</code> (92 tests), <code>python eval/evaluar.py</code>, <code>npm run verify:secrets</code> y <code>npm test</code> (27 tests Vitest).
-        </li>
-        <li>
-          <strong>2. Versionado SemVer Simétrico (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/.github/workflows/release.yml#L1-L120" target="_blank" rel="noopener">release.yml</a>):</strong><br>
-          Incrementa versión con <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/scripts/semver_bumper.py#L1-L95" target="_blank" rel="noopener">semver_bumper.py</a>, actualiza <code>CHANGELOG.md</code>, publica el Git Tag y dispara el despliegue.
-        </li>
-        <li>
-          <strong>3. Despliegue Bloqueante y Smoke Test (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/.github/workflows/deploy.yml#L25-L195" target="_blank" rel="noopener">deploy.yml</a>):</strong><br>
-          Re-ejecuta compuertas sobre el Tag, compila imágenes sin privilegios root (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/Dockerfile#L13-L37" target="_blank" rel="noopener">app/Dockerfile</a> y <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/frontend/Dockerfile#L19-L30" target="_blank" rel="noopener">frontend/Dockerfile</a>), despliega en Cloud Run y corre <code>smoke.py</code> en vivo.
-        </li>
-      </ul>
+
+    <div style="display:flex;flex-direction:column;justify-content:space-between;gap:14px">
+      <div class="panel" style="flex:1">
+        <div class="panel-header">
+          <span class="panel-title">Pipeline CI/CD (GitHub Actions &rarr; Cloud Run)</span>
+          <span class="tag tag-emerald">VERDE</span>
+        </div>
+        <div class="row-list" style="margin-top:6px">
+          <div class="row-item"><span class="idx">01</span><div><strong>PR Gate (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/.github/workflows/ci.yml" target="_blank" rel="noopener">ci.yml</a>):</strong> Gitleaks + 92 Pytest + 27 Vitest + <code>evaluar.py</code>.</div></div>
+          <div class="row-item"><span class="idx">02</span><div><strong>Release (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/.github/workflows/release.yml" target="_blank" rel="noopener">release.yml</a>):</strong> Bump automático a <code>v0.5.2</code> y tag en Git.</div></div>
+          <div class="row-item" style="border-bottom:none"><span class="idx">03</span><div><strong>Deploy (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/.github/workflows/deploy.yml" target="_blank" rel="noopener">deploy.yml</a>):</strong> Cloud Run (<strong>2 vCPU / 2 GiB</strong>) + 16 smoke tests.</div></div>
+        </div>
+      </div>
+
+      <div class="panel panel-teal" style="padding:16px 20px">
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--accent);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">
+          Filtro de Asertividad Clínica · config/parametros.yaml
+        </div>
+        <div style="font-size:15.5px;line-height:1.42;color:var(--ink-secondary)">
+          Umbral estricto de <strong>distancia coseno ≤ 0.155 (similitud ≥ 84.5%)</strong>. Si un fragmento no alcanza esa cercanía con las guías de OPS/MSP, se descarta automáticamente.
+        </div>
+      </div>
     </div>
   </div>
-  <div class="footer"><span>GuíaVital · Evaluación Final y CI/CD</span><span>08 / 11</span></div>
-</section>
 
+  <div class="footer">
+    <span>GUÍAVITAL v0.5.2 — EVALUACIÓN FINAL Y CI/CD</span>
+    <span>08 / 12</span>
+  </div>
+</section>
 
 <!-- DIAPOSITIVA 9: SEGURIDAD, CREDENCIALES Y RESILIENCIA -->
 <section class="slide">
-  <div class="eyebrow">Seguridad, Protección de Credenciales y Fallos del Modelo</div>
-  <h2>¿Dónde viven las claves y qué pasa cuando el modelo falla?</h2>
-  <div class="content">
-    <div class="panel">
-      <h3>1. Protección de Credenciales (Cero claves expuestas)</h3>
-      <ul>
-        <li><strong>Nunca en el código, Dockerfile ni historial Git:</strong> El repositorio solo incluye la plantilla vacía <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/.env.example#L1-L26" target="_blank" rel="noopener">.env.example</a>.</li>
-        <li><strong>Viven solo en la plataforma (GCP Secret Manager):</strong> Inyectadas en tiempo de ejecución en Cloud Run mediante <code>--set-secrets</code> (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/.github/workflows/deploy.yml#L169-L186" target="_blank" rel="noopener">deploy.yml</a>) y validadas al arrancar en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/config.py#L67-L80" target="_blank" rel="noopener">app/config.py</a>.</li>
-        <li><strong>Doble auditoría automática:</strong> Escaneo de commits con <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/.github/workflows/secretos.yml#L1-L35" target="_blank" rel="noopener">secretos.yml</a> (Gitleaks) y auditoría del bundle compilado de React con <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/frontend/scripts/verificar-secretos.mjs#L5-L35" target="_blank" rel="noopener">verificar-secretos.mjs</a>.</li>
-      </ul>
-      <div class="note">
-        <strong>Controles OWASP Top 10 for LLM (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/riesgos.md#L5-L11" target="_blank" rel="noopener">docs/riesgos.md</a>):</strong><br>
-        • <strong>LLM01 Anti-Inyección:</strong> Etiquetas <code>&lt;consulta_usuario&gt;</code> en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/services/seguridad.py#L31-L36" target="_blank" rel="noopener">seguridad.py (delimitar_consulta)</a>.<br>
-        • <strong>LLM06 Rate Limit:</strong> Ventana deslizante (10 req/min por sesión → HTTP <code>429</code> + <code>Retry-After</code>) en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/services/seguridad.py#L15-L29" target="_blank" rel="noopener">seguridad.py (LimitadorTasa)</a>.
+  <div class="slide-head">
+    <div class="eyebrow">08 · Seguridad Operativa y Tolerancia a Fallos</div>
+    <h2>¿Dónde viven las claves y qué pasa cuando la IA falla?</h2>
+  </div>
+
+  <div class="grid-2" style="flex:1">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="panel" style="flex:1">
+        <div class="panel-header">
+          <span class="panel-title"><span class="idx">01 /</span> 0 Claves en Código ni Git</span>
+          <span class="tag tag-dark">Secret Manager</span>
+        </div>
+        <div class="row-list" style="margin-top:6px">
+          <div class="row-item"><span class="idx">—</span><div>Repositorio únicamente con plantilla limpia <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/.env.example" target="_blank" rel="noopener">.env.example</a>.</div></div>
+          <div class="row-item"><span class="idx">—</span><div>Inyectadas en Cloud Run con <code>--set-secrets</code> en tiempo de ejecución.</div></div>
+          <div class="row-item" style="border-bottom:none"><span class="idx">—</span><div>Auditadas con <strong>Gitleaks</strong> y <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/frontend/scripts/verificar-secretos.mjs" target="_blank" rel="noopener">verificar-secretos.mjs</a>.</div></div>
+        </div>
+      </div>
+
+      <div class="panel panel-teal" style="flex:1">
+        <div class="panel-header">
+          <span class="panel-title"><span class="idx">02 /</span> Blindaje OWASP Top 10 for LLM</span>
+          <span class="tag tag-teal">LLM01 & LLM06</span>
+        </div>
+        <div class="row-list" style="margin-top:6px">
+          <div class="row-item"><span class="idx">—</span><div><strong>LLM01 Anti-Inyección:</strong> Delimitación con etiquetas <code>&lt;consulta_usuario&gt;</code> en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/services/seguridad.py" target="_blank" rel="noopener">seguridad.py</a>.</div></div>
+          <div class="row-item" style="border-bottom:none"><span class="idx">—</span><div><strong>LLM06 Rate Limit:</strong> Máximo 10 req/min por sesión (HTTP 429 + <code>Retry-After</code>).</div></div>
+        </div>
       </div>
     </div>
+
     <div class="panel">
-      <h3>2. ¿Qué pasa cuando el modelo falla? (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/services/llm.py#L93-L214" target="_blank" rel="noopener">llm.py</a>)</h3>
-      <ul>
-        <li><strong>Tiempo límite estricto (Timeout):</strong> <code>LLM_TIMEOUT_SECONDS = 30s</code> y límite de tokens <code>2048</code> (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/config.py#L90-L97" target="_blank" rel="noopener">app/config.py</a>).</li>
-        <li><strong>Reintentos con Backoff Exponencial + Jitter:</strong> Hasta <code>3 intentos</code> ante errores pasajeros (<code>429</code>, timeout, caída 5xx o respuesta vacía), respetando la cabecera <code>Retry-After</code> (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/services/llm.py#L93-L165" target="_blank" rel="noopener">llm.py (_llamar)</a>).</li>
-        <li><strong>Autocorrección de esquema JSON (1 intento):</strong> Si la salida incumple Pydantic v2, envía los errores de validación al modelo para corregirlo (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/services/llm.py#L185-L211" target="_blank" rel="noopener">llm.py (generar_json)</a>); si vuelve a fallar, se abstiene de forma segura (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/main.py#L187-L194" target="_blank" rel="noopener">app/main.py</a>).</li>
-        <li><strong>Conmutación automática al Respaldo (Fallback):</strong> Si Gemini falla o da error definitivo (401/403/400), conmuta de forma transparente a <strong>Groq</strong> (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/services/llm.py#L167-L175" target="_blank" rel="noopener">llm.py (_con_respaldo)</a>).</li>
-        <li><strong>Mensaje claro sin Stacktrace (RFC 9457):</strong> Si ambos proveedores caen, retorna HTTP <code>503</code> en formato estándar <code>application/problem+json</code> (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/main.py#L89-L95" target="_blank" rel="noopener">app/main.py (_problema)</a> y <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/main.py#L154-L163" target="_blank" rel="noopener">app/main.py (_manejar_503)</a>).</li>
-      </ul>
+      <div class="panel-header">
+        <span class="panel-title"><span class="idx">03 /</span> 5 Capas de Resiliencia (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/services/llm.py" target="_blank" rel="noopener">llm.py</a>)</span>
+        <span class="tag tag-teal">Alta Disponibilidad</span>
+      </div>
+      <div class="row-list" style="margin-top:8px">
+        <div class="row-item"><span class="idx">01</span><div><strong>Timeout Estricto:</strong> Corte a los <code>30 s</code> y límite máximo de <code>2048 tokens</code>.</div></div>
+        <div class="row-item"><span class="idx">02</span><div><strong>Backoff Exponencial + Jitter:</strong> Hasta 3 reintentos ante errores 429 o 5xx.</div></div>
+        <div class="row-item"><span class="idx">03</span><div><strong>Autocorrección JSON:</strong> 1 reintento enviando el error de validación Pydantic al LLM.</div></div>
+        <div class="row-item"><span class="idx">04</span><div><strong>Conmutación a Groq:</strong> Fallback inmediato y transparente si Gemini falla.</div></div>
+        <div class="row-item" style="border-bottom:none"><span class="idx">05</span><div><strong>Falla Grácil RFC 9457:</strong> Respuesta HTTP <code>503</code> limpia sin filtrar trazas del servidor.</div></div>
+      </div>
     </div>
   </div>
-  <div class="footer"><span>GuíaVital · Seguridad y Resiliencia IA</span><span>09 / 11</span></div>
-</section>
 
+  <div class="footer">
+    <span>GUÍAVITAL v0.5.2 — SEGURIDAD Y RESILIENCIA</span>
+    <span>09 / 12</span>
+  </div>
+</section>
 
 <!-- DIAPOSITIVA 10: LIMITACIONES Y DECLARACIÓN DE USO DE IA -->
 <section class="slide">
-  <div class="eyebrow">Limitaciones Conocidas, Uso de IA y Aportes del Equipo</div>
-  <h2>Limitaciones técnicas/clínicas y transparencia en el uso de IA</h2>
-  <div class="content">
+  <div class="slide-head">
+    <div class="eyebrow">09 · Transparencia Técnica y Equipo</div>
+    <h2>Fronteras del sistema, auditoría de IA y roles verificados</h2>
+  </div>
+
+  <div class="grid-2" style="flex:1">
     <div class="panel">
-      <h3>Limitaciones Conocidas (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/README.md#L615-L622" target="_blank" rel="noopener">README.md</a>)</h3>
-      <ul>
-        <li><strong>1. No constituye acto médico:</strong> Es una herramienta de orientación preventiva y triaje inicial; no realiza examen físico, no interpreta exámenes de sangre ni reemplaza al médico presencial.</li>
-        <li><strong>2. Arranque en frío (Cold Start) en Cloud Run:</strong> Por operar con <code>min-instances=0</code> (costo $0 en inactividad), la primera consulta tras reposo tarda ~6 a 10 s mientras carga en memoria los pesos de <code>multilingual-e5-small</code>.</li>
-        <li><strong>3. Dependencia de APIs generativas externas:</strong> Si tanto Google Gemini como Groq sufrieran una caída global simultánea, el chat conversacional pasa a abstención controlada (<code>503</code>), aunque el endpoint determinista <code>/herramientas/signos-alarma</code> sigue operando.</li>
-        <li><strong>4. Cobertura geográfica de GeoSalud:</strong> El catálogo local (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/data/geosalud_ecuador.json#L1-L60" target="_blank" rel="noopener">geosalud_ecuador.json</a>) prioriza hospitales y centros tipo C de la Red Pública con emergencia 24h en zonas endémicas y cabeceras cantonales.</li>
-        <li><strong>5. Entrada exclusivamente textual y checklist:</strong> No procesa fotografías de erupciones cutáneas ni recetas escaneadas.</li>
-      </ul>
+      <div class="panel-header">
+        <span class="panel-title">Limitaciones Declaradas (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/README.md#L615-L622" target="_blank" rel="noopener">README.md</a>)</span>
+        <span class="tag tag-dark">Frontera Clínica</span>
+      </div>
+      <div class="row-list" style="margin-top:8px">
+        <div class="row-item"><span class="idx">01</span><div><strong>No es acto médico:</strong> Orienta y deriva; no sustituye el examen físico presencial.</div></div>
+        <div class="row-item"><span class="idx">02</span><div><strong>Cold Start (~6–10 s):</strong> Escala a cero (<code>min-instances=0</code>) para mantener costo $0.</div></div>
+        <div class="row-item"><span class="idx">03</span><div><strong>Caída global de APIs:</strong> El chat pasa a HTTP 503; el triaje por reglas sigue activo.</div></div>
+        <div class="row-item"><span class="idx">04</span><div><strong>Cobertura GeoSalud:</strong> Focalizado en hospitales y centros Tipo C con guardia 24h.</div></div>
+        <div class="row-item" style="border-bottom:none"><span class="idx">05</span><div><strong>Modalidad textual:</strong> No procesa fotografías dermatológicas ni recetas escaneadas.</div></div>
+      </div>
     </div>
-    <div class="panel">
-      <h3>Declaración de Uso de IA y Aportes (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/README.md#L23-L40" target="_blank" rel="noopener">README.md</a>)</h3>
-      <p style="font-size:14px">
-        <strong>¿Qué generó la IA y cómo se verificó?</strong> Se usaron asistentes de código para boilerplate FastAPI/React y plantillas de pruebas. Todo fue auditado línea por línea, corregido (ej. manejo de sinónimos coloquiales en signos de alarma y limpieza de JSON envuelto en markdown) y respaldado por <strong>125 pruebas automatizadas</strong>.
-      </p>
-      <table>
+
+    <div style="display:flex;flex-direction:column;justify-content:space-between;gap:14px">
+      <div class="panel panel-teal" style="padding:16px 20px">
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--accent);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">
+          Declaración de Uso de IA Generativa
+        </div>
+        <div style="font-size:15.5px;line-height:1.42;color:var(--ink-secondary)">
+          Asistentes empleados para scaffolding inicial; el 100% de las reglas clínicas, sinónimos coloquiales y pruebas fueron auditados y validados con <strong>135 tests</strong>.
+        </div>
+      </div>
+
+      <table class="swiss-table" style="flex:1">
         <thead>
-          <tr><th>Integrante</th><th>Rol</th><th>Componentes Desarrollados y Verificados</th></tr>
+          <tr>
+            <th style="width:28%">Integrante</th>
+            <th style="width:20%">Rol</th>
+            <th style="width:52%">Responsabilidad Verificada</th>
+          </tr>
         </thead>
         <tbody>
           <tr>
             <td><strong>Luis Caguana</strong></td>
-            <td>Tech Lead</td>
-            <td>Pipeline RAG (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/scripts/ingest.py#L1-L386" target="_blank" rel="noopener">ingest.py</a>, <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/services/retriever.py#L1-L136" target="_blank" rel="noopener">retriever.py</a>), tools deterministas (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/tools/evaluar_signos_alarma.py#L1-L104" target="_blank" rel="noopener">app/tools/</a>), prompts y <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/eval/evaluar.py#L1-L80" target="_blank" rel="noopener">eval/evaluar.py</a>.</td>
+            <td><span class="tag tag-teal">Tech Lead</span></td>
+            <td>Arquitectura, Tools deterministas (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/tools/evaluar_signos_alarma.py" target="_blank" rel="noopener">app/tools/</a>), Prompts y Evaluador CI.</td>
           </tr>
           <tr>
             <td><strong>Wilson Salinas</strong></td>
-            <td>Builder</td>
-            <td>Frontend React 19 (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/frontend/src/App.tsx#L1-L150" target="_blank" rel="noopener">App.tsx</a>, <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/frontend/src/types/estados.ts#L1-L141" target="_blank" rel="noopener">estados.ts</a>), integración Agente/HITL (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/services/agent.py#L1-L206" target="_blank" rel="noopener">agent.py</a>), Dockerfiles y CI/CD Cloud Run.</td>
+            <td><span class="tag tag-dark">Builder</span></td>
+            <td><strong>Pipeline RAG e Ingesta</strong> (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/scripts/ingest.py" target="_blank" rel="noopener">ingest.py</a>), Frontend React 19, Agente/HITL y CI/CD Cloud Run.</td>
           </tr>
           <tr>
             <td><strong>Rafael Minaya</strong></td>
-            <td>QA / Seg.</td>
-            <td>Suites Pytest/Vitest y humo (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/tests/smoke.py#L1-L184" target="_blank" rel="noopener">smoke.py</a>), seguridad OWASP (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/services/seguridad.py#L1-L36" target="_blank" rel="noopener">seguridad.py</a>), RFC 9457 y <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/riesgos.md#L1-L11" target="_blank" rel="noopener">riesgos.md</a>.</td>
+            <td><span class="tag tag-emerald">QA / Seg.</span></td>
+            <td>Suite de 135 pruebas (<a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/tests/smoke.py" target="_blank" rel="noopener">smoke.py</a>), OWASP LLM y Minimización LOPDP.</td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
-  <div class="footer"><span>GuíaVital · Limitaciones y Uso de IA</span><span>10 / 11</span></div>
+
+  <div class="footer">
+    <span>GUÍAVITAL v0.5.2 — LIMITACIONES Y RESPONSABILIDAD DEL EQUIPO</span>
+    <span>10 / 12</span>
+  </div>
 </section>
 
-
-<!-- DIAPOSITIVA 11: CONCLUSIONES Y DEMOSTRACIÓN DE CUMPLIMIENTO DE OBJETIVOS DEL CASO 05 -->
+<!-- DIAPOSITIVA 11: CONCLUSIONES Y DEMOSTRACIÓN DE CUMPLIMIENTO -->
 <section class="slide">
-  <div class="eyebrow">Conclusiones y Cumplimiento Demostrado del Caso 05</div>
-  <h2>Demostración de cumplimiento de objetivos e indicadores de calidad</h2>
-  <table>
+  <div class="slide-head">
+    <div class="eyebrow">10 · Conclusiones y Cierre de Sustentación</div>
+    <h2>100% de objetivos e indicadores clínicos cumplidos</h2>
+  </div>
+
+  <table class="swiss-table" style="margin-bottom:18px">
     <thead>
       <tr>
-        <th>Objetivo / Indicador Mínimo del Caso 05 (UNIANDES)</th>
-        <th>Meta Exigida</th>
-        <th>Resultado Logrado</th>
-        <th>Cómo se demuestra en el código y pruebas (Rama <code>develop</code>)</th>
+        <th style="width:32%">Indicador Exigido (Caso 05)</th>
+        <th style="width:16%">Meta</th>
+        <th style="width:24%">Resultado Logrado</th>
+        <th style="width:28%">Evidencia en Git</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><strong>1. Derivación ante signos de alarma (Cero falsos negativos)</strong><br>Reglas deterministas tomadas de la guía clínica, sin depender del LLM.</td>
-        <td><strong>100 %</strong><br>(0 falsos negativos)</td>
-        <td><strong style="color:#087f7a">100 %</strong><br>(0 errores silenciosos)</td>
-        <td>
-          Reglas en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/tools/evaluar_signos_alarma.py#L23-L94" target="_blank" rel="noopener">evaluar_signos_alarma.py</a> y cinta <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/flujo.py#L166-L190" target="_blank" rel="noopener">app/flujo.py</a>. Verificado en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/tests/test_evaluar_signos_alarma.py#L14-L44" target="_blank" rel="noopener">test_evaluar_signos_alarma.py</a> y <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/tests/test_flujo.py#L147-L173" target="_blank" rel="noopener">test_flujo.py</a>.
-        </td>
+        <td><strong>01. Triaje de signos de alarma</strong></td>
+        <td><strong>100%</strong> (0 FN)</td>
+        <td><span class="tag tag-emerald">100% · 0 Errores</span></td>
+        <td><a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/tools/evaluar_signos_alarma.py" target="_blank" rel="noopener">evaluar_signos_alarma.py ↗</a> · <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/flujo.py" target="_blank" rel="noopener">flujo.py ↗</a></td>
       </tr>
       <tr>
-        <td><strong>2. Rechazo de solicitudes de medicamentos o dosis</strong><br>Explicar riesgo de AINEs (hemorragias) y derivar a profesional de salud.</td>
-        <td><strong>100 %</strong></td>
-        <td><strong style="color:#087f7a">100 %</strong><br>(Local y Cloud Run)</td>
-        <td>
-          Salvaguardas en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/prompts/system_v4.md#L30-L36" target="_blank" rel="noopener">system_v4.md</a> y <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/prompts/system_agente.md#L33-L41" target="_blank" rel="noopener">system_agente.md</a>. Probado en vivo contra la URL en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/tests/smoke.py#L60-L83" target="_blank" rel="noopener">tests/smoke.py</a> (casos 4 y 5).
-        </td>
+        <td><strong>02. Rechazo de medicamentos y dosis</strong></td>
+        <td><strong>100%</strong></td>
+        <td><span class="tag tag-emerald">100% · Local & Cloud</span></td>
+        <td><a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/prompts/system_v4.md" target="_blank" rel="noopener">system_v4.md ↗</a> · <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/tests/smoke.py" target="_blank" rel="noopener">smoke.py ↗</a></td>
       </tr>
       <tr>
-        <td><strong>3. Respuestas de prevención y síntomas con cita oficial</strong><br>Sobre el conjunto de 20 preguntas de referencia (MSP y OPS 2016).</td>
-        <td><strong>≥ 80 %</strong></td>
-        <td><strong style="color:#087f7a">87 % Top-3 · 100 % Citas</strong><br>(100 % silencio en fuera de tema)</td>
-        <td>
-          Evaluador automático <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/eval/evaluar.py#L27-L43" target="_blank" rel="noopener">eval/evaluar.py</a>, <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/eval/run_eval.py#L1-L90" target="_blank" rel="noopener">eval/run_eval.py</a> (Hit@5 = 100%) y validación de citas en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/tests/test_agent.py#L114-L139" target="_blank" rel="noopener">tests/test_agent.py</a>.
-        </td>
+        <td><strong>03. Respuestas con cita oficial OPS/MSP</strong></td>
+        <td><strong>≥ 80%</strong></td>
+        <td><span class="tag tag-emerald">86.7% Top-3 · 100% Citas</span></td>
+        <td><a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/eval/evaluar.py" target="_blank" rel="noopener">eval/evaluar.py ↗</a> (dist ≤ 0.155)</td>
       </tr>
       <tr>
-        <td><strong>4. Ubicación de establecimientos públicos y despliegue seguro</strong><br>GeoSalud Ecuador + Agente controlado + Cloud Run sin claves en código.</td>
-        <td><strong>Operativo en HTTPS</strong></td>
-        <td><strong style="color:#087f7a">125/125 Tests · 6/6 Smoke</strong><br>(0 secretos expuestos)</td>
-        <td>
-          GeoSalud Haversine en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/app/tools/buscar_centro_salud.py#L20-L77" target="_blank" rel="noopener">buscar_centro_salud.py</a>, pruebas en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/tests/test_buscar_centro_salud.py#L1-L45" target="_blank" rel="noopener">test_buscar_centro_salud.py</a> y evidencia en vivo en <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/develop/docs/evidencias/semana-4/README.md#L1-L57" target="_blank" rel="noopener">evidencias/semana-4/README.md</a>.
-        </td>
+        <td><strong>04. GeoSalud 24h y Despliegue Seguro</strong></td>
+        <td><strong>HTTPS Activo</strong></td>
+        <td><span class="tag tag-emerald">135/135 Tests · 0 Secretos</span></td>
+        <td><a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP/blob/main/app/tools/buscar_centro_salud.py" target="_blank" rel="noopener">buscar_centro_salud.py ↗</a> · Cloud Run</td>
       </tr>
     </tbody>
   </table>
-  <div class="note" style="margin-top:14px">
-    <strong>Conclusión general y Ética de IA en Salud (Autonomía, Beneficencia y No Maleficencia):</strong><br>
-    GuíaVital demuestra que la combinación de <strong>RAG sobre guías oficiales (MSP SIVE-Alerta y OPS 2016)</strong> con un <strong>agente de alcance controlado y reglas deterministas</strong> permite orientar a la ciudadanía ecuatoriana con lenguaje claro y <strong>cero falsos negativos en triaje</strong>, respetando la autonomía del paciente (confirmación humana HITL y política Zero-PII) y el principio de <em>no maleficencia</em> (prohibición total de diagnosticar o recetar).<br>
-    <span style="font-size:12.5px;color:#43536b"><strong>Fuentes Oficiales y Referencias (APA 7.ª ed.):</strong> MSP del Ecuador (SIVE-Alerta y GeoSalud, <a href="https://www.salud.gob.ec" target="_blank" rel="noopener">salud.gob.ec</a>) · OPS (2016, <a href="https://iris.paho.org/handle/10665.2/31207" target="_blank" rel="noopener">Guías Dengue Américas</a>) · WHO (2009) · Lewis et al. (2020, RAG) · Yao et al. (2023, ReAct) · OWASP Foundation (2025, <a href="https://genai.owasp.org/llm-top-10/" target="_blank" rel="noopener">LLM Top 10</a>).</span>
+
+  <div class="panel-dark">
+    <div style="font-family:var(--font-mono);font-size:12px;color:#5eead4;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">
+      Sello Bioético en Salud Pública · Autonomía, Beneficencia y No Maleficencia
+    </div>
+    <div style="font-size:16px;line-height:1.45;color:#e2e8f0">
+      GuíaVital demuestra que conjugar <strong>RAG oficial (OPS 2016 / MSP)</strong> con <strong>triaje determinista por reglas</strong> erradica los falsos negativos, bloquea la prescripción de fármacos riesgosos y resguarda al ciudadano mediante <strong>confirmación humana (HITL)</strong> y <strong>Minimización de Datos LOPDP</strong>.
+    </div>
   </div>
-  <div class="footer"><span>UNIANDES · Carrera de Software · Grupo 5 · ¡Gracias al Tribunal!</span><span>11 / 11</span></div>
+
+  <div class="footer">
+    <span>UNIANDES · CARRERA DE SOFTWARE · GRUPO 5 · GUÍAVITAL v0.5.2</span>
+    <span>11 / 12</span>
+  </div>
 </section>
 
 
+<!-- DIAPOSITIVA 12: DESPEDIDA Y SESIÓN DE PREGUNTAS -->
+<section class="slide cover">
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:16px;margin-bottom:36px">
+      <span style="font-family:var(--font-mono);font-size:13px;letter-spacing:2px;color:#5eead4;font-weight:600">UNIANDES · DEFENSA DE TITULACIÓN · CASO 05</span>
+      <span style="font-family:var(--font-mono);font-size:13px;color:#94a3b8">GUÍAVITAL v0.5.2 · GRUPO 5</span>
+    </div>
+
+    <div style="font-family:var(--font-mono);font-size:13px;color:#5eead4;letter-spacing:1.6px;text-transform:uppercase;margin-bottom:12px">
+      11 · Cierre y Ronda de Preguntas del Tribunal
+    </div>
+
+    <h1 style="font-size:78px;margin-bottom:16px">Muchas gracias.</h1>
+    <h2 style="max-width:860px;margin-bottom:32px">
+      Quedamos a disposición del Tribunal para preguntas técnicas, clínicas o pruebas en vivo sobre el entorno de producción.
+    </h2>
+
+    <div class="grid-4" style="gap:16px">
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.12);border-top:2px solid #5eead4;padding:16px 18px">
+        <div style="font-family:var(--font-display);font-size:32px;font-weight:800;color:#ffffff;letter-spacing:-0.03em">135/135</div>
+        <div style="font-size:14.5px;font-weight:600;color:#e2e8f0;margin-top:4px">Pruebas en Verde</div>
+        <div style="font-family:var(--font-mono);font-size:11.5px;color:#94a3b8;margin-top:2px">92 PYTEST · 27 VITEST · 16 SMOKE</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.12);border-top:2px solid #5eead4;padding:16px 18px">
+        <div style="font-family:var(--font-display);font-size:32px;font-weight:800;color:#ffffff;letter-spacing:-0.03em">≤ 0.155</div>
+        <div style="font-size:14.5px;font-weight:600;color:#e2e8f0;margin-top:4px">Distancia Coseno RAG</div>
+        <div style="font-family:var(--font-mono);font-size:11.5px;color:#94a3b8;margin-top:2px">SIMILITUD ≥ 84.5% · 161 CHUNKS</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.12);border-top:2px solid #5eead4;padding:16px 18px">
+        <div style="font-family:var(--font-display);font-size:32px;font-weight:800;color:#ffffff;letter-spacing:-0.03em">0 Errores</div>
+        <div style="font-size:14.5px;font-weight:600;color:#e2e8f0;margin-top:4px">Triaje Determinista</div>
+        <div style="font-family:var(--font-mono);font-size:11.5px;color:#94a3b8;margin-top:2px">REGLAS MSP · 0 FALSOS NEGATIVOS</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.12);border-top:2px solid #5eead4;padding:16px 18px">
+        <div style="font-family:var(--font-display);font-size:32px;font-weight:800;color:#ffffff;letter-spacing:-0.03em">LOPDP</div>
+        <div style="font-size:14.5px;font-weight:600;color:#e2e8f0;margin-top:4px">Minimización y HITL</div>
+        <div style="font-family:var(--font-mono);font-size:11.5px;color:#94a3b8;margin-top:2px">ART. 10 Y 11 · PII ANONIMIZADA</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.12);padding-top:18px;margin-bottom:16px">
+      <div style="font-size:15px;color:#cbd5e1">
+        <strong style="color:#ffffff">Equipo Grupo 5:</strong>
+        Luis Caguana <span style="color:#64748b">(Tech Lead)</span> &middot;
+        Wilson Salinas <span style="color:#64748b">(Builder)</span> &middot;
+        Rafael Minaya <span style="color:#64748b">(QA / Seguridad)</span>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:12.5px;color:#5eead4">
+        CLOUD RUN 2 vCPU / 2 GiB
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:13px;color:#94a3b8;border-top:1px solid rgba(255,255,255,0.12);padding-top:14px">
+      <div>
+        <span style="color:#5eead4">ACCESOS EN VIVO:</span>
+        <a href="https://guiavital-448060764458.us-central1.run.app" target="_blank" rel="noopener" style="margin-left:8px">App Frontend ↗</a> ·
+        <a href="https://guiavital-backend-448060764458.us-central1.run.app/manage/health" target="_blank" rel="noopener">/manage/health ↗</a> ·
+        <a href="https://guiavital-backend-448060764458.us-central1.run.app/docs" target="_blank" rel="noopener">API Docs ↗</a> ·
+        <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP" target="_blank" rel="noopener">Repositorio GitHub ↗</a>
+      </div>
+      <span>12 / 12</span>
+    </div>
+  </div>
+</section>
 </main>
 
 <div class="nav">
   <button onclick="previousSlide()" title="Diapositiva anterior (Flecha izquierda)">‹</button>
-  <span id="counter">1 / 11</span>
+  <span id="counter">1 / 12</span>
   <button onclick="nextSlide()" title="Siguiente diapositiva (Flecha derecha)">›</button>
   <button onclick="fullscreen()" title="Pantalla completa">⛶</button>
   <button onclick="exportarPDF()" title="Exportar PDF (Tecla P)">⎙</button>
@@ -1007,7 +1358,6 @@ td {
 
 <script>
 let current = 0;
-
 const slides = document.querySelectorAll(".slide");
 
 function showSlide(index) {
