@@ -107,9 +107,9 @@ A diferencia de la Semana 3 (ejecutada en contenedor local o con recursos mínim
 
 ### 6.2 Tabla Comparativa: Semana 3 vs. Semana 4
 
-| Dimensión / Métrica Evaluada | Semana 3 (Línea Base v0.3.3) | Semana 4 (Versión Desplegada v0.5.1) | Variación / Impacto | Cumplimiento |
+| Dimensión / Métrica Evaluada | Semana 3 (Línea Base v0.3.3) | Semana 4 (Versión Desplegada v0.5.2) | Variación / Impacto | Cumplimiento |
 | :--- | :---: | :---: | :---: | :---: |
-| **Versión SemVer y Estado** | `v0.3.3` (Local / CI) | `v0.5.1` (Producción Cloud Run) | Maduración a versión de entrega final desplegada en la nube | ✅ Superado |
+| **Versión SemVer y Estado** | `v0.3.3` (Local / CI) | `v0.5.2` (Producción Cloud Run) | Maduración a versión de entrega final desplegada en la nube | ✅ Superado |
 | **Infraestructura Cloud Run** | 1 vCPU / 1 GiB RAM (Local) | **2 vCPU / 2 GiB RAM** (Producción) | +100% CPU y RAM; soporte robusto de embeddings locales | ✅ Optimizado |
 | **Pruebas Automatizadas Backend (`pytest`)** | 84 pruebas unitarias | **92 pruebas unitarias e integración** | +8 pruebas (citas estructuradas, rate limit, aislamiento) | ✅ Incrementado |
 | **Pruebas Automatizadas Frontend (`Vitest`)** | 0 pruebas formales | **27 pruebas unitarias de componentes** | Cobertura integral de UI, modales legales y flujo HITL | ✅ Incorporado |

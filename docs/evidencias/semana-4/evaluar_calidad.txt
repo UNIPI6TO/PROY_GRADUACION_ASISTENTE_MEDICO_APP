@@ -1,4 +1,4 @@
-=== EVALUACIÓN PLAN DE CALIDAD (eval/evaluar.py) · VERSIÓN 0.5.1 ===
+=== EVALUACIÓN PLAN DE CALIDAD (eval/evaluar.py) · VERSIÓN 0.5.2 ===
 Fecha de ejecución: 2026-11-10 16:53:45 EST
 Ambiente: Local / Python 3.12 (Indexación Multilingual-E5-Small + ChromaDB)
 

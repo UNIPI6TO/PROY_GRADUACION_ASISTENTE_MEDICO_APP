@@ -14,6 +14,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import type { MensajeHistorialUI } from "../types/estados";
+import { esEnlaceSeguro } from "../api/cliente";
 
 interface MensajeChatProps {
   mensaje: MensajeHistorialUI;
@@ -21,21 +22,84 @@ interface MensajeChatProps {
   onConfirmarAccion?: (toolCallId: string, aprobado: boolean) => void;
 }
 
-/**
- * Convierte marcadores inline (**negrita** y *cursiva*) en nodos React seguros (<strong> y <em>)
- * sin usar innerHTML, manteniendo 100% de protección OWASP LLM05 contra XSS.
- */
-function formatearEnLinea(texto: string): React.ReactNode[] {
+function formatearNegritaYCursiva(texto: string, prefijoKey: string): React.ReactNode[] {
   const partes = texto.split(/(\*\*[^*]+\*\*|\*[^*\n]+\*)/g);
   return partes.map((parte, idx) => {
     if (parte.startsWith("**") && parte.endsWith("**") && parte.length > 4) {
-      return <strong key={idx}>{parte.slice(2, -2)}</strong>;
+      return <strong key={`${prefijoKey}-b-${idx}`}>{parte.slice(2, -2)}</strong>;
     }
     if (parte.startsWith("*") && parte.endsWith("*") && parte.length > 2) {
-      return <em key={idx}>{parte.slice(1, -1)}</em>;
+      return <em key={`${prefijoKey}-i-${idx}`}>{parte.slice(1, -1)}</em>;
     }
     return parte;
   });
+}
+
+/**
+ * Convierte enlaces Markdown [texto](url), URLs directas https://... y marcadores inline (**negrita** y *cursiva*)
+ * en nodos React seguros (<a>, <strong> y <em>) sin usar innerHTML y validando con esEnlaceSeguro (OWASP LLM05).
+ */
+function formatearEnLinea(texto: string): React.ReactNode[] {
+  const regexEnlaces = /(\[[^\]]+\]\(https?:\/\/[^\s)]+\)|https?:\/\/[^\s<>")]+)/g;
+  const segmentos = texto.split(regexEnlaces);
+  const resultado: React.ReactNode[] = [];
+
+  segmentos.forEach((segmento, idx) => {
+    if (!segmento) return;
+
+    // 1. Enlace en formato Markdown: [Etiqueta](https://...)
+    const matchMd = segmento.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
+    if (matchMd) {
+      const etiqueta = matchMd[1].replace(/^\*\*|\*\*$/g, "");
+      const url = matchMd[2];
+      if (esEnlaceSeguro(url)) {
+        const esMapa = /google\.com\/maps|maps\.google\.|maps\.app\.goo\.gl/i.test(url);
+        resultado.push(
+          <a
+            key={`md-link-${idx}`}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={esMapa ? "enlace-chat-externo enlace-mapa-google" : "enlace-chat-externo"}
+          >
+            {etiqueta}
+          </a>
+        );
+        return;
+      }
+    }
+
+    // 2. URL directa: https://...
+    if (/^https?:\/\//i.test(segmento)) {
+      const matchUrl = segmento.match(/^(https?:\/\/[^\s<>")]+?)([.,;:!?]*)$/);
+      const urlLimpia = matchUrl ? matchUrl[1] : segmento;
+      const puntuacionFinal = matchUrl ? matchUrl[2] : "";
+
+      if (esEnlaceSeguro(urlLimpia)) {
+        const esMapa = /google\.com\/maps|maps\.google\.|maps\.app\.goo\.gl/i.test(urlLimpia);
+        resultado.push(
+          <a
+            key={`raw-link-${idx}`}
+            href={urlLimpia}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={esMapa ? "enlace-chat-externo enlace-mapa-google" : "enlace-chat-externo"}
+          >
+            {esMapa ? "📍 Ver ubicación y navegar en Google Maps" : urlLimpia}
+          </a>
+        );
+        if (puntuacionFinal) {
+          resultado.push(puntuacionFinal);
+        }
+        return;
+      }
+    }
+
+    // 3. Texto normal con soporte de **negrita** y *cursiva*
+    resultado.push(...formatearNegritaYCursiva(segmento, `txt-${idx}`));
+  });
+
+  return resultado;
 }
 
 /**
@@ -249,7 +313,7 @@ export function renderizarTextoEstructurado(texto: string): React.ReactNode {
       const contenidoVineta = matchVineta[1];
       const esSubItem =
         /^\s{2,}/.test(lineaCruda) ||
-        /^(?:\*\*)?(?:Direcci[oó]n|Tel[eé]fonos?|Horario|Atenci[oó]n|Referencia)/i.test(
+        /^(?:\*\*)?(?:Direcci[oó]n|Tel[eé]fonos?|Horarios?|Servicios?|Consulta Externa|Emergencia|Atenci[oó]n|Referencia|Ubicaci[oó]n|Mapa|Google Maps)/i.test(
           contenidoVineta
         );
       itemsListaActual.push(

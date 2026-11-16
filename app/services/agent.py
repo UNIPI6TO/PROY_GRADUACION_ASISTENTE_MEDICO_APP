@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from typing import Any, Callable
 
 from app.config import cargar_parametros
@@ -43,6 +44,33 @@ ESQUEMAS = [ESQ_MSP, ESQ_ALARMA, ESQ_CENTROS, ESQ_NOTIF]
 # 2. Confirmación humana requerida
 REQUIEREN_OK = {"notificar_contacto_emergencia"}
 
+_PATRON_SOLICITUD_CENTROS = re.compile(
+    r"\b("
+    r"centro\s+de\s+salud|centros\s+de\s+salud|"
+    r"centro\s+medico|centros\s+medicos|"
+    r"hospital|hospitales|clinica|subcentro|dispensario|establecimiento|"
+    r"donde\s+acudir|a\s+donde\s+ir|a\s+donde\s+acudir|donde\s+ir|donde\s+voy|"
+    r"puedo\s+ir|puedo\s+acudir|me\s+atiend\w*|atencion\s+medica|"
+    r"cercano|cercanos|cercana|cercanas|cerca\s+de|"
+    r"ubicacion|direccion|direcciones|horario|horarios|servicio|servicios|"
+    r"como\s+llegar|mapa|maps"
+    r")\b"
+)
+
+
+def _normalizar_consulta(texto: str) -> str:
+    sin_tildes = unicodedata.normalize("NFD", (texto or "").lower())
+    return "".join(c for c in sin_tildes if unicodedata.category(c) != "Mn")
+
+
+def _usuario_solicita_centros(mensajes: list[dict[str, Any]]) -> bool:
+    """Verifica deterministamente si en el último mensaje del usuario se solicitó información de centros médicos."""
+    for m in reversed(mensajes):
+        if m.get("role") == "user":
+            contenido = _normalizar_consulta(str(m.get("content", "")))
+            return bool(_PATRON_SOLICITUD_CENTROS.search(contenido))
+    return False
+
 
 def _desempacar_respuesta(texto: str) -> str:
     """Extrae texto conversacional limpio si el modelo envolvió la salida en JSON."""
@@ -61,6 +89,36 @@ def _desempacar_respuesta(texto: str) -> str:
     return t
 
 
+def _asegurar_enlaces_centros(texto: str, centros: list[dict[str, Any]]) -> str:
+    """Garantiza deterministamente que los centros encontrados incluyan dirección, servicios/horarios y enlace de Google Maps."""
+    if not centros or "google.com/maps" in texto:
+        return texto
+
+    lineas_extra = ["\n\n### 📍 Establecimientos de salud, servicios, horarios y ubicación:"]
+    for c in centros:
+        nombre = c.get("nombre", "Centro de Salud MSP")
+        direccion = c.get("direccion", "")
+        ciudad = c.get("ciudad", "")
+        telefonos = ", ".join(c.get("telefonos", [])) or "171"
+        servicios = c.get("servicios_horarios", [])
+        url = c.get("google_maps_url", "")
+
+        lineas_extra.append(f"- **{nombre}** ({ciudad})")
+        if direccion:
+            lineas_extra.append(f"  - **Dirección:** {direccion}")
+        if servicios:
+            resumen_srv = "; ".join(
+                f"{s.get('servicio', '')}: {s.get('dias', '')} ({s.get('horario', '')})"
+                for s in servicios
+            )
+            lineas_extra.append(f"  - **Servicios y horarios:** {resumen_srv}")
+        lineas_extra.append(f"  - **Teléfonos:** {telefonos}")
+        if url:
+            lineas_extra.append(f"  - **Ubicación:** [📍 Ver ubicación y navegar en Google Maps]({url})")
+
+    return texto.rstrip() + "\n" + "\n".join(lineas_extra)
+
+
 def ejecutar_bucle_agente(
     mensajes: list[dict[str, Any]],
     cliente_llm: ClienteLLM | None = None,
@@ -76,6 +134,7 @@ def ejecutar_bucle_agente(
 
     cliente = cliente_llm or ClienteLLM()
     fuentes_detectadas: list[Fuente] = []
+    centros_detectados: list[dict[str, Any]] = []
 
     for vuelta in range(vuelta_inicial, max_iter + 1):
         msg, proveedor, modelo = cliente.completar_con_herramientas(mensajes, tools=ESQUEMAS)
@@ -83,9 +142,11 @@ def ejecutar_bucle_agente(
         # Si el modelo respondió con texto y sin llamadas a herramientas -> meta cumplida
         tool_calls = getattr(msg, "tool_calls", None)
         if not tool_calls:
+            respuesta_limpia = _desempacar_respuesta(msg.content or "")
+            respuesta_final = _asegurar_enlaces_centros(respuesta_limpia, centros_detectados)
             return {
                 "estado": "completado",
-                "respuesta": _desempacar_respuesta(msg.content or ""),
+                "respuesta": respuesta_final,
                 "vueltas": vuelta,
                 "mensajes": mensajes,
                 "fuentes": fuentes_detectadas,
@@ -145,17 +206,32 @@ def ejecutar_bucle_agente(
                 }
 
             # Ejecución determinista de herramienta libre
-            try:
-                datos_validados = MODELOS_IN[nombre](**args)
-                resultado = PERMITIDAS[nombre](datos_validados)
-                # Acumular fuentes si vienen de consultar_guia_msp
-                if isinstance(resultado, dict) and "fuentes" in resultado:
-                    for f in resultado["fuentes"]:
-                        fuentes_detectadas.append(
-                            Fuente(documento=f.get("documento", ""), seccion=f.get("seccion"))
-                        )
-            except Exception as e:
-                resultado = {"error": f"Error validando argumentos: {str(e)}"}
+            if nombre == "buscar_centro_salud" and not _usuario_solicita_centros(mensajes):
+                resultado = {
+                    "omitido": True,
+                    "mensaje": (
+                        "El ciudadano solo mencionó su localidad pero NO solicitó información de centros médicos ni preguntó a dónde acudir. "
+                        "NO muestres hospitales ni centros de salud en tu respuesta; responde únicamente a su consulta y "
+                        "ofrécele amablemente consultar los centros de salud cercanos si lo necesita."
+                    ),
+                }
+            else:
+                try:
+                    datos_validados = MODELOS_IN[nombre](**args)
+                    resultado = PERMITIDAS[nombre](datos_validados)
+                    # Acumular fuentes si vienen de consultar_guia_msp
+                    if isinstance(resultado, dict) and "fuentes" in resultado:
+                        for f in resultado["fuentes"]:
+                            fuentes_detectadas.append(
+                                Fuente(documento=f.get("documento", ""), seccion=f.get("seccion"))
+                            )
+                    # Acumular centros si vienen de buscar_centro_salud
+                    if isinstance(resultado, dict) and "centros_cercanos" in resultado:
+                        for c in resultado.get("centros_cercanos", []):
+                            if isinstance(c, dict):
+                                centros_detectados.append(c)
+                except Exception as e:
+                    resultado = {"error": f"Error validando argumentos: {str(e)}"}
 
             mensajes.append({
                 "role": "tool",
