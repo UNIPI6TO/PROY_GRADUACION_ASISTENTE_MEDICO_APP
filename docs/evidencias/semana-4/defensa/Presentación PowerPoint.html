@@ -10,23 +10,25 @@
 
 <style>
 :root {
-  --bg-stage: #090d16;
-  --bg-slide: #fbfcfe;
-  --surface: #ffffff;
-  --surface-alt: #f4f6f9;
-  --ink: #0f172a;
-  --ink-secondary: #334155;
-  --ink-muted: #64748b;
-  --line: #e2e8f0;
-  --line-strong: #cbd5e1;
-  --accent: #0d9488;
-  --accent-dark: #0f766e;
-  --accent-soft: #f0fdfa;
-  --navy: #0f172a;
-  --crimson: #be123c;
-  --crimson-soft: #fff1f2;
-  --emerald: #047857;
-  --emerald-soft: #ecfdf5;
+  --bg-stage: #050b14;
+  --bg-slide: #0a2048;
+  --surface: rgba(13, 27, 56, 0.88);
+  --surface-alt: rgba(19, 38, 77, 0.92);
+  --ink: #ffffff;
+  --ink-secondary: #e2e8f0;
+  --ink-muted: #94a3b8;
+  --line: rgba(255, 255, 255, 0.12);
+  --line-strong: rgba(255, 255, 255, 0.22);
+  --accent: #FFC501;
+  --accent-gold: #FFC501;
+  --accent-dark: #d9a300;
+  --accent-soft: rgba(255, 197, 1, 0.14);
+  --navy: #07152b;
+  --crimson: #fb7185;
+  --crimson-soft: rgba(244, 63, 94, 0.16);
+  --emerald: #34d399;
+  --emerald-soft: rgba(16, 185, 129, 0.16);
+  --teal: #5eead4;
   --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
@@ -62,12 +64,17 @@ body {
   height: 720px;
   min-height: 720px;
   max-height: 720px;
-  background: var(--bg-slide);
-  border-radius: 2px;
-  padding: 32px 52px 20px;
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.65);
+  background-color: var(--bg-slide);
+  background-image: url("assets/fondo_contenido.png");
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 4px;
+  padding: 28px 48px 18px;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.75);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--ink);
 }
 
 .slide.active {
@@ -75,23 +82,156 @@ body {
   flex-direction: column;
 }
 
-/* PORTADA MINIMALISTA ARQUITECTÓNICA */
-.cover {
-  background: #090d16;
-  background-image:
-    radial-gradient(circle at 88% 18%, rgba(13, 148, 136, 0.22) 0%, transparent 45%),
-    linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 100% 100%, 64px 64px, 64px 64px;
+/* PORTADA OFICIAL DE LA PLANTILLA PPTX */
+.slide.cover {
+  background-color: #07152b;
+  background-image: url("assets/fondo_portada.png");
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
   color: #f8fafc;
   justify-content: space-between;
-  padding: 52px 64px 56px;
+  padding: 32px 50px 20px;
+}
+
+.cover-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 40px;
+  height: calc(100% - 48px);
+  align-items: center;
+  padding: 8px 16px;
+}
+
+.cover-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding-bottom: 8px;
+}
+
+.cover-logo-main {
+  width: 320px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.6));
+}
+
+.cover-block {
+  margin: 12px 0;
+}
+
+.cover-label {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.cover-label-lg {
+  font-family: var(--font-sans);
+  font-size: 32px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+}
+
+.cover-team {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.6;
+}
+
+.cover-team .role {
+  font-size: 13.5px;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+.cover-group {
+  font-size: 32px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 1px;
+}
+
+.cover-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 24px;
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.cover-topic {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1.35;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+
+.cover-subtopic {
+  font-size: 15px;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 22px;
+  letter-spacing: 0.5px;
+}
+
+.cover-meta-badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cover-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 10px;
+  padding-right: 140px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+
+.cover-links a {
+  color: var(--teal);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.cover-links a:hover {
+  text-decoration: underline;
+  color: #ffffff;
+}
+
+/* LOGO INSTITUCIONAL DE ESQUINA INFERIOR DERECHA */
+.slide-logo {
+  position: absolute;
+  bottom: 12px;
+  right: 28px;
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+  z-index: 10;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.6));
 }
 
 /* CABECERA EDITORIAL DE DIAPOSITIVA */
 .slide-head {
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 8px;
   margin-bottom: 14px;
   flex-shrink: 0;
 }
@@ -100,10 +240,10 @@ body {
   font-family: var(--font-mono);
   color: var(--accent);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 1.6px;
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -129,12 +269,12 @@ h1 {
 
 h2 {
   font-family: var(--font-display);
-  color: var(--ink);
-  font-size: 32px;
+  color: #ffffff;
+  font-size: 24px;
   line-height: 1.15;
   margin: 0;
   font-weight: 700;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
 }
 
 .cover h2 {
@@ -148,65 +288,56 @@ h2 {
 }
 
 p {
-  font-size: 16.5px;
+  font-size: 15.5px;
   line-height: 1.5;
   margin: 0 0 8px;
   color: var(--ink-secondary);
 }
 
 a {
-  color: var(--ink);
+  color: var(--teal);
   font-weight: 600;
   text-decoration: none;
-  border-bottom: 1px solid var(--accent);
+  border-bottom: 1px solid rgba(94, 234, 212, 0.4);
   transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 a:hover {
-  color: var(--accent);
-}
-
-.cover a {
-  color: #e2e8f0;
-  border-bottom-color: rgba(94, 234, 212, 0.5);
-}
-
-.cover a:hover {
-  color: #5eead4;
-  border-bottom-color: #5eead4;
+  color: #ffffff;
+  border-bottom-color: #ffffff;
 }
 
 code {
   font-family: var(--font-mono);
   background: var(--surface-alt);
-  color: var(--ink);
+  color: var(--teal);
   padding: 2px 6px;
   border-radius: 2px;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
   border: 1px solid var(--line);
 }
 
-/* ETIQUETAS TÉCNICAS RECTAS (SIN PÍLDORAS REDONDEADAS) */
+/* ETIQUETAS TÉCNICAS */
 .tag {
   font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
   padding: 4px 10px;
   border-radius: 2px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.4px;
   text-transform: uppercase;
   white-space: nowrap;
 }
-.tag-teal { background: var(--accent-soft); color: var(--accent-dark); border: 1px solid #99f6e4; }
-.tag-dark { background: var(--navy); color: #f8fafc; }
-.tag-crimson { background: var(--crimson-soft); color: var(--crimson); border: 1px solid #fecdd3; }
-.tag-emerald { background: var(--emerald-soft); color: var(--emerald); border: 1px solid #a7f3d0; }
-.tag-outline { background: transparent; color: #cbd5e1; border: 1px solid rgba(255,255,255,0.2); }
+.tag-teal { background: rgba(94, 234, 212, 0.15); color: #5eead4; border: 1px solid rgba(94, 234, 212, 0.4); }
+.tag-dark { background: rgba(7, 21, 43, 0.9); color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.15); }
+.tag-crimson { background: var(--crimson-soft); color: var(--crimson); border: 1px solid rgba(251, 113, 133, 0.4); }
+.tag-emerald { background: var(--emerald-soft); color: var(--emerald); border: 1px solid rgba(52, 211, 153, 0.4); }
+.tag-outline { background: rgba(255, 255, 255, 0.04); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.2); }
 
-/* ÍNDICE NUMÉRICO EDITORIAL */
+/* ÍNDICE NUMÉRICO */
 .idx {
   font-family: var(--font-mono);
   font-size: 13px;
@@ -214,7 +345,6 @@ code {
   color: var(--accent);
   letter-spacing: 0.5px;
 }
-
 .idx-crimson { color: var(--crimson); }
 .idx-navy { color: var(--ink-muted); }
 
@@ -230,39 +360,42 @@ code {
 .grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 18px;
 }
 
 .grid-4 {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 14px;
 }
 
-/* PANELES MINIMALISTAS DE LÍNEA FINA Y ACENTO SUPERIOR */
+/* PANELES MINIMALISTAS */
 .panel {
   background: var(--surface);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--line);
-  border-top: 2px solid var(--ink);
+  border-top: 2px solid var(--accent);
   border-radius: 2px;
-  padding: 15px 20px;
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  color: var(--ink-secondary);
 }
 
-.panel-teal { border-top-color: var(--accent); }
+.panel-teal { border-top-color: var(--teal); }
 .panel-crimson { border-top-color: var(--crimson); }
 .panel-emerald { border-top-color: var(--emerald); }
 .panel-subtle { border-top: 1px solid var(--line); background: var(--surface); }
 
 .panel-dark {
-  background: var(--navy);
+  background: rgba(7, 18, 40, 0.92);
+  backdrop-filter: blur(8px);
   color: #f8fafc;
-  border: 1px solid #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-top: 2px solid var(--accent);
   border-radius: 2px;
-  padding: 20px 24px;
+  padding: 16px 20px;
 }
 
 .panel-header {
@@ -271,14 +404,14 @@ code {
   align-items: center;
   gap: 10px;
   margin-bottom: 8px;
-  min-height: 28px;
+  min-height: 26px;
 }
 
 .panel-title {
   font-family: var(--font-display);
-  font-size: 18.5px;
+  font-size: 17.5px;
   font-weight: 700;
-  color: var(--ink);
+  color: #ffffff;
   letter-spacing: -0.02em;
   line-height: 1.2;
   white-space: nowrap;
@@ -289,10 +422,14 @@ code {
 }
 
 .panel-body {
-  font-size: 16.5px;
-  line-height: 1.48;
+  font-size: 15px;
+  line-height: 1.45;
   color: var(--ink-secondary);
   flex: 1;
+}
+
+.panel-body strong {
+  color: #ffffff;
 }
 
 .panel-dark .panel-body {
@@ -300,24 +437,25 @@ code {
 }
 
 .panel-foot {
-  margin-top: 12px;
-  padding-top: 10px;
+  margin-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid var(--line);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ink-muted);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-/* MÉTRICAS ESTILO SWISS DESIGN */
+/* MÉTRICAS */
 .stat-cell {
   background: var(--surface);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--line);
   border-top: 2px solid var(--accent);
   border-radius: 2px;
-  padding: 16px 20px;
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -325,24 +463,24 @@ code {
 
 .stat-val {
   font-family: var(--font-display);
-  font-size: 44px;
+  font-size: 38px;
   font-weight: 800;
-  color: var(--ink);
+  color: #ffffff;
   line-height: 1.0;
   letter-spacing: -0.04em;
 }
 
 .stat-lbl {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  color: var(--ink);
-  margin-top: 8px;
+  color: #f1f5f9;
+  margin-top: 6px;
   letter-spacing: -0.01em;
 }
 
 .stat-sub {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
   color: var(--ink-muted);
   margin-top: 3px;
 }
@@ -350,17 +488,24 @@ code {
 /* FRANJA DE ESTADO */
 .status-bar {
   background: var(--surface);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--line);
+  border-left: 3px solid var(--emerald);
   border-radius: 2px;
-  padding: 12px 20px;
+  padding: 10px 18px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
-  font-size: 15.5px;
+  margin-bottom: 14px;
+  font-size: 15px;
+  color: var(--ink-secondary);
 }
 
-/* LISTA NUMERADA MINIMALISTA */
+.status-bar strong {
+  color: #ffffff;
+}
+
+/* LISTA NUMERADA */
 .row-list {
   display: flex;
   flex-direction: column;
@@ -373,13 +518,13 @@ code {
   align-items: baseline;
   padding: 8px 0;
   border-bottom: 1px solid var(--line);
-  font-size: 15.5px;
+  font-size: 15px;
   line-height: 1.38;
   color: var(--ink-secondary);
 }
 
 .row-item strong {
-  color: var(--ink);
+  color: #ffffff;
 }
 
 /* TABLA EDITORIAL LIMPIA */
@@ -387,87 +532,107 @@ table.swiss-table {
   width: 100%;
   border-collapse: collapse;
   background: var(--surface);
-  border-top: 2px solid var(--ink);
+  border-top: 2px solid var(--accent);
   border-bottom: 1px solid var(--line-strong);
-  font-size: 16px;
+  font-size: 15px;
 }
 
 table.swiss-table th {
   font-family: var(--font-mono);
   background: var(--surface-alt);
-  color: var(--ink);
-  padding: 12px 16px;
+  color: #ffffff;
+  padding: 10px 14px;
   font-weight: 700;
   text-align: left;
-  font-size: 13px;
+  font-size: 12.5px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   border-bottom: 1px solid var(--line-strong);
 }
 
 table.swiss-table td {
-  padding: 13px 16px;
+  padding: 11px 14px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
-  line-height: 1.42;
+  line-height: 1.4;
   color: var(--ink-secondary);
 }
 
 table.swiss-table td strong {
-  color: var(--ink);
+  color: #ffffff;
 }
 
 /* PIE DE PÁGINA */
 .footer {
-  margin-top: 12px;
+  margin-top: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   color: var(--ink-muted);
   font-family: var(--font-mono);
-  font-size: 12.5px;
+  font-size: 12px;
   border-top: 1px solid var(--line);
   padding-top: 8px;
+  padding-right: 140px;
   flex-shrink: 0;
 }
 
-/* BARRA DE NAVEGACIÓN MINIMALISTA */
+/* BARRA DE NAVEGACIÓN */
 .nav {
   position: fixed;
   bottom: 14px;
   left: 50%;
   transform: translateX(-50%);
-  background: #090d16;
-  border: 1px solid rgba(255,255,255,0.15);
-  padding: 5px 10px;
-  border-radius: 4px;
+  background: rgba(7, 21, 43, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 14px;
+  border-radius: 30px;
   display: flex;
   align-items: center;
   gap: 8px;
   color: white;
-  z-index: 100;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  z-index: 1000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
 .nav button {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.08);
   color: #e2e8f0;
-  border: 1px solid rgba(255,255,255,0.12);
-  width: 30px;
-  height: 30px;
-  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 16px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
 }
 
 .nav button:hover {
   background: var(--accent);
   border-color: var(--accent);
-  color: white;
+  color: #07152b;
+}
+
+.nav button.btn-pptx {
+  background: rgba(255, 197, 1, 0.18);
+  color: var(--accent);
+  border-color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0 12px;
+  gap: 4px;
+}
+
+.nav button.btn-pptx:hover {
+  background: var(--accent);
+  color: #07152b;
 }
 
 .nav span {
@@ -523,7 +688,7 @@ table.swiss-table td strong {
     height: 190.5mm !important;
     min-height: 190.5mm !important;
     max-height: 190.5mm !important;
-    padding: 36px 52px 52px !important;
+    padding: 30px 48px 24px !important;
     margin: 0 !important;
     box-shadow: none !important;
     border-radius: 0 !important;
@@ -536,7 +701,7 @@ table.swiss-table td strong {
 
   .slide.cover {
     justify-content: space-between !important;
-    padding: 48px 60px 52px !important;
+    padding: 36px 50px 24px !important;
   }
 
   .slide:last-child {
@@ -559,53 +724,57 @@ table.swiss-table td strong {
 <main class="deck" id="deck">
 
 <!-- DIAPOSITIVA 1: PORTADA -->
-<section class="slide cover active">
-  <div>
-    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:16px;margin-bottom:36px">
-      <span style="font-family:var(--font-mono);font-size:13px;letter-spacing:2px;color:#5eead4;font-weight:600">UNIANDES · PROCESO DE TITULACIÓN COMPLEXIVO · CASO 05</span>
-      <span style="font-family:var(--font-mono);font-size:13px;color:#94a3b8">RELEASE v0.5.2 · GRUPO 5</span>
+<section class="slide cover active" id="slide-1">
+  <div class="cover-layout">
+    <!-- COLUMNA IZQUIERDA: LOGO UNIANDES, INTEGRANTES Y GRUPO -->
+    <div class="cover-left">
+      <img src="assets/logo_uniandes.png" alt="UNIANDES" class="cover-logo-main">
+      
+      <div class="cover-block">
+        <div class="cover-label">INTEGRANTES:</div>
+        <div class="cover-team">
+          <div>Luis Caguana <span class="role">(Tech Lead)</span></div>
+          <div>Wilson Salinas <span class="role">(Builder)</span></div>
+          <div>Rafael Minaya <span class="role">(QA / Seguridad)</span></div>
+        </div>
+      </div>
+
+      <div class="cover-group">GRUPO N° 5</div>
     </div>
 
-    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-      <span class="tag tag-outline">RAG Oficial OPS/MSP · dist ≤ 0.155</span>
-      <span class="tag tag-outline">Triaje Determinista · 0 Falsos Negativos</span>
-      <span class="tag tag-outline">Minimización LOPDP & HITL</span>
-    </div>
-
-    <h1>GuíaVital</h1>
-    <h2>Asistente de orientación en salud pública sobre dengue y arbovirosis fundamentado en evidencia oficial y reglas clínicas deterministas.</h2>
-  </div>
-
-  <div>
-    <div class="grid-3" style="margin-bottom:28px;border-top:1px solid rgba(255,255,255,0.12);padding-top:22px">
-      <div>
-        <div style="font-family:var(--font-mono);font-size:12px;color:#5eead4;letter-spacing:1px;text-transform:uppercase">01 / Tech Lead</div>
-        <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:white;margin:4px 0">Luis Caguana</div>
-        <div style="font-size:14.5px;color:#94a3b8;line-height:1.4">Arquitectura, Tools deterministas, Prompts y Evaluador CI</div>
+    <!-- COLUMNA DERECHA: TEMA, TÍTULO Y BADGES -->
+    <div class="cover-right">
+      <div class="cover-block">
+        <div class="cover-label-lg">TEMA:</div>
+        <div class="cover-topic">
+          GUÍAVITAL: ASISTENTE DE ORIENTACIÓN EN SALUD PÚBLICA SOBRE DENGUE Y ARBOVIROSIS EN ECUADOR
+        </div>
+        <div class="cover-subtopic">
+          CASO 05 · PROCESO DE TITULACIÓN COMPLEXIVO UNIANDES
+        </div>
+        <div class="cover-meta-badges">
+          <span class="tag tag-outline">RAG Oficial OPS/MSP · dist ≤ 0.155</span>
+          <span class="tag tag-outline">Triaje Determinista · 0 Falsos Negativos</span>
+          <span class="tag tag-outline">Minimización LOPDP & HITL</span>
+        </div>
       </div>
-      <div>
-        <div style="font-family:var(--font-mono);font-size:12px;color:#5eead4;letter-spacing:1px;text-transform:uppercase">02 / Builder</div>
-        <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:white;margin:4px 0">Wilson Salinas</div>
-        <div style="font-size:14.5px;color:#94a3b8;line-height:1.4">Pipeline RAG e Ingesta, Frontend React 19 y CI/CD Cloud Run</div>
-      </div>
-      <div>
-        <div style="font-family:var(--font-mono);font-size:12px;color:#5eead4;letter-spacing:1px;text-transform:uppercase">03 / QA & Seguridad</div>
-        <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:white;margin:4px 0">Rafael Minaya</div>
-        <div style="font-size:14.5px;color:#94a3b8;line-height:1.4">Suite de 135 Pruebas, OWASP LLM y Minimización LOPDP</div>
-      </div>
-    </div>
-
-    <div style="display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:13px;color:#94a3b8;border-top:1px solid rgba(255,255,255,0.12);padding-top:14px">
-      <div>
-        <span style="color:#5eead4">CLOUD RUN:</span>
-        <a href="https://guiavital-448060764458.us-central1.run.app" target="_blank" rel="noopener" style="margin-left:8px">App Frontend ↗</a> ·
-        <a href="https://guiavital-backend-448060764458.us-central1.run.app/manage/health" target="_blank" rel="noopener">/manage/health ↗</a> ·
-        <a href="https://guiavital-backend-448060764458.us-central1.run.app/docs" target="_blank" rel="noopener">API Docs ↗</a> ·
-        <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP" target="_blank" rel="noopener">GitHub ↗</a>
-      </div>
-      <span>01 / 12</span>
     </div>
   </div>
+
+  <!-- Barra de accesos directos inferior -->
+  <div class="cover-footer">
+    <div class="cover-links">
+      <span style="color:var(--accent);font-weight:700">CLOUD RUN:</span>
+      <a href="https://guiavital-448060764458.us-central1.run.app" target="_blank" rel="noopener" style="margin-left:8px">App Frontend ↗</a> ·
+      <a href="https://guiavital-backend-448060764458.us-central1.run.app/manage/health" target="_blank" rel="noopener">/manage/health ↗</a> ·
+      <a href="https://guiavital-backend-448060764458.us-central1.run.app/docs" target="_blank" rel="noopener">API Docs ↗</a> ·
+      <a href="https://github.com/UNIPI6TO/PROY_GRADUACION_ASISTENTE_MEDICO_APP" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+    <div>01 / 12</div>
+  </div>
+
+  <!-- Logo esquina inferior derecha oficial -->
+  <img src="assets/logo_uniandes.png" alt="UNIANDES" class="slide-logo">
 </section>
 
 <!-- DIAPOSITIVA 2: PROBLEMA, ANTECEDENTES Y USUARIO -->
@@ -680,6 +849,8 @@ table.swiss-table td strong {
     <span>GUÍAVITAL v0.5.2 — PROBLEMA CLÍNICO Y POBLACIÓN OBJETIVO</span>
     <span>02 / 12</span>
   </div>
+
+  <img src="assets/logo_uniandes.png" alt="UNIANDES" class="slide-logo">
 </section>
 
 <!-- DIAPOSITIVA 3: OBJETIVOS DEL CASO 05 -->
@@ -748,6 +919,8 @@ table.swiss-table td strong {
     <span>GUÍAVITAL v0.5.2 — OBJETIVOS Y FASES DE INGENIERÍA</span>
     <span>03 / 12</span>
   </div>
+
+  <img src="assets/logo_uniandes.png" alt="UNIANDES" class="slide-logo">
 </section>
 
 <!-- DIAPOSITIVA 4: DEMO EN VIVO SOBRE LA URL PÚBLICA -->
@@ -829,6 +1002,8 @@ table.swiss-table td strong {
     <span>GUÍAVITAL v0.5.2 — DEMOSTRACIÓN EN VIVO</span>
     <span>04 / 12</span>
   </div>
+
+  <img src="assets/logo_uniandes.png" alt="UNIANDES" class="slide-logo">
 </section>
 
 <!-- DIAPOSITIVA 5: ARQUITECTURA GENERAL Y FLUJO -->
@@ -892,6 +1067,8 @@ table.swiss-table td strong {
     <span>GUÍAVITAL v0.5.2 — ARQUITECTURA EN 4 CAPAS</span>
     <span>05 / 12</span>
   </div>
+
+  <img src="assets/logo_uniandes.png" alt="UNIANDES" class="slide-logo">
 </section>
 
 <!-- DIAPOSITIVA 6: DECISIONES DE ARQUITECTURA (ADRs) -->
@@ -948,6 +1125,8 @@ table.swiss-table td strong {
     <span>GUÍAVITAL v0.5.2 — REGISTRO DE DECISIONES DE ARQUITECTURA</span>
     <span>06 / 12</span>
   </div>
+
+  <img src="assets/logo_uniandes.png" alt="UNIANDES" class="slide-logo">
 </section>
 
 <!-- DIAPOSITIVA 7: EVIDENCIAS I: PRUEBAS CONTRA LA URL Y SUITE TOTAL -->
@@ -1026,6 +1205,8 @@ table.swiss-table td strong {
     <span>GUÍAVITAL v0.5.2 — CERTIFICACIÓN FUNCIONAL EN PRODUCCIÓN</span>
     <span>07 / 12</span>
   </div>
+
+  <img src="assets/logo_uniandes.png" alt="UNIANDES" class="slide-logo">
 </section>
 
 <!-- DIAPOSITIVA 8: EVIDENCIAS II: EVALUACIÓN FINAL Y PIPELINE EN VERDE -->
@@ -1097,6 +1278,8 @@ table.swiss-table td strong {
     <span>GUÍAVITAL v0.5.2 — EVALUACIÓN FINAL Y CI/CD</span>
     <span>08 / 12</span>
   </div>
+
+  <img src="assets/logo_uniandes.png" alt="UNIANDES" class="slide-logo">
 </section>
 
 <!-- DIAPOSITIVA 9: SEGURIDAD, CREDENCIALES Y RESILIENCIA -->
@@ -1151,6 +1334,8 @@ table.swiss-table td strong {
     <span>GUÍAVITAL v0.5.2 — SEGURIDAD Y RESILIENCIA</span>
     <span>09 / 12</span>
   </div>
+
+  <img src="assets/logo_uniandes.png" alt="UNIANDES" class="slide-logo">
 </section>
 
 <!-- DIAPOSITIVA 10: LIMITACIONES Y DECLARACIÓN DE USO DE IA -->
@@ -1218,6 +1403,8 @@ table.swiss-table td strong {
     <span>GUÍAVITAL v0.5.2 — LIMITACIONES Y RESPONSABILIDAD DEL EQUIPO</span>
     <span>10 / 12</span>
   </div>
+
+  <img src="assets/logo_uniandes.png" alt="UNIANDES" class="slide-logo">
 </section>
 
 <!-- DIAPOSITIVA 11: CONCLUSIONES Y DEMOSTRACIÓN DE CUMPLIMIENTO -->
@@ -1277,6 +1464,8 @@ table.swiss-table td strong {
     <span>UNIANDES · CARRERA DE SOFTWARE · GRUPO 5 · GUÍAVITAL v0.5.2</span>
     <span>11 / 12</span>
   </div>
+
+  <img src="assets/logo_uniandes.png" alt="UNIANDES" class="slide-logo">
 </section>
 
 
@@ -1345,6 +1534,8 @@ table.swiss-table td strong {
       <span>12 / 12</span>
     </div>
   </div>
+
+  <img src="assets/logo_uniandes.png" alt="UNIANDES" class="slide-logo">
 </section>
 </main>
 
@@ -1353,7 +1544,8 @@ table.swiss-table td strong {
   <span id="counter">1 / 12</span>
   <button onclick="nextSlide()" title="Siguiente diapositiva (Flecha derecha)">›</button>
   <button onclick="fullscreen()" title="Pantalla completa">⛶</button>
-  <button onclick="exportarPDF()" title="Exportar PDF (Tecla P)">⎙</button>
+  <button onclick="exportarPDF()" title="Exportar PDF (Tecla P)">⎙ PDF</button>
+  <button onclick="descargarPPTX()" title="Descargar presentación oficial en PowerPoint (.pptx)" class="btn-pptx">📥 PPTX</button>
 </div>
 
 <script>
@@ -1390,6 +1582,15 @@ function fullscreen() {
   } else {
     document.exitFullscreen();
   }
+}
+
+function descargarPPTX() {
+  const link = document.createElement("a");
+  link.href = "Presentacion_GuiaVital_Grupo5.pptx";
+  link.download = "Presentacion_GuiaVital_Grupo5.pptx";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 function exportarPDF() {
