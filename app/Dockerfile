@@ -22,8 +22,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Descargar el modelo de embeddings durante el build (RUN ...), no al arrancar
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-small')"
 
-# Copiar configuración operativa, código fuente del backend y la base vectorial indexada
+# Copiar configuración operativa, base GeoSalud, código fuente del backend y la base vectorial indexada
 COPY config/ ./config/
+COPY data/geosalud_ecuador.json ./data/geosalud_ecuador.json
 COPY app/ ./app/
 COPY chroma_db/ ./chroma_db/
 
