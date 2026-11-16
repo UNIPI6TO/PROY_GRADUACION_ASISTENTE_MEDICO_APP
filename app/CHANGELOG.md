@@ -9,6 +9,13 @@ y el backend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.6.1-SNAPSHOT-RC1] - 2026-11-16
+
+- fix: detectar centros de salud por ubicación
+- fix: asegurar confirmación de notificaciones
+- feat: (agente) preparar aviso de emergencia
+- feat: (centros) mejorar búsqueda y ubicación
+
 ## [0.6.0] - 2026-11-16
 
 - fix: asegurar confirmación de notificaciones
