@@ -9,6 +9,12 @@ y el backend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-16
+
+- fix: (docker) incluir datos de geosalud
+- fix: detectar centros de salud por ubicación
+- fix: asegurar confirmación de notificaciones
+
 ## [0.6.1-SNAPSHOT-RC2] - 2026-11-16
 
 - fix: (docker) incluir datos de geosalud
