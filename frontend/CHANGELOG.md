@@ -9,6 +9,12 @@ y el frontend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-16
+
+- feat: (centros) mejorar búsqueda y ubicación
+- fix: (flujo) detectar síntomas incompletos
+- fix: enmascarar datos personales en el historial
+
 ## [0.6.0-SNAPSHOT-RC2] - 2026-11-16
 
 - feat: (centros) mejorar búsqueda y ubicación
