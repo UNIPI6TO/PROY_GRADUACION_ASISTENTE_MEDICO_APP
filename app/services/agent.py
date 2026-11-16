@@ -15,7 +15,12 @@ from typing import Any, Callable
 from app.config import cargar_parametros
 from app.schemas import Fuente
 from app.services.llm import ClienteLLM
-from app.tools.buscar_centro_salud import ESQUEMA as ESQ_CENTROS, BuscarCentroSaludIn, buscar_centro_salud
+from app.tools.buscar_centro_salud import (
+    ESQUEMA as ESQ_CENTROS,
+    RUTA_GEOSALUD,
+    BuscarCentroSaludIn,
+    buscar_centro_salud,
+)
 from app.tools.consultar_guia_msp import ESQUEMA as ESQ_MSP, ConsultarGuiaMspIn, consultar_guia_msp
 from app.tools.evaluar_signos_alarma import ESQUEMA as ESQ_ALARMA, EvaluarSignosAlarmaIn, evaluar_signos_alarma
 from app.tools.notificar_contacto_emergencia import (
@@ -48,9 +53,11 @@ _PATRON_SOLICITUD_CENTROS = re.compile(
     r"\b("
     r"centro\s+de\s+salud|centros\s+de\s+salud|"
     r"centro\s+medico|centros\s+medicos|"
-    r"hospital|hospitales|clinica|subcentro|dispensario|establecimiento|"
-    r"donde\s+acudir|a\s+donde\s+ir|a\s+donde\s+acudir|donde\s+ir|donde\s+voy|"
-    r"puedo\s+ir|puedo\s+acudir|me\s+atiend\w*|atencion\s+medica|"
+    r"hospital|hospitales|clinica|subcentro|dispensario|establecimiento|establecimientos|"
+    r"donde\s+(?:puedo\s+|debo\s+|podria\s+)?(?:acudir|ir|atenderme)|"
+    r"a\s+donde\s+(?:puedo\s+|debo\s+|podria\s+)?(?:acudir|ir|atenderme)|"
+    r"donde\s+voy|(?:puedo|debo)\s+(?:ir|acudir)|"
+    r"me\s+atiend\w*|ser\s+atendid\w*|atencion\s+medica|"
     r"cercano|cercanos|cercana|cercanas|cerca\s+de|"
     r"ubicacion|direccion|direcciones|horario|horarios|servicio|servicios|"
     r"como\s+llegar|mapa|maps"
@@ -77,6 +84,33 @@ def _usuario_solicita_centros(mensajes: list[dict[str, Any]]) -> bool:
             contenido = _normalizar_consulta(str(m.get("content", "")))
             return bool(_PATRON_SOLICITUD_CENTROS.search(contenido))
     return False
+
+
+def _detectar_ciudad_en_mensajes(mensajes: list[dict[str, Any]]) -> str | None:
+    """Busca en los mensajes del usuario (del más reciente al más antiguo) si mencionó una ciudad o provincia de GeoSalud."""
+    if not RUTA_GEOSALUD.exists():
+        return None
+    try:
+        with open(RUTA_GEOSALUD, "r", encoding="utf-8") as f:
+            centros = json.load(f)
+    except Exception:
+        return None
+
+    localidades: list[str] = []
+    for c in centros:
+        for campo in ("ciudad", "provincia"):
+            val = (c.get(campo) or "").strip()
+            if val and val not in localidades:
+                localidades.append(val)
+
+    for m in reversed(mensajes):
+        if m.get("role") == "user":
+            texto_norm = _normalizar_consulta(str(m.get("content", "")))
+            for loc in localidades:
+                loc_norm = _normalizar_consulta(loc)
+                if loc_norm and re.search(rf"\b{re.escape(loc_norm)}\b", texto_norm):
+                    return loc
+    return None
 
 
 def _ya_uso_herramienta(mensajes: list[dict[str, Any]], nombre_herramienta: str) -> bool:
@@ -180,6 +214,18 @@ def ejecutar_bucle_agente(
         # Si el modelo respondió con texto y sin llamadas a herramientas -> verificar HITL pendiente o meta cumplida
         tool_calls = getattr(msg, "tool_calls", None)
         if not tool_calls:
+            # Si el ciudadano solicitó explícitamente dónde acudir / centros de salud pero el LLM solo llamó a RAG,
+            # ejecutar deterministamente buscar_centro_salud para su ciudad
+            if not centros_detectados and _usuario_solicita_centros(mensajes):
+                ciudad_ctx = _detectar_ciudad_en_mensajes(mensajes)
+                if ciudad_ctx:
+                    res_geo = buscar_centro_salud(
+                        BuscarCentroSaludIn(ciudad=ciudad_ctx, solo_emergencia_24h=False)
+                    )
+                    for c in res_geo.get("centros_cercanos", []):
+                        if isinstance(c, dict):
+                            centros_detectados.append(c)
+
             respuesta_limpia = _desempacar_respuesta(msg.content or "")
             respuesta_final = _asegurar_enlaces_centros(respuesta_limpia, centros_detectados)
 
