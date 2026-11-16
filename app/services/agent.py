@@ -57,6 +57,13 @@ _PATRON_SOLICITUD_CENTROS = re.compile(
     r")\b"
 )
 
+_PATRON_SOLICITUD_NOTIF = re.compile(
+    r"\b(notifica\w*|avisa\w*|alerta\w*|comunica\w*|envia\w*\s+un?\s*mensaje)\b.*"
+    r"\b(contacto|familiar|hermano|hermana|mama|madre|papa|padre|esposo|esposa|emergencia|\d{7,15})\b",
+    re.DOTALL,
+)
+_PATRON_DESTINATARIO = re.compile(r"(?:\+?593[\s.-]?|0)?9\d(?:[\s.-]?\d){7,8}\b|\b\d{7,15}\b")
+
 
 def _normalizar_consulta(texto: str) -> str:
     sin_tildes = unicodedata.normalize("NFD", (texto or "").lower())
@@ -70,6 +77,35 @@ def _usuario_solicita_centros(mensajes: list[dict[str, Any]]) -> bool:
             contenido = _normalizar_consulta(str(m.get("content", "")))
             return bool(_PATRON_SOLICITUD_CENTROS.search(contenido))
     return False
+
+
+def _ya_uso_herramienta(mensajes: list[dict[str, Any]], nombre_herramienta: str) -> bool:
+    """Verifica si una herramienta ya fue invocada en el historial de mensajes del turno actual."""
+    for m in mensajes:
+        if m.get("role") == "assistant" and m.get("tool_calls"):
+            for tc in m["tool_calls"]:
+                fn = tc.get("function", {}) if isinstance(tc, dict) else getattr(tc, "function", None)
+                nombre = fn.get("name", "") if isinstance(fn, dict) else getattr(fn, "name", "")
+                if nombre == nombre_herramienta:
+                    return True
+    return False
+
+
+def _extraer_solicitud_notificacion(mensajes: list[dict[str, Any]]) -> dict[str, str] | None:
+    """Detecta deterministamente si el último mensaje del usuario pide notificar a un contacto de emergencia."""
+    for m in reversed(mensajes):
+        if m.get("role") == "user":
+            raw = str(m.get("content", ""))
+            norm = _normalizar_consulta(raw)
+            if _PATRON_SOLICITUD_NOTIF.search(norm):
+                m_dest = _PATRON_DESTINATARIO.search(raw)
+                if m_dest:
+                    return {
+                        "destinatario": m_dest.group(0).strip(),
+                        "mensaje": "Alerta de salud (GuíaVital): El paciente presenta signos de alarma y se dirige de urgencia al hospital.",
+                    }
+            break
+    return None
 
 
 def _desempacar_respuesta(texto: str) -> str:
