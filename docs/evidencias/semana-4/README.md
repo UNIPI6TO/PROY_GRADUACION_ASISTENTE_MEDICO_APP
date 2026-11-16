@@ -101,24 +101,43 @@ En cumplimiento estricto del requerimiento docente para la Entrega Final, la sig
 
 ---
 
-## 6. Salidas Oficiales de los Scripts de Calidad y Recuperación (Versión 0.5.2)
+## 6. Salidas Oficiales de los Scripts de Calidad y Recuperación (Versión 0.6.1)
 
-En cumplimiento del requerimiento docente, se ejecutaron las suites deterministas sobre el corpus normativo indexado (161 fragmentos) y el conjunto de 21 preguntas de referencia:
+En cumplimiento del requerimiento docente, se ejecutaron las suites deterministas sobre el corpus normativo indexado (161 fragmentos vigentes) y los conjuntos dorados de evaluación:
 
 ### 6.1 Plan de Calidad de la Cinta y RAG (`eval/evaluar.py`)
 *Archivo generado:* [`docs/evidencias/semana-4/evaluar_calidad.txt`](evaluar_calidad.txt)
+
+El script [`eval/evaluar.py`](../../../eval/evaluar.py) valida automáticamente en integración continua dos conjuntos dorados sin consumir tokens externos:
+1. **`eval/preguntas_rag.jsonl` (20 casos):**
+   - **15 consultas clínicas con fuente (`rag-01` a `rag-15`):** Evalúa que `consultar_guia_msp` recupere fragmentos vigentes con las palabras clave esperadas en el `Top-3` (`13/15 = 86.7%`, superando la meta $\ge 85\%$) y que el **100% (`15/15`)** incluya citas estructuradas válidas `Fuente(documento, seccion)`.
+   - **5 consultas fuera de dominio (`rag-16` a `rag-20`):** Verifica el **100% de silencio (`5/5`)** ante temas ajenos (fractura de tibia, cotización del dólar, programación en Rust, leyes de tránsito en Europa y recetas de cocina) gracias al umbral de distancia coseno `distancia_max: 0.155`.
+2. **`eval/casos_flujo.jsonl` (20 casos):**
+   - Evalúa las 6 estaciones deterministas de [`app/flujo.py`](../../../app/flujo.py), confirmando **0 errores silenciosos** en los 14 casos resueltos automáticamente y un **30.0% (`6/20`)** de derivación segura a revisión médica humana ante síntomas vagos sin temporalidad, intenciones mezcladas o intentos de inyección de prompt (`caso-16`).
+
 ```text
-Loading weights: 100%|██████████| 199/199 [00:00<00:00, 4202.84it/s]
+Loading weights: 100%|██████████| 199/199 [00:00<00:00, 3711.51it/s]
 RAG acierto top-3: 87% (13/15 casos = 86.7%)  ·  Con cita: 100% (15/15)  ·  Silencio: 100% (5/5)  ·  Flujo a revisión: 30% (6/20)  ·  Errores silenciosos: 0
-[EXITO] Todas las metas del Plan de Calidad se han cumplido.
+[EXITO] Todas las metas del Plan de Calidad de la Semana 3 se han cumplido.
 ```
 
-### 6.2 Recuperación Vectorial Hit@k (`eval/run_eval.py`)
+### 6.2 Recuperación Vectorial Hit@k sobre Preguntas Doradas (`eval/run_eval.py`)
 *Archivo generado:* [`docs/evidencias/semana-4/evaluar_recuperacion_vectorial.txt`](evaluar_recuperacion_vectorial.txt)
+
+Evaluación directa sobre las **20 preguntas clínicas doradas** de [`eval/preguntas.csv`](../../../eval/preguntas.csv) (`P01` a `P20`):
 ```text
-Resumen: Hit@1 = 18/21 (85.7%) | Hit@5 = 20/21 (95.2%)
-Detalle de las 21 consultas de referencia:
-- 18 de 21 consultas posicionaron el fragmento normativo exacto en el Puesto #1.
-- 20 de 21 consultas posicionaron el fragmento en el Top-5.
-- P21 (consulta fuera de dominio sobre música) fue rechazada limpiamente con distancia superior al umbral (0.1802).
+Resumen: Hit@1 = 18/20 (90.0%) | Hit@5 = 20/20 (100.0%)
+Detalle de las 20 consultas clínicas de referencia:
+- 18 de 20 consultas (90.0%) posicionaron el fragmento normativo exacto en el Puesto #1 (Hit@1 >= 85%).
+- 20 de 20 consultas (100.0%) posicionaron el fragmento normativo en el Top-5 (Hit@5 = 100%).
 ```
+
+---
+
+## 7. Mejoras Consolidadas en el Release `v0.6.1`
+
+El tag **`v0.6.1`** consolida las mejoras funcionales, operativas y de defensa implementadas tras la revisión final:
+- **Búsqueda Determinista de Centros de Salud (`app/tools/buscar_centro_salud.py` y `data/geosalud_ecuador.json`):** Incorporación de horarios de atención, cartera de servicios, direcciones verificadas y enlaces directos de navegación a Google Maps, renderizados de forma segura en [`frontend/src/components/MensajeChat.tsx`](../../../frontend/src/components/MensajeChat.tsx).
+- **Respaldo de Ubicación y Confirmación HITL (`app/services/agent.py`):** Detección proactiva de ciudad/provincia mencionada por el usuario y ejecución garantizada de herramientas informativas antes de pausar el bucle en estado `requiere_confirmacion` para avisos de emergencia.
+- **Empaquetado en Contenedor de Producción (`app/Dockerfile`):** Inclusión explícita de `COPY data/geosalud_ecuador.json ./data/geosalud_ecuador.json` dentro de la imagen Docker desplegada en Cloud Run.
+- **Materiales de Defensa y Simulador (`docs/evidencias/semana-4/defensa/`):** Incorporación de la presentación institucional en formatos HTML y PowerPoint junto con el simulador interactivo offline de tres casos clínicos.

@@ -6,8 +6,9 @@ from pptx.enum.shapes import MSO_SHAPE
 import os
 
 TEMPLATE_PATH = r'docs/Plantilla_Presentacion_Grado.pptx'
-OUTPUT_PATH = r'docs/evidencias/semana-4/Presentacion_GuiaVital_Grupo5.pptx'
-ASSETS_DIR = r'docs/evidencias/semana-4/assets'
+OUTPUT_PATH = r'docs/evidencias/semana-4/defensa/Presentacion_GuiaVital_Grupo5.pptx'
+OUTPUT_PATH_ALT = r'docs/evidencias/semana-4/defensa/Presentación.pptx'
+ASSETS_DIR = r'docs/evidencias/semana-4/defensa/assets'
 
 IMG_FONDO_CONTENIDO = os.path.join(ASSETS_DIR, 'image4.png')
 IMG_LOGO = os.path.join(ASSETS_DIR, 'image3.png')
@@ -44,7 +45,7 @@ p2.font.bold = True
 p2.font.color.rgb = GOLD
 
 p2_sub = shape2.text_frame.add_paragraph()
-p2_sub.text = 'Caso 05 · Proceso de Titulación Complexivo UNIANDES'
+p2_sub.text = 'Caso 05 · Proceso de Titulación Complexivo UNIANDES · v0.6.1'
 p2_sub.font.name = 'Arial'
 p2_sub.font.size = Pt(14)
 p2_sub.font.color.rgb = LIGHT_GRAY
@@ -74,6 +75,17 @@ p7.font.name = 'Arial'
 p7.font.size = Pt(30)
 p7.font.bold = True
 p7.font.color.rgb = WHITE
+
+# Barra inferior de accesos directos sobre franja blanca (alto contraste azul oscuro)
+tb_cover_links = slide0.shapes.add_textbox(Emu(820000), Emu(6400000), Emu(7000000), Emu(380000))
+tf_links = tb_cover_links.text_frame
+tf_links.word_wrap = True
+p_links = tf_links.paragraphs[0]
+p_links.text = 'CLOUD RUN (v0.6.1):  App Frontend ↗  ·  /manage/health ↗  ·  API Docs ↗  ·  GitHub ↗'
+p_links.font.name = 'Consolas'
+p_links.font.size = Pt(10.5)
+p_links.font.bold = True
+p_links.font.color.rgb = RGBColor(0x07, 0x15, 0x2B)
 
 # -------------------------------------------------------------
 # HELPER: Configurar título en Slide
@@ -333,18 +345,18 @@ slide7 = prs.slides.add_slide(blank_layout)
 setup_slide_header(slide7, "07 · Métricas Clínicas y Despliegue Continuo", "Evaluación cuantitativa y pipeline CI/CD en verde", is_new=True)
 
 add_card(slide7, Emu(800000), Emu(1900000), Emu(5100000), Emu(4200000), "MÉTRICAS CUANTITATIVAS DEL MODELO", [
-    "86.7% Acierto RAG Top-3: 13 de 15 preguntas de evaluación clínica recuperaron los chunks exactos del MSP (Meta del proyecto: ≥ 85%).",
+    "86.7% Acierto RAG Top-3 (evaluar.py): 13 de 15 preguntas clínicas recuperaron los fragmentos exactos del MSP (Meta: ≥ 85%).",
+    "100% Hit@5 y 90.0% Hit@1 (run_eval.py): 20 de 20 preguntas clínicas doradas en Top-5 (18/20 en Puesto #1).",
     "Distancia Coseno Media ≤ 0.155: Similitud semántica del 84.5% entre la consulta del usuario y el corpus normativo.",
-    "100% Citas Oficiales: El asistente incluye la referencia documental de la OPS o MSP en el 100% de las respuestas médicas.",
-    "0.0% Recomendación Errónea: Cero incidentes de prescripción de medicamentos contraindicados en las pruebas.",
-    "100% Sensibilidad en Alarma: Detección infalible de signos de alarma que amenazan la vida del paciente."
+    "100% Citas Oficiales y 100% Abstención: Referencia documental OPS/MSP en el 100% de respuestas y 5/5 silencio fuera de dominio.",
+    "0 Errores Silenciosos: 100% sensibilidad en alarma y 30% de desvío seguro a revisión médica humana."
 ], TEAL)
 
-add_card(slide7, Emu(6100000), Emu(1900000), Emu(5100000), Emu(4200000), "PIPELINE CI/CD Y GOBERNANZA CLOUD RUN", [
-    "Integración Continua (CI): GitHub Actions ejecuta automáticamente ruff, flake8, pytest (92 tests) y vitest (27 tests) en cada push.",
-    "Construcción y Registro: Dockerfile multi-stage empaqueta la imagen optimizada (Python 3.12-slim) y la publica en Artifact Registry.",
-    "Despliegue Continuo (CD): Despliegue automático a Google Cloud Run (2 vCPU, 2 GiB) con política de autoescalado de 0 a 5 instancias.",
-    "Auditoría y Monitoreo: Cloud Logging registra cada interacción con hash anónimo, latencia y tokens consumidos."
+add_card(slide7, Emu(6100000), Emu(1900000), Emu(5100000), Emu(4200000), "PIPELINE CI/CD Y GOBERNANZA CLOUD RUN (v0.6.1)", [
+    "Integración Continua (CI): GitHub Actions ejecuta automáticamente gitleaks, pytest (92 tests), vitest (27 tests) y evaluar.py.",
+    "Release Simétrico (release.yml): Bump automático a v0.6.1, actualización de changelogs y publicación de tag en Git.",
+    "Despliegue Continuo (CD): Despliegue automático a Google Cloud Run (2 vCPU, 2 GiB) con GeoSalud y enlaces a Google Maps.",
+    "Certificación en Producción: 16 pruebas de humo (smoke.py) ejecutadas en vivo contra el Agente v2."
 ], GOLD)
 
 # -------------------------------------------------------------
@@ -418,10 +430,10 @@ for col_idx, h in enumerate(indicadores_headers):
 
 matriz = [
     ("1. Corpus Normativo Oficial MSP", "100% fuentes oficiales", "100% OPS / MSP Ecuador", "161 chunks indexados en ChromaDB"),
-    ("2. Precisión RAG Top-3", "≥ 85% acierto semántico", "86.7% acierto (dist ≤ 0.155)", "Evaluación en eval/run_eval.py"),
+    ("2. Precisión RAG (Top-3 / Hit@5)", "≥ 85% acierto semántico", "86.7% Top-3 · 100% Hit@5 (20/20)", "Evaluación en eval/evaluar.py y run_eval.py"),
     ("3. Triaje Determinista de Alarma", "0 falsos negativos", "0 omisiones críticas (100%)", "18 pruebas unitarias en test_tools.py"),
     ("4. Bloqueo de Automedicación AINEs", "100% prohibición", "0 prescripciones erróneas", "Regla inquebrantable en prompt y código"),
-    ("5. Despliegue en Producción", "Nube pública verificable", "Google Cloud Run activo", "16 smoke tests aprobados en vivo")
+    ("5. Despliegue en Producción", "Nube pública verificable", "Google Cloud Run activo (v0.6.1)", "16 smoke tests aprobados en vivo")
 ]
 
 for row_idx, row in enumerate(matriz, start=1):
@@ -466,4 +478,5 @@ add_card(slide11, Emu(800000), Emu(4800000), Emu(10400000), Emu(1300000), "ENLAC
 
 # Guardar la presentación completa
 prs.save(OUTPUT_PATH)
-print(f"Presentation successfully created with {len(prs.slides)} slides at: {OUTPUT_PATH}")
+prs.save(OUTPUT_PATH_ALT)
+print(f"Presentation successfully created with {len(prs.slides)} slides at: {OUTPUT_PATH} and {OUTPUT_PATH_ALT}")

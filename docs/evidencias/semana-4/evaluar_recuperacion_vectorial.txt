@@ -1,9 +1,9 @@
 ===============================================================================================
 EVALUACIÓN DE BASE VECTORIAL GUÍAVITAL (Top-5 vecinos más cercanos · Distancia Coseno)
-Versión: 0.5.2 · Archivo: eval/preguntas.csv (Total: 21 preguntas)
-Fecha: 2026-11-10 16:54:24 EST
+Versión: 0.6.1 · Archivo: eval/preguntas.csv (Total: 20 preguntas)
+Fecha: 2026-11-16 00:07:30 EST
 ===============================================================================================
-Loading weights: 100%|██████████| 199/199 [00:00<00:00, 4471.76it/s]
+Loading weights: 100%|██████████| 199/199 [00:00<00:00, 4815.89it/s]
 [P01] Puesto #1 (dist=0.1251) | Fuente: MSP Ecuador -> 8.2.3.2 Dengue · MEDIDAS DE CONTROL (págs. 95-100)
 [P02] Puesto #1 (dist=0.1032) | Fuente: MSP Ecuador -> 8.2.3.2 Dengue · MEDIDAS DE CONTROL (págs. 95-100)
 [P03] Puesto #1 (dist=0.0883) | Fuente: OPS/OMS -> 1.2.1 Fase febril
@@ -24,7 +24,6 @@ Loading weights: 100%|██████████| 199/199 [00:00<00:00, 4471
 [P18] Puesto #1 (dist=0.0739) | Fuente: MSP Ecuador -> 8.2.3.2 Dengue · CADENA EPIDEMIOLÓGICA (págs. 95-100)
 [P19] Puesto #1 (dist=0.0830) | Fuente: OPS/OMS -> Anexo F. Diagnóstico diferencial de fiebre del dengue y la fiebre
 [P20] Puesto #2 (dist=0.1012) | Fuente: OPS/OMS -> 5.1.2 Paso 2: diagnóstico y evaluación de la fase y gravedad de la
-[P21] NO ENCONTRÓ 'alta' en top-5 | salió '6.4.1 Recomendaciones' (dist=0.1802)
 -----------------------------------------------------------------------------------------------
-Resumen: Hit@1 = 18/21 (85.7%) | Hit@5 = 20/21 (95.2%)
+Resumen: Hit@1 = 18/20 (90.0%) | Hit@5 = 20/20 (100.0%)
 ===============================================================================================

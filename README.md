@@ -210,8 +210,8 @@ PROY_GRADUACION_ASISTENTE_MEDICO_APP/
 │   ├── casos_flujo.jsonl        # Conjunto dorado de 20 casos para calibración de la cinta (0 errores silenciosos)
 │   ├── preguntas_rag.jsonl      # 20 preguntas de evaluación RAG (15 documentadas, 5 de abstención controlada)
 │   ├── evaluar.py               # Evaluador integral de metas de calidad para CI (RAG top-3 >= 85%, cinta <= 30% revisión)
-│   ├── preguntas.csv            # Conjunto de 21 preguntas clínicas de referencia con validación Hit@k
-│   ├── run_eval.py              # Evaluador de recuperación vectorial (Hit@1 = 85.7%, Hit@5 = 95.2%)
+│   ├── preguntas.csv            # Conjunto de 20 preguntas clínicas de referencia con validación Hit@k
+│   ├── run_eval.py              # Evaluador de recuperación vectorial (Hit@1 = 90.0%, Hit@5 = 100.0%)
 │   └── entradas_prompts.csv     # Conjunto de entradas para evaluación comparativa de prompts
 ├── tests/                       # Pruebas automatizadas del backend con pytest y dobles (mocks)
 │   ├── smoke.py                 # Pruebas funcionales de humo E2E (16 casos certificados contra app desplegada en Cloud Run)

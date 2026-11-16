@@ -158,7 +158,7 @@ Se adopta la **Opción B**:
   * Cero costos por llamadas a servicios de embeddings en la nube.
   * Privacidad total: las consultas no viajan a proveedores de embeddings externos.
   * Pruebas automatizadas inmediatas en `pytest` (~4 s) mediante inyección de mocks (`CarteroDeterminista` y cliente efímero en memoria).
-  * Precisión comprobada: evaluación empírica con 20 preguntas clínicas en [eval/run_eval.py](../eval/run_eval.py) alcanzando **Hit@5 = 100%** y **Hit@1 = 85%**.
+  * Precisión comprobada: evaluación empírica con 20 preguntas clínicas en [eval/run_eval.py](../eval/run_eval.py) alcanzando **Hit@5 = 100% (20/20)** y **Hit@1 = 90.0% (18/20)**.
 * **Negativas y riesgos:**
   * La primera ejecución requiere la descarga local de los pesos del modelo HuggingFace (~470 MB). En entornos sin internet debe configurarse `local_files_only=True` sobre la caché local.
 

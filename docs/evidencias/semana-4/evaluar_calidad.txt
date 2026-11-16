@@ -1,7 +1,10 @@
-=== EVALUACIÓN PLAN DE CALIDAD (eval/evaluar.py) · VERSIÓN 0.5.2 ===
-Fecha de ejecución: 2026-11-10 16:53:45 EST
-Ambiente: Local / Python 3.12 (Indexación Multilingual-E5-Small + ChromaDB)
+=== EVALUACIÓN PLAN DE CALIDAD (eval/evaluar.py) · VERSIÓN 0.6.1 ===
+Fecha de ejecución: 2026-11-16 00:07:30 EST
+Ambiente: Local / Python (Indexación Multilingual-E5-Small + ChromaDB · 161 fragmentos vigentes)
+Conjuntos evaluados:
+  - eval/preguntas_rag.jsonl (20 casos: 15 consultas clínicas con fuente MSP/OPS + 5 consultas fuera de dominio)
+  - eval/casos_flujo.jsonl   (20 casos dorados de triaje determinista y guardrails de seguridad)
 
-Loading weights: 100%|██████████| 199/199 [00:00<00:00, 4202.84it/s]
+Loading weights: 100%|██████████| 199/199 [00:00<00:00, 3711.51it/s]
 RAG acierto top-3: 87% (13/15 casos)  ·  Con cita: 100% (15/15)  ·  Silencio: 100% (5/5)  ·  Flujo a revisión: 30% (6/20)  ·  Errores silenciosos: 0
-[EXITO] Todas las metas del Plan de Calidad se han cumplido.
+[EXITO] Todas las metas del Plan de Calidad de la Semana 3 se han cumplido.

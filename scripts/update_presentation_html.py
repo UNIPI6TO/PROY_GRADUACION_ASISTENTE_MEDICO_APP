@@ -1,6 +1,6 @@
 import re
 
-HTML_PATH = r'docs/evidencias/semana-4/Presentación PowerPoint.html'
+HTML_PATH = r'docs/evidencias/semana-4/defensa/Presentación PowerPoint.html'
 
 with open(HTML_PATH, 'r', encoding='utf-8') as f:
     html = f.read()
@@ -197,23 +197,30 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-  padding-top: 10px;
+  padding-top: 12px;
+  padding-left: 16px;
   padding-right: 140px;
   font-family: var(--font-mono);
-  font-size: 12.5px;
-  color: var(--ink-muted);
+  font-size: 13px;
+  color: #e2e8f0;
+}
+
+.cover-links {
+  color: #334155;
+  font-weight: 700;
 }
 
 .cover-links a {
-  color: var(--teal);
-  text-decoration: none;
+  color: #0a2048;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
   transition: color 0.2s;
 }
 
 .cover-links a:hover {
   text-decoration: underline;
-  color: #ffffff;
+  color: #1d4ed8;
 }
 
 /* LOGO INSTITUCIONAL DE ESQUINA INFERIOR DERECHA */
@@ -763,7 +770,7 @@ new_slide1 = """<section class="slide cover active" id="slide-1">
   <!-- Barra de accesos directos inferior -->
   <div class="cover-footer">
     <div class="cover-links">
-      <span style="color:var(--accent);font-weight:700">CLOUD RUN:</span>
+      <span style="color:#07152b;font-weight:800">CLOUD RUN:</span>
       <a href="https://guiavital-448060764458.us-central1.run.app" target="_blank" rel="noopener" style="margin-left:8px">App Frontend ↗</a> ·
       <a href="https://guiavital-backend-448060764458.us-central1.run.app/manage/health" target="_blank" rel="noopener">/manage/health ↗</a> ·
       <a href="https://guiavital-backend-448060764458.us-central1.run.app/docs" target="_blank" rel="noopener">API Docs ↗</a> ·

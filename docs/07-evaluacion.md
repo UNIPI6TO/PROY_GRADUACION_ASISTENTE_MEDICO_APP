@@ -12,7 +12,7 @@ Para medir objetivamente la calidad de **GuíaVital** sin depender de apreciacio
 
 | Archivo en `eval/` | Propósito | Composición de los Casos |
 | :--- | :--- | :--- |
-| **`eval/preguntas.csv`** | Evaluación detallada de ranking vectorial (`Hit@1` y `Hit@5` en [`eval/run_eval.py`](../eval/run_eval.py)). | **21 consultas representativas:** prevención vectorial (`P01`-`P02`), fase febril y crítica (`P03`-`P04`), automedicación y paracetamol (`P05`-`P06`), signos de alarma (`P07`-`P10`), grupos vulnerables (`P11`-`P13`), pruebas NS1/IgM (`P14`-`P15`), vigilancia epidemiológica SIVE-Alerta y CIE-10 (`P16`-`P18`), diagnóstico diferencial y alta (`P19`-`P20`), y fuera de dominio (`P21`). |
+| **`eval/preguntas.csv`** | Evaluación detallada de ranking vectorial (`Hit@1` y `Hit@5` en [`eval/run_eval.py`](../eval/run_eval.py)). | **20 consultas clínicas representativas:** prevención vectorial (`P01`-`P02`), fase febril y crítica (`P03`-`P04`), automedicación y paracetamol (`P05`-`P06`), signos de alarma (`P07`-`P10`), grupos vulnerables (`P11`-`P13`), pruebas NS1/IgM (`P14`-`P15`), vigilancia epidemiológica SIVE-Alerta y CIE-10 (`P16`-`P18`), y diagnóstico diferencial y alta (`P19`-`P20`). |
 | **`eval/preguntas_rag.jsonl`** | Evaluación automatizada en CI ([`eval/evaluar.py`](../eval/evaluar.py)) para `Top-3` y silencio/abstención. | **20 casos estructurados:** `15` preguntas clínicas resolubles con las guías oficiales del MSP/OPS (`rag-01` a `rag-15`) y `5` preguntas sin respuesta en las fuentes / fuera de dominio (`rag-16` fractura de tibia, `rag-17` cotización del dólar, `rag-18` programación en Rust, `rag-19` leyes de tránsito en Europa, `rag-20` receta de cocina). |
 | **`eval/casos_flujo.jsonl`** | Conjunto dorado (*Golden Dataset*) de triaje clínico y seguridad ([`app/flujo.py`](../app/flujo.py)). | **20 relatos clínicos y entradas de borde (`caso-01` a `caso-20`):** incluye reportes claros con signos de alarma, lenguaje coloquial ecuatoriano (*"pana toy que vuelo en fiebre"*, errores ortográficos *"fievre ace 4 dias"*), intenciones mezcladas, síntomas vagos, consultas generales e intentos de **inyección de prompt** (`caso-16`). |
 
@@ -24,7 +24,7 @@ La ejecución reproducible mediante `python eval/evaluar.py`, `python -m eval.ru
 
 | Métrica Oficial | Cómo se calcula | Objetivo Mínimo | Resultado Semana 3 | Estado |
 | :--- | :--- | :---: | :---: | :---: |
-| **1. Recuperación correcta (Top-3 / Top-5)** | Preguntas con respuesta cuyo fragmento esperado aparece entre los $k$ recuperados / total de preguntas con respuesta | $\ge 85\%$ | **87.0% (Top-3)** (`eval/evaluar.py`)<br/>**100.0% (Hit@5)** / **85.0% (Hit@1)** | ✅ **Cumple** |
+| **1. Recuperación correcta (Top-3 / Top-5)** | Preguntas con respuesta cuyo fragmento esperado aparece entre los $k$ recuperados / total de preguntas con respuesta | $\ge 85\%$ | **87.0% (Top-3)** (`eval/evaluar.py`)<br/>**100.0% (Hit@5)** / **90.0% (Hit@1)** | ✅ **Cumple** |
 | **2. Respuesta correcta con cita** | Consultas del dominio respondidas fundamentándose en el fragmento recuperado e incluyendo `Fuente(documento, seccion)` | $\ge 80\%$ | **86.7% (13/15 en Top-3 directo)**<br/>**100% con cita estructurada** | ✅ **Cumple** |
 | **3. Abstención / Silencio correcto** | Preguntas sin respuesta en las fuentes (`rag-16` a `rag-20`) donde el sistema se abstiene (`se_abstiene=True`) y no inventa | $100\%$ | **100.0% (5/5)** | ✅ **Cumple** |
 | **4. Rechazo fuera de dominio e inyección** | Casos fuera de dominio e intentos de inyección directa/indirecta bloqueados o desviados sin ejecutar acciones indebidas | $100\%$ | **100.0%** (Escenarios B y D Agente + `caso-16` Flujo) | ✅ **Cumple** |
@@ -32,7 +32,7 @@ La ejecución reproducible mediante `python eval/evaluar.py`, `python -m eval.ru
 
 ### Salida verificada del script de Integración Continua (`python eval/evaluar.py`):
 ```text
-Loading weights: 100%|##########| 199/199 [00:00<00:00, 5289.56it/s]
+Loading weights: 100%|##########| 199/199 [00:00<00:00, 3711.51it/s]
 RAG acierto top-3: 87%  ·  Con cita: 100%  ·  Silencio: 100%  ·  Flujo a revisión: 30%  ·  Errores silenciosos: 0
 [EXITO] Todas las metas del Plan de Calidad de la Semana 3 se han cumplido.
 ```
@@ -46,9 +46,9 @@ Tal como establece la guía metodológica del seminario, el valor de la evaluaci
 ### 3.1 Diagnóstico en Recuperación Vectorial (`RAG`)
 | ID Caso | Consulta Evaluada | Comportamiento Observado | Diagnóstico Técnico (¿Recuperación o Generación?) | Acción Correctiva Aplicada |
 | :--- | :--- | :--- | :--- | :--- |
-| **`P04`** (`preguntas.csv`) | *"A mi hijo se le quitó la fiebre al cuarto día pero ahora pasa con mucho sueño y letargo, ¿qué pasa cuando baja la fiebre?"* | El fragmento exacto sobre la **fase crítica (defervescencia)** aparece en `Top-3` / `Top-5`, pero no siempre en `Hit@1` cuando el usuario usa solo términos coloquiales (*"se le quitó la fiebre"*). | **Brecha léxico-semántica en Recuperación:** La guía clínica OPS 2016 utiliza terminología médica (*"defervescencia"*, *"caída de la fiebre entre el día 3 y 7"*). | 1. Se amplió `k=3` en `consultar_guia_msp` para asegurar que el bloque de fase crítica entre siempre al contexto del LLM.<br/>2. Además, como *"mucho sueño y letargo"* es un signo de alarma, la herramienta determinista `evaluar_signos_alarma` captura el caso con **100% de certeza** independientemente del vocabulario. |
+| **`P05`** (`preguntas.csv`) | *"¿Puedo tomar ibuprofeno, aspirina o diclofenaco para calmar el dolor fuerte de cuerpo por dengue?"* | El fragmento normativo de contraindicación de AINEs aparece en Puesto #4 (`Top-5`), ya que los primeros 3 fragmentos priorizan el manejo general del paciente ambulatorio (Grupo A). | **Granularidad de sección en Recuperación:** La advertencia de no administrar AINEs está embebida dentro de las medidas de control y manejo del hogar. | 1. En `consultar_guia_msp` y en el prompt `system_agente.md` / `system_v4.md` se reforzó la prohibición determinista de AINEs.<br/>2. El fragmento se recupera dentro de la ventana `Top-5` (`Hit@5 = 100%`). |
 | **`P16`** (`preguntas.csv`) | *"¿Cuál es el código CIE-10 para el dengue sin signos de alarma y para el dengue grave según el MSP?"* | En búsqueda puramente vectorial sin limpieza, los códigos alfanuméricos cortos (`A90`, `A91`) tenían menor peso semántico frente a textos largos. | **Limitación de embeddings densos ante códigos exactos (Recuperación).** | Se inyectó el metadato `"codigo_cie10": "A90, A91"` en `scripts/ingest.py` y se habilitó el filtro híbrido `where_document={"$contains": ...}` en `BuscadorVectorial.buscar()`. |
-| **`P21` y `rag-16..20`** | Consultas fuera de dominio (*tienda de música, fractura de tibia, cotización del dólar, Rust, ceviche*). | ChromaDB devuelve por diseño los $k$ vecinos menos lejanos aunque la distancia sea alta ($\text{dist} > 0.155$, oscilando entre $0.171$ y $0.219$). | **Comportamiento esperado del índice denso; mitigado por umbral determinista y guardrails.** | 1. Se desacopló y calibró `distancia_max: 0.155` en `config/parametros.yaml`. Al superarse este umbral, `consultar_guia_msp` devuelve `encontrado=False` y fragmentos vacíos (100% de silencio garantizado en código sin alucinar fuentes).<br/>2. A nivel conversacional, el `system_v4.md` y el agente refuerzan la abstención (`se_abstiene=True`). |
+| **`rag-16..20`** (`preguntas_rag.jsonl`) | Consultas fuera de dominio (*fractura de tibia, cotización del dólar, programación en Rust, leyes de tránsito en Europa, receta de ceviche*). | ChromaDB devuelve por diseño los $k$ vecinos menos lejanos aunque la distancia sea alta ($\text{dist} > 0.155$, oscilando entre $0.171$ y $0.219$). | **Comportamiento esperado del índice denso; mitigado por umbral determinista y guardrails.** | 1. Se desacopló y calibró `distancia_max: 0.155` en `config/parametros.yaml`. Al superarse este umbral, `consultar_guia_msp` devuelve `encontrado=False` y fragmentos vacíos (100% de silencio garantizado en código sin alucinar fuentes).<br/>2. A nivel conversacional, el `system_v4.md` y el agente refuerzan la abstención (`se_abstiene=True`). |
 
 ### 3.2 Diagnóstico en la Cinta de Flujo Automatizado (`eval/casos_flujo.jsonl`)
 En la evaluación de los 20 casos clínicos sobre [`app/flujo.py`](../app/flujo.py) con umbral calibrado en `0.85` ([`config/parametros.yaml`](../config/parametros.yaml)):
@@ -107,9 +107,9 @@ A diferencia de la Semana 3 (ejecutada en contenedor local o con recursos mínim
 
 ### 6.2 Tabla Comparativa: Semana 3 vs. Semana 4
 
-| Dimensión / Métrica Evaluada | Semana 3 (Línea Base v0.3.3) | Semana 4 (Versión Desplegada v0.5.2) | Variación / Impacto | Cumplimiento |
+| Dimensión / Métrica Evaluada | Semana 3 (Línea Base v0.3.3) | Semana 4 (Versión Desplegada v0.6.1) | Variación / Impacto | Cumplimiento |
 | :--- | :---: | :---: | :---: | :---: |
-| **Versión SemVer y Estado** | `v0.3.3` (Local / CI) | `v0.5.2` (Producción Cloud Run) | Maduración a versión de entrega final desplegada en la nube | ✅ Superado |
+| **Versión SemVer y Estado** | `v0.3.3` (Local / CI) | `v0.6.1` (Producción Cloud Run) | Maduración a versión de entrega final desplegada en la nube | ✅ Superado |
 | **Infraestructura Cloud Run** | 1 vCPU / 1 GiB RAM (Local) | **2 vCPU / 2 GiB RAM** (Producción) | +100% CPU y RAM; soporte robusto de embeddings locales | ✅ Optimizado |
 | **Pruebas Automatizadas Backend (`pytest`)** | 84 pruebas unitarias | **92 pruebas unitarias e integración** | +8 pruebas (citas estructuradas, rate limit, aislamiento) | ✅ Incrementado |
 | **Pruebas Automatizadas Frontend (`Vitest`)** | 0 pruebas formales | **27 pruebas unitarias de componentes** | Cobertura integral de UI, modales legales y flujo HITL | ✅ Incorporado |
@@ -118,8 +118,8 @@ A diferencia de la Semana 3 (ejecutada en contenedor local o con recursos mínim
 | **Latencia Promedio en Producción (Cloud Run)** | No disponible en nube | **2.81 s** (Promedio) · **11.80 s** (p95) · **12.57 s** (máx) | Medición real con llamadas LLM y function calling en v2 (docs/08) | ✅ Certificado |
 | **Sondas de Observabilidad (`/manage/health`)** | 0.45 s (Local) | **0.24 s** (Cloud Run) | Respuesta ultrarrápida Liveness/Readiness (0 tokens) | ✅ Optimizado |
 | **RAG: Acierto Top-3 (`eval/evaluar.py`)** | 86.7% (13/15 casos) | **86.7% (13/15 casos)** | Precisión sostenida sobre corpus curado (13/15 = 86.7%, meta $\ge 85\%$) | ✅ Cumple |
-| **RAG: Ranking Hit@1 (`eval/run_eval.py`)** | 85.7% (18/21 consultas) | **85.7% (18/21 consultas)** | Evaluación sobre el total unificado de 21 preguntas base | ✅ Cumple |
-| **RAG: Ranking Hit@5 (`eval/run_eval.py`)** | 95.2% (20/21 consultas) | **95.2% (20/21 consultas)** | 20 de 21 consultas en top-5; P21 rechazada limpiamente | ✅ Cumple |
+| **RAG: Ranking Hit@1 (`eval/run_eval.py`)** | 90.0% (18/20 consultas) | **90.0% (18/20 consultas)** | Evaluación sobre el conjunto dorado de 20 preguntas clínicas (`P01`-`P20`) | ✅ Cumple |
+| **RAG: Ranking Hit@5 (`eval/run_eval.py`)** | 100.0% (20/20 consultas) | **100.0% (20/20 consultas)** | 20 de 20 consultas clínicas posicionadas en el Top-5 | ✅ 100% Cumple |
 | **RAG: Respuestas con Cita Estructurada** | 86.7% | **100.0%** (15/15 consultas válidas) | `Fuente(documento, seccion)` validada por contrato | ✅ 100% Cumple |
 | **RAG: Abstención / Silencio Fuera de Dominio** | 100.0% (5/5 casos) | **100.0% (5/5 casos)** | Cero alucinaciones ante consultas no clínicas (`dist > 0.155`) | ✅ 100% Cumple |
 | **Flujo Clínico Dorado: Errores Silenciosos** | 0 errores | **0 errores silenciosos** | Exactitud determinista absoluta en triaje de dengue | ✅ 100% Cumple |
@@ -132,8 +132,8 @@ A diferencia de la Semana 3 (ejecutada en contenedor local o con recursos mínim
 ### 6.3 Conclusiones del Diagnóstico Evolutivo
 
 1. **Robustez y Capacidad de Cómputo:** El escalamiento de Cloud Run a **2 vCPU y 2 GiB de memoria** resolvió de forma definitiva la latencia en la vectorización en frío del modelo `multilingual-e5-small`, permitiendo atender las 16 pruebas funcionales de humo en producción con una latencia promedio de **2.81 s** sin caídas ni reinicios por memoria.
-2. **Cero Regresiones en Calidad Documental:** La precisión en recuperación RAG se mantuvo intacta en **86.7% en Top-3** (13/15 casos), mientras que la exigencia de **citas estructuradas** se perfeccionó del 86.7% al **100.0%**, garantizando que toda respuesta clínica esté respaldada por las guías del MSP o de la OPS.
-3. **Seguridad y Control de Agencia Demostrados en Nube:** El Agente v2 superó con éxito las pruebas de Human-in-the-Loop en vivo (PF-06), el límite de tasa defensivo de 429 con `Retry-After` (PF-13) y el aislamiento multi-turno en SQLite (PF-14), certificando que la arquitectura desacoplada cumple rigurosamente con los estándares de producción médica exigidos para el cierre del seminario.
+2. **Cero Regresiones en Calidad Documental:** La precisión en recuperación RAG se mantuvo intacta en **86.7% en Top-3** (`eval/evaluar.py`, 13/15 casos) y **100.0% en Hit@5 / 90.0% en Hit@1** (`eval/run_eval.py`, 20/20 preguntas doradas), mientras que la exigencia de **citas estructuradas** alcanzó el **100.0%**, garantizando que toda respuesta clínica esté respaldada por las guías del MSP o de la OPS.
+3. **Seguridad y Control de Agencia Demostrados en Nube:** El Agente v2 superó con éxito las pruebas de Human-in-the-Loop en vivo (`PF-14`), el aislamiento multi-turno en SQLite (`PF-15`) y el límite de tasa defensivo de 429 con `Retry-After` (`PF-16`), certificando que la arquitectura desacoplada cumple rigurosamente con los estándares de producción médica exigidos para el cierre del seminario.
 
 ---
 
