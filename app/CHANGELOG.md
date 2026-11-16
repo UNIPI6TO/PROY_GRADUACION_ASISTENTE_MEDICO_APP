@@ -9,6 +9,26 @@ y el backend se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-16
+
+- fix: asegurar confirmación de notificaciones
+- feat: (agente) preparar aviso de emergencia
+- feat: (centros) mejorar búsqueda y ubicación
+- fix: (flujo) detectar síntomas incompletos
+
+## [0.6.0-SNAPSHOT-RC2] - 2026-11-16
+
+- fix: asegurar confirmación de notificaciones
+- feat: (agente) preparar aviso de emergencia
+- feat: (centros) mejorar búsqueda y ubicación
+- fix: (flujo) detectar síntomas incompletos
+
+## [0.6.0-SNAPSHOT-RC1] - 2026-11-16
+
+- feat: (centros) mejorar búsqueda y ubicación
+- fix: (flujo) detectar síntomas incompletos
+- fix: enmascarar datos personales en el historial
+
 ## [0.5.2] - 2026-11-10
 
 - fix: (flujo) detectar síntomas incompletos
