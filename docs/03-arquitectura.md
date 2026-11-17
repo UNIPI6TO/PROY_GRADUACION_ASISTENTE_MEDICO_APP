@@ -214,15 +214,15 @@ Comparativa detallada en [`docs/05-prompts.md`](05-prompts.md):
 
 ---
 
-## 11. Estrategia de Pruebas Automatizadas (125 Pruebas: 92 Backend + 27 Frontend + 6 Humo)
+## 11. Estrategia de Pruebas Automatizadas (135 Pruebas: 92 Backend + 27 Frontend + 16 Humo)
 
 La arquitectura desacopla las dependencias con `Depends()` en FastAPI y mocks deterministas en Vitest/MSW, permitiendo validar el 100% del sistema en cada Pull Request y antes de cada despliegue:
 
 ```mermaid
 flowchart LR
-  PT["Suite de Pruebas<br/>(125 tests totales)"] --> BE_T["Backend: pytest (92 tests)<br/>14 archivos en tests/"]
+  PT["Suite de Pruebas<br/>(135 tests totales)"] --> BE_T["Backend: pytest (92 tests)<br/>14 archivos en tests/"]
   PT --> FE_T["Frontend: Vitest + MSW (27 tests)<br/>4 archivos en frontend/tests/"]
-  PT --> SM_T["Producción: tests/smoke.py (6 tests)<br/>Contra Cloud Run en vivo"]
+  PT --> SM_T["Producción: tests/smoke.py (16 tests)<br/>Contra Cloud Run en vivo"]
   BE_T --> M1["Dobles LLMFalso y CarteroDeterminista<br/>SQLite :memory: · Cero red / Cero costo"]
   FE_T --> M2["MSW Server + Testing Library<br/>DOMPurify XSS · Máquina de estados · UI"]
 ```
@@ -233,7 +233,7 @@ flowchart LR
 | **Chat v1, Memoria y Seguridad** | `test_dengue.py` | 20 | Contrato `200`, persistencia multi-turno en SQLite, aislamiento entre sesiones, *rate limit* `429` + `Retry-After`, delimitación anti-inyección `<consulta_usuario>`, validaciones `422` y errores RFC 9457. |
 | **RAG, Cliente LLM y Operación** | `test_retriever.py`, `test_llm.py`, `test_main.py`, `test_semver_bumper*.py`, `test_actualizar_changelog.py` | 37 | Extracción de PDFs oficiales, prefijos E5 (`query:` / `passage:`), filtro de vigencia, reintentos con *backoff*, conmutación a respaldo (Groq), `/manage/health`, `/manage/info` y automatización SemVer. |
 | **Frontend, Seguridad UI y Contratos** | `cliente.test.ts`, `estados.test.ts`, `manage.test.ts`, `seguridad-y-ui.test.tsx` | 27 | Máquina de 7 estados, parser SSE de trozos partidos, errores RFC 9457, neutralización XSS (`OWASP LLM05`), sesión anónima, pop-up `s4g`, tarjeta de autorización y normalización de WhatsApp. |
-| **Pruebas de Humo en Nube** | `tests/smoke.py` | 6 | Salud en vivo (`GET /manage/health`), orientación v1 y v2, rechazo de automedicación, defensa ante *Prompt Injection* y validación `422` en Google Cloud Run. |
+| **Pruebas de Humo en Nube** | `tests/smoke.py` | 16 | Salud en vivo (`GET /manage/health` en `0.31 s`), triaje determinista (`0.22 s`), citas RAG (`3.22 s`), rechazo de automedicación (`2.21 s`), GeoSalud (`2.15 s`), pausa HITL (`4.38 s`), defensa *Prompt Injection* (`1.99 s`), aislamiento multi-turno (`6.31 s`) y *Rate Limit* `429` (`13.27 s`) en Google Cloud Run (promedio `2.73 s`, `p95: 6.31 s`). |
 
 ---
 
